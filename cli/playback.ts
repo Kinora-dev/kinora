@@ -26,7 +26,6 @@ Options:
   --out <dir>           Output root served statically (default: playback-data)
   --git-sha <sha>
   --git-branch <branch>
-  --git-message <msg>
   --ci-provider <name>
   --ci-run-url <url>
   --ci-run-number <n>
@@ -78,7 +77,6 @@ async function main(): Promise<void> {
       out: { type: 'string', default: 'playback-data' },
       'git-sha': { type: 'string' },
       'git-branch': { type: 'string' },
-      'git-message': { type: 'string' },
       'ci-provider': { type: 'string' },
       'ci-run-url': { type: 'string' },
       'ci-run-number': { type: 'string' },
@@ -106,8 +104,8 @@ async function main(): Promise<void> {
   const runId = values.run ?? (startTime ? startTime.slice(0, 10) : new Date().toISOString().slice(0, 10))
 
   const git =
-    values['git-sha'] || values['git-branch'] || values['git-message']
-      ? { sha: values['git-sha'], branch: values['git-branch'], message: values['git-message'] }
+    values['git-sha'] || values['git-branch']
+      ? { sha: values['git-sha'], branch: values['git-branch'] }
       : undefined
   const ci =
     values['ci-provider'] || values['ci-run-url'] || values['ci-run-number']

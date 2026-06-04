@@ -15,7 +15,6 @@ export type Counts = z.infer<typeof countsSchema>
 export const gitMetaSchema = z.object({
   sha: z.string().optional(),
   branch: z.string().optional(),
-  message: z.string().optional(),
 })
 
 export const ciMetaSchema = z.object({

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { ArrowLeft, Paperclip, GitBranch } from 'lucide-vue-next'
+import { ArrowLeft, Paperclip, GitBranch, ExternalLink } from 'lucide-vue-next'
 import { useManifest, useRunReport } from '@/composables/queries'
 import TestStatusBadge from '@/components/viz/TestStatusBadge.vue'
 import StatBlock from '@/components/viz/StatBlock.vue'
@@ -65,16 +65,29 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
     <template v-else>
       <!-- Header -->
       <div class="flex flex-col gap-6">
-        <div>
-          <h1 class="font-mono text-xl font-semibold tracking-tight">{{ report.runId }}</h1>
-          <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-xs text-muted-foreground">
-            <span>{{ dateFmt.format(new Date(report.startedAt)) }}</span>
-            <span v-if="report.meta.git?.branch" class="flex items-center gap-1">
-              <GitBranch class="size-3" />{{ report.meta.git.branch }}
-              <span v-if="report.meta.git.sha">@ {{ report.meta.git.sha }}</span>
-            </span>
-            <span v-if="report.meta.playwrightVersion">playwright {{ report.meta.playwrightVersion }}</span>
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h1 class="font-mono text-xl font-semibold tracking-tight">{{ report.runId }}</h1>
+            <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-xs text-muted-foreground">
+              <span>{{ dateFmt.format(new Date(report.startedAt)) }}</span>
+              <span v-if="report.meta.git?.branch" class="flex items-center gap-1">
+                <GitBranch class="size-3" />{{ report.meta.git.branch }}
+                <span v-if="report.meta.git.sha">@ {{ report.meta.git.sha }}</span>
+              </span>
+              <span v-if="report.meta.playwrightVersion">playwright {{ report.meta.playwrightVersion }}</span>
+            </div>
           </div>
+
+          <a
+            v-if="report.meta.ci?.runUrl"
+            :href="report.meta.ci.runUrl"
+            target="_blank"
+            rel="noreferrer"
+            class="flex shrink-0 items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
+          >
+            <ExternalLink class="size-3.5" />
+            {{ report.meta.ci.provider ?? 'CI' }}<span v-if="report.meta.ci.runNumber"> #{{ report.meta.ci.runNumber }}</span>
+          </a>
         </div>
 
         <div class="flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg border border-border/70 bg-card/40 px-6 py-5">

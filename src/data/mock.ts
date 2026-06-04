@@ -169,7 +169,11 @@ function buildManifest(now: number): Manifest {
         countsByTag,
         playwrightVersion: '1.58.2',
         git: { branch, sha: seed.toString(16).slice(0, 7) },
-        ci: { provider: 'github', runNumber: String(1000 + (p.runs - d)) },
+        ci: {
+          provider: 'github',
+          runNumber: String(1000 + (p.runs - d)),
+          runUrl: `https://github.com/acme/${p.id}/actions/runs/${1000 + (p.runs - d)}`,
+        },
         reportPath: `reports/${p.id}/${runId}.json`,
       })
     }
