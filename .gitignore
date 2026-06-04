@@ -25,3 +25,9 @@ dist-ssr
 *.sw?
 
 .playwright-mcp
+
+# Playwright e2e
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
