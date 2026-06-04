@@ -71,7 +71,7 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
 </script>
 
 <template>
-  <div class="rounded-xl border border-border/70 bg-card/40 overflow-hidden">
+  <div class="rounded-xl border border-border/70 bg-card/80 overflow-hidden">
     <Table>
       <TableHeader>
         <TableRow class="hover:bg-transparent">

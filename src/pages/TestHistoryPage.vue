@@ -76,7 +76,7 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
           <TestStatusBadge :status="history.lastStatus" />
         </div>
 
-        <div class="flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg border border-border/70 bg-card/40 px-6 py-5">
+        <div class="flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg border border-border/70 bg-card/80 px-6 py-5">
           <StatBlock label="Runs" :value="history.runs" />
           <Separator orientation="vertical" class="h-10" />
           <StatBlock
@@ -91,7 +91,7 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
       </div>
 
       <!-- Timeline -->
-      <div class="flex flex-col gap-3 rounded-xl border border-border/70 bg-card/40 px-6 py-5">
+      <div class="flex flex-col gap-3 rounded-xl border border-border/70 bg-card/80 px-6 py-5">
         <div class="flex items-center justify-between font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
           <span>Status timeline</span>
           <span>{{ history.runs }} runs · oldest → newest</span>
@@ -108,7 +108,7 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
           v-for="p in incidents"
           :key="p.runId"
           :to="{ name: 'run', params: { projectId, runId: p.runId } }"
-          class="block rounded-lg border border-border/70 bg-card/40 px-4 py-3 transition-colors hover:border-border"
+          class="block rounded-lg border border-border/70 bg-card/80 px-4 py-3 transition-colors hover:border-border"
         >
           <div class="flex items-center justify-between gap-3">
             <div class="flex items-center gap-2">

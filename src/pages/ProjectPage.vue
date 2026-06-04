@@ -77,7 +77,7 @@ const toneText = computed(() =>
           </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg border border-border/70 bg-card/40 px-6 py-5">
+        <div class="flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg border border-border/70 bg-card/80 px-6 py-5">
           <StatBlock
             label="Pass rate"
             :value="latest ? formatPct(passRate(latest.counts)) : '-'"

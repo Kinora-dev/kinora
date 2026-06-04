@@ -124,7 +124,7 @@ const stats = computed(() => {
 
       <div
         v-if="!isLoading && !error"
-        class="flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg border border-border/70 bg-card/40 px-6 py-5"
+        class="flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg border border-border/70 bg-card/80 px-6 py-5"
       >
         <StatBlock label="Projects" :value="stats.projects" />
         <Separator orientation="vertical" class="h-10" />

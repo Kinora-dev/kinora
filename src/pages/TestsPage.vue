@@ -66,7 +66,7 @@ const rows = computed(() => {
           </p>
         </div>
 
-        <div class="flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg border border-border/70 bg-card/40 px-6 py-5">
+        <div class="flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg border border-border/70 bg-card/80 px-6 py-5">
           <StatBlock label="Tests tracked" :value="histories.length" />
           <Separator orientation="vertical" class="h-10" />
           <StatBlock label="Unstable" :value="unstableCount" :tone="unstableCount ? 'flaky' : 'pass'" />
@@ -93,7 +93,7 @@ const rows = computed(() => {
           v-for="h in rows"
           :key="h.testKey"
           :to="{ name: 'test', params: { projectId }, query: { key: h.testKey } }"
-          class="group grid grid-cols-[1fr_auto] items-center gap-4 rounded-lg border border-border/70 bg-card/40 px-4 py-3 transition-colors hover:border-border"
+          class="group grid grid-cols-[1fr_auto] items-center gap-4 rounded-lg border border-border/70 bg-card/80 px-4 py-3 transition-colors hover:border-border"
         >
           <div class="min-w-0">
             <div class="flex items-center gap-2">

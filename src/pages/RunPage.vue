@@ -92,7 +92,7 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
           </a>
         </div>
 
-        <div class="flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg border border-border/70 bg-card/40 px-6 py-5">
+        <div class="flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg border border-border/70 bg-card/80 px-6 py-5">
           <StatBlock
             label="Pass rate" :value="formatPct(passRate(report.counts))"
             :tone="report.counts.unexpected ? 'fail' : report.counts.flaky ? 'flaky' : 'pass'"
@@ -136,7 +136,7 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
         <div
           v-for="t in filtered"
           :key="t.testKey"
-          class="rounded-lg border border-border/70 bg-card/40 px-4 py-3 transition-colors hover:border-border"
+          class="rounded-lg border border-border/70 bg-card/80 px-4 py-3 transition-colors hover:border-border"
         >
           <div class="flex items-start justify-between gap-4">
             <div class="min-w-0">
