@@ -108,7 +108,7 @@ npx @playbackhq/cli results.json \
 
 ## Data source modes
 
-The frontend reads data through one small interface, with two transports selected by `mode`: the `PLAYBACK_MODE` env var on Docker, or `config.js` when building from source. Same contract on both sides, so the UI is identical - only the transport differs.
+The frontend reads data through one small interface, with two transports selected by `mode`: the `PLAYBACK_MODE` env var on Docker. Same contract on both sides, so the UI is identical - only the transport differs.
 
 **`static`** (default) - fetches files, zero backend:
 
@@ -127,14 +127,7 @@ GET {baseUrl}/api/projects/:projectId/runs/:runId     -> RunReport
 GET {baseUrl}/api/projects/:projectId/tests           -> { project, histories }
 ```
 
-Set `PLAYBACK_MODE=rest` (or `mode: 'rest'` in `config.js`). A small [Hono](https://hono.dev) reference server (reads CLI output, computes history server-side) ships in [`examples/rest-server.ts`](examples/rest-server.ts):
-
-```bash
-npx @playbackhq/cli results.json --project web-app   # produce playback-data/
-pnpm serve:rest playback-data 8787                   # serve at http://localhost:8787/api (repo example)
-```
-
-Build your own against those three endpoints; responses must satisfy the zod schemas in [`packages/core/src/contracts/playback.ts`](packages/core/src/contracts/playback.ts) (`manifestSchema`, `runReportSchema`, `projectHistorySchema`).
+[`examples/rest-server.ts`](examples/rest-server.ts) is a small [Hono](https://hono.dev) server implementing the three endpoints above - run it or use it as a template; responses must satisfy the zod schemas in [`packages/core/src/contracts/playback.ts`](packages/core/src/contracts/playback.ts). Then set `PLAYBACK_MODE=rest` to point the dashboard at your API.
 
 ## Docker
 
