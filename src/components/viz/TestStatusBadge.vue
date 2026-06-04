@@ -1,16 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { PwTestStatus } from '@/contracts/playwright'
+import { pwStatusMeta } from '@/lib/status'
 
 const props = defineProps<{ status: PwTestStatus }>()
-
-const map: Record<PwTestStatus, { label: string; dot: string; text: string }> = {
-  expected: { label: 'Pass', dot: 'bg-pass', text: 'text-pass' },
-  unexpected: { label: 'Fail', dot: 'bg-fail', text: 'text-fail' },
-  flaky: { label: 'Flaky', dot: 'bg-flaky', text: 'text-flaky' },
-  skipped: { label: 'Skip', dot: 'bg-muted-foreground', text: 'text-muted-foreground' },
-}
-const s = computed(() => map[props.status])
+const s = computed(() => pwStatusMeta[props.status])
 </script>
 
 <template>

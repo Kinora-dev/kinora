@@ -16,6 +16,18 @@ export const router = createRouter({
       component: () => import('@/pages/RunPage.vue'),
       props: true,
     },
+    {
+      path: '/projects/:projectId/tests',
+      name: 'tests',
+      component: () => import('@/pages/TestsPage.vue'),
+      props: true,
+    },
+    {
+      path: '/projects/:projectId/test',
+      name: 'test',
+      component: () => import('@/pages/TestHistoryPage.vue'),
+      props: true,
+    },
   ],
   scrollBehavior: () => ({ top: 0 }),
 })

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { ArrowLeft } from 'lucide-vue-next'
+import { ArrowLeft, ArrowRight } from 'lucide-vue-next'
 import { useManifest } from '@/composables/queries'
 import HealthBadge from '@/components/viz/HealthBadge.vue'
 import Sparkline from '@/components/viz/Sparkline.vue'
@@ -76,7 +76,16 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
               {{ project.description }}
             </p>
           </div>
-          <HealthBadge :health="health" />
+          <div class="flex flex-col items-end gap-2">
+            <HealthBadge :health="health" />
+            <RouterLink
+              :to="{ name: 'tests', params: { projectId: project.id } }"
+              class="flex items-center gap-1 font-mono text-xs text-muted-foreground hover:text-foreground"
+            >
+              Per-test history
+              <ArrowRight class="size-3" />
+            </RouterLink>
+          </div>
         </div>
 
         <div class="flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg border border-border/70 bg-card/40 px-6 py-5">

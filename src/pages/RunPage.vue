@@ -123,9 +123,12 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
                   class="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
                 >{{ tag }}</span>
               </div>
-              <div class="mt-1.5 truncate text-sm font-medium">
+              <RouterLink
+                :to="{ name: 'test', params: { projectId }, query: { key: t.testKey } }"
+                class="mt-1.5 block truncate text-sm font-medium hover:underline"
+              >
                 {{ t.titlePath.join(' › ') }}
-              </div>
+              </RouterLink>
               <div class="mt-0.5 font-mono text-[11px] text-muted-foreground">
                 {{ t.file }}:{{ t.line }} &middot; {{ t.projectName }}
               </div>
