@@ -6,20 +6,6 @@ Playwright already ships a great HTML report for a single run. `playback` sits o
 
 It is a **static frontend only**. There is no backend to run. You host two kinds of JSON files anywhere static (S3, GitHub Pages, nginx, a CDN), point the frontend at that URL, and you are done. Anyone can manage their own reports and run their own UI.
 
-## How it works
-
-```
-your static host (config.baseUrl)
-├─ manifest.json                       # index: projects + per-run summaries (small)
-└─ reports/
-   ├─ web-app/2026-06-04-run.json       # full per-run report (drill-down)
-   └─ checkout/2026-06-04-run.json
-```
-
-1. The frontend fetches `manifest.json` first (one small file, all projects + run summaries).
-2. The overview and history views render entirely from those summaries.
-3. When you open a single run, it lazily fetches that run's full report from `reports/...`.
-
 ## The report format
 
 The source of truth is Playwright's built-in **`json` reporter**:
@@ -122,14 +108,3 @@ pnpm serve:rest playback-data 8787           # serve it at http://localhost:8787
 
 Build your own server against those three endpoints; responses must satisfy the schemas in [`src/contracts/playback.ts`](src/contracts/playback.ts) (`manifestSchema`, `runReportSchema`, `projectHistorySchema`).
 
-## Develop
-
-```bash
-pnpm install
-pnpm dev          # http://localhost:5173 (mock data)
-pnpm test         # vitest unit tests (normalize / history / aggregate / contracts)
-pnpm lint         # eslint (antfu config); lint:fix to autofix
-pnpm build        # type-check + production build
-```
-
-CI (lint + type-check + build + test) runs on every push and PR via [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
