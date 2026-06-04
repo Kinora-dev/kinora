@@ -1,15 +1,15 @@
 #!/usr/bin/env -S npx tsx
 /* eslint-disable no-console */
-import type { RunReport } from '../src/contracts/playback'
+import type { RunReport } from '@playback/core'
 import { readFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import path from 'node:path'
 import process from 'node:process'
 import {
+  buildTestHistories,
   manifestSchema,
   runReportSchema,
-} from '../src/contracts/playback'
-import { buildTestHistories } from '../src/lib/history'
+} from '@playback/core'
 
 // Reference REST server for playback's `rest` mode. Reads a CLI output dir
 // (manifest.json + reports/) and serves the same contract over /api/*, with

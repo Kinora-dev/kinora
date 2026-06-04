@@ -26,8 +26,8 @@ dist-ssr
 
 .playwright-mcp
 
-# Playwright e2e
-/test-results/
-/playwright-report/
-/blob-report/
-/playwright/.cache/
+# Playwright e2e (any package)
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/

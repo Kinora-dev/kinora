@@ -1,0 +1,29 @@
+{
+  "name": "@playback/cli",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "description": "CLI to turn Playwright JSON reports into playback data files",
+  "bin": {
+    "playback": "./dist/playback.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "ingest": "tsx src/playback.ts",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "tsdown"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@playback/core": "workspace:*",
+    "@types/node": "^24.12.3",
+    "tsdown": "^0.22.2",
+    "tsx": "^4.22.4",
+    "typescript": "~6.0.2"
+  }
+}
