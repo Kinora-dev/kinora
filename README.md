@@ -60,7 +60,7 @@ Run it once per project per run; re-running the same `--run` replaces that entry
 
 ### 3. Host the data, point the app at it
 
-Upload `playback-data/**` to any static host (S3, GitHub Pages, nginx, a CDN). Then set `baseUrl` in `public/config.js`:
+Upload `playback-data/**` to any static host (S3, GitHub Pages, nginx, a CDN). Then set `baseUrl` in [`packages/app/public/config.js`](packages/app/public/config.js):
 
 ```js
 window.__PLAYBACK__ = {
@@ -72,7 +72,7 @@ window.__PLAYBACK__ = {
 Build and deploy the frontend:
 
 ```bash
-pnpm build      # static output in dist/
+pnpm build      # static output in packages/app/dist/
 ```
 
 `config.js` is copied as-is into the build, so you can change `baseUrl` on the host without rebuilding.
@@ -92,7 +92,7 @@ pnpm ingest <results.json> --project <id> [options]
 --ci-provider / --ci-run-url / --ci-run-number
 ```
 
-Invoke as `pnpm ingest <args>`, `npx tsx cli/playback.ts <args>`, or `playback <args>` once installed.
+Invoke as `pnpm ingest <args>`, `npx tsx packages/cli/src/playback.ts <args>`, or `playback <args>` once the CLI is installed.
 
 CI example:
 
@@ -133,5 +133,5 @@ pnpm ingest results.json --project web-app    # produce playback-data/
 pnpm serve:rest playback-data 8787            # serve at http://localhost:8787/api
 ```
 
-Build your own against those three endpoints; responses must satisfy the zod schemas in [`src/contracts/playback.ts`](src/contracts/playback.ts) (`manifestSchema`, `runReportSchema`, `projectHistorySchema`).
- 
+Build your own against those three endpoints; responses must satisfy the zod schemas in [`packages/core/src/contracts/playback.ts`](packages/core/src/contracts/playback.ts) (`manifestSchema`, `runReportSchema`, `projectHistorySchema`).
+
