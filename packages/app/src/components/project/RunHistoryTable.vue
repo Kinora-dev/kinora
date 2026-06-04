@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { RunHealth, RunSummary } from '@playback/core'
+import type { RunHealth, RunSummary } from '@playbackhq/core'
 import type { ColumnDef, SortingState } from '@tanstack/vue-table'
-import { formatDuration, formatPct, passRate, runHealth } from '@playback/core'
+import { formatDuration, formatPct, passRate, runHealth } from '@playbackhq/core'
 import { getCoreRowModel, getSortedRowModel, useVueTable } from '@tanstack/vue-table'
 import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-vue-next'
 import { ref } from 'vue'

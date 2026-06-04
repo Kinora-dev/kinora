@@ -138,3 +138,23 @@ pnpm serve:rest playback-data 8787            # serve at http://localhost:8787/a
 
 Build your own against those three endpoints; responses must satisfy the zod schemas in [`packages/core/src/contracts/playback.ts`](packages/core/src/contracts/playback.ts) (`manifestSchema`, `runReportSchema`, `projectHistorySchema`).
 
+## Docker
+
+Run the dashboard as a container - no clone, no build on the host. `config.js` is generated from env on startup, so one image serves any data source.
+
+```bash
+docker build -t playback .
+docker run -p 8080:80 \
+  -e PLAYBACK_BASE_URL=https://reports.example.com \
+  -e PLAYBACK_TITLE="My Reports" \
+  playback
+```
+
+| env | default | meaning |
+|-----|---------|---------|
+| `PLAYBACK_BASE_URL` | (empty) | where `manifest.json` + `reports/` live - **required** for real data |
+| `PLAYBACK_MODE` | `static` | `static` (files) or `rest` (`/api/*` endpoints) |
+| `PLAYBACK_TITLE` | `Playback` | header title |
+
+The bundled nginx serves on port 80, falls back SPA deep links to `index.html`, and marks `config.js` no-cache so a container restart with new env takes effect.
+

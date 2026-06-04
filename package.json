@@ -9,21 +9,21 @@
     "node": "24.12.0"
   },
   "scripts": {
-    "dev": "pnpm --filter @playback/app dev",
-    "build": "pnpm --filter @playback/app build",
-    "build:cli": "pnpm --filter @playback/cli build",
-    "preview": "pnpm --filter @playback/app preview",
+    "dev": "pnpm --filter @playbackhq/app dev",
+    "build": "pnpm --filter @playbackhq/app build",
+    "build:cli": "pnpm --filter @playbackhq/cli build",
+    "preview": "pnpm --filter @playbackhq/app preview",
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "pnpm -r test",
-    "test:e2e": "pnpm --filter @playback/app test:e2e",
+    "test:e2e": "pnpm --filter @playbackhq/app test:e2e",
     "ingest": "tsx packages/cli/src/playback.ts",
     "serve:rest": "tsx examples/rest-server.ts"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.0.0",
-    "@playback/core": "workspace:*",
+    "@playbackhq/core": "workspace:*",
     "eslint": "^10.3.0",
     "tsx": "^4.22.4",
     "typescript": "~6.0.2"

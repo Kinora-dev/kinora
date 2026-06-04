@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { PwTestStatus } from '@playback/core'
-import { formatDuration, formatPct, passRate } from '@playback/core'
+import type { PwTestStatus } from '@playbackhq/core'
+import { formatDuration, formatPct, passRate } from '@playbackhq/core'
 import { ArrowLeft, ExternalLink, GitBranch, Paperclip } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'

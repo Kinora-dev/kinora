@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { formatPct } from '@playback/core'
+import { formatPct } from '@playbackhq/core'
 import { ArrowLeft } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'

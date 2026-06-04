@@ -1,15 +1,37 @@
 {
-  "name": "@playback/cli",
+  "name": "@playbackhq/cli",
   "type": "module",
-  "version": "0.0.0",
-  "private": true,
-  "description": "CLI to turn Playwright JSON reports into playback data files",
+  "version": "0.1.0",
+  "description": "Turn Playwright JSON reports into playback data files",
+  "author": "Joris Gallot",
+  "license": "MIT",
+  "homepage": "https://github.com/joris-gallot/playback#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joris-gallot/playback.git",
+    "directory": "packages/cli"
+  },
+  "bugs": "https://github.com/joris-gallot/playback/issues",
+  "keywords": [
+    "playwright",
+    "test-report",
+    "flaky-tests",
+    "ci",
+    "dashboard",
+    "cli"
+  ],
   "bin": {
     "playback": "./dist/playback.mjs"
   },
   "files": [
     "dist"
   ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsdown",
     "ingest": "tsx src/playback.ts",
@@ -20,7 +42,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@playback/core": "workspace:*",
+    "@playbackhq/core": "workspace:*",
     "@types/node": "^24.12.3",
     "tsdown": "^0.22.2",
     "tsx": "^4.22.4",

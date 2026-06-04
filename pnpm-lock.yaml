@@ -11,7 +11,7 @@ importers:
       '@antfu/eslint-config':
         specifier: ^9.0.0
         version: 9.0.0(@typescript-eslint/rule-tester@8.60.1(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3))(@typescript-eslint/typescript-estree@8.60.1(typescript@6.0.3))(@typescript-eslint/utils@8.60.1(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3))(@vue/compiler-sfc@3.5.35)(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3)(vitest@4.1.8(@types/node@24.13.0)(vite@8.0.16(@types/node@24.13.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0)))
-      '@playback/core':
+      '@playbackhq/core':
         specifier: workspace:*
         version: link:packages/core
       eslint:
@@ -29,7 +29,7 @@ importers:
       '@lucide/vue':
         specifier: ^1.17.0
         version: 1.17.0(vue@3.5.35(typescript@6.0.3))
-      '@playback/core':
+      '@playbackhq/core':
         specifier: workspace:*
         version: link:../core
       '@tanstack/vue-table':
@@ -103,7 +103,7 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
-      '@playback/core':
+      '@playbackhq/core':
         specifier: workspace:*
         version: link:../core
       '@types/node':

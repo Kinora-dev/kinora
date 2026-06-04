@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { PwTestStatus } from '@playback/core'
-import { pwStatusMeta } from '@playback/core'
+import type { PwTestStatus } from '@playbackhq/core'
+import { pwStatusMeta } from '@playbackhq/core'
 import { computed } from 'vue'
 
 const props = defineProps<{ status: PwTestStatus }>()

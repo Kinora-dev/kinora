@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { RunHealth } from '@playback/core'
+import type { RunHealth } from '@playbackhq/core'
 import { computed } from 'vue'
 
 const props = defineProps<{ health: RunHealth, size?: 'sm' | 'md' }>()

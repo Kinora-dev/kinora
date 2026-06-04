@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import type { Manifest, ProjectEntry, RunSummary } from '@playback/core'
+import type { Manifest, ProjectEntry, RunSummary } from '@playbackhq/core'
 import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -9,7 +9,7 @@ import {
   ingestPlaywrightReport,
   manifestSchema,
   SCHEMA_VERSION,
-} from '@playback/core'
+} from '@playbackhq/core'
 
 const USAGE = `playback ingest - turn a Playwright json report into playback data files
 

@@ -1,5 +1,5 @@
 {
-  "name": "@playback/app",
+  "name": "@playbackhq/app",
   "type": "module",
   "version": "0.0.0",
   "private": true,
@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@lucide/vue": "^1.17.0",
-    "@playback/core": "workspace:*",
+    "@playbackhq/core": "workspace:*",
     "@tanstack/vue-table": "^8.21.3",
     "@vueuse/core": "^14.3.0",
     "class-variance-authority": "^0.7.1",

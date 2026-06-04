@@ -7,7 +7,7 @@ import {
   formatPct,
   latestRun,
   runHealth,
-} from '@playback/core'
+} from '@playbackhq/core'
 import { computed, ref } from 'vue'
 import ProjectCard from '@/components/project/ProjectCard.vue'
 import { Button } from '@/components/ui/button'

@@ -1,4 +1,4 @@
-import type { Manifest, ProjectHistory, RunReport } from '@playback/core'
+import type { Manifest, ProjectHistory, RunReport } from '@playbackhq/core'
 import {
 
   buildTestHistories,
@@ -7,7 +7,7 @@ import {
 
   projectHistorySchema,
   runReportSchema,
-} from '@playback/core'
+} from '@playbackhq/core'
 import { config, useMock } from '@/config'
 import { mockManifest, mockRun } from './mock'
 

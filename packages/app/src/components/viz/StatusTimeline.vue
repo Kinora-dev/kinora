@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { TestPoint } from '@playback/core'
-import { pwStatusMeta } from '@playback/core'
+import type { TestPoint } from '@playbackhq/core'
+import { pwStatusMeta } from '@playbackhq/core'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import {

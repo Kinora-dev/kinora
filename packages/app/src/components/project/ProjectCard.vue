@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { ProjectEntry } from '@playback/core'
-import { formatDuration, formatPct, latestRun, passRate, runHealth, sortedRuns, trend } from '@playback/core'
+import type { ProjectEntry } from '@playbackhq/core'
+import { formatDuration, formatPct, latestRun, passRate, runHealth, sortedRuns, trend } from '@playbackhq/core'
 import { ArrowDownRight, ArrowRight, ArrowUpRight } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'

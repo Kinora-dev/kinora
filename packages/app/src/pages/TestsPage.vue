@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { byInstability, formatPct, isUnstable } from '@playback/core'
+import { byInstability, formatPct, isUnstable } from '@playbackhq/core'
 import { ArrowLeft, ChevronRight } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'

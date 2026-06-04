@@ -6,7 +6,7 @@ import {
   runHealth,
   sortedRuns,
   trend,
-} from '@playback/core'
+} from '@playbackhq/core'
 import { ArrowLeft, ArrowRight } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'

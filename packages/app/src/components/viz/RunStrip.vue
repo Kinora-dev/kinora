@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { RunSummary } from '@playback/core'
-import { formatPct, passRate, runHealth } from '@playback/core'
+import type { RunSummary } from '@playbackhq/core'
+import { formatPct, passRate, runHealth } from '@playbackhq/core'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import {
