@@ -143,11 +143,17 @@ Build your own against those three endpoints; responses must satisfy the zod sch
 Run the dashboard as a container - no clone, no build on the host. `config.js` is generated from env on startup, so one image serves any data source.
 
 ```bash
-docker build -t playback .
 docker run -p 8080:80 \
   -e PLAYBACK_BASE_URL=https://reports.example.com \
   -e PLAYBACK_TITLE="My Reports" \
-  playback
+  ghcr.io/joris-gallot/playback:latest
+```
+
+Or build it yourself:
+
+```bash
+docker build -t playback .
+docker run -p 8080:80 -e PLAYBACK_BASE_URL=https://reports.example.com playback
 ```
 
 | env | default | meaning |
