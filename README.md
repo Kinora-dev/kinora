@@ -35,7 +35,7 @@ That's the full UI running on sample reports. To plug in your own, see [Use your
 
 ## Use your own reports
 
-Three steps: generate data, host it, point the app at it.
+Two halves, neither needs a clone: produce data with the CLI, then run the dashboard pointed at it.
 
 ### 1. Emit Playwright's JSON report
 
@@ -59,26 +59,24 @@ Output lands in `playback-data/`:
 - `manifest.json` - index of projects and runs
 - `reports/web-app/<date>.json` - one file per run
 
-Run it once per project per run; re-running the same `--run` replaces that entry.
+Run it once per project per run; re-running the same `--run` replaces that entry. Full flags in [CLI reference](#cli-reference).
 
-### 3. Host the data, point the app at it
+### 3. Host the data
 
-Upload `playback-data/**` to any static host (S3, GitHub Pages, nginx, a CDN). Then set `baseUrl` in [`packages/app/public/config.js`](packages/app/public/config.js):
+Upload `playback-data/**` to any static host (S3, GitHub Pages, nginx, a CDN). The URL where `manifest.json` lives is your `baseUrl` for the next step.
 
-```js
-window.__PLAYBACK__ = {
-  baseUrl: 'https://reports.example.com', // where manifest.json + reports/ live
-  title: 'Playback',
-}
-```
-
-Build and deploy the frontend:
+### 4. Run the dashboard
 
 ```bash
-pnpm build      # static output in packages/app/dist/
+docker run -p 8080:80 \
+  -e PLAYBACK_BASE_URL=https://reports.example.com \
+  -e PLAYBACK_TITLE="My Reports" \
+  ghcr.io/joris-gallot/playback:latest
 ```
 
-`config.js` is copied as-is into the build, so you can change `baseUrl` on the host without rebuilding.
+Dashboard at http://localhost:8080
+
+Defaults to `static` (reads the files you hosted). Outgrowing it? [Data source modes](#data-source-modes) covers the `rest` API.
 
 ## CLI reference
 
@@ -95,7 +93,7 @@ npx @playbackhq/cli <results.json> --project <id> [options]
 --ci-provider / --ci-run-url / --ci-run-number
 ```
 
-Run via `npx @playbackhq/cli <args>`, or install it (`npm i -g @playbackhq/cli`) and call `playback <args>`. Working inside this repo? `pnpm ingest <args>` runs the CLI from source.
+Run via `npx @playbackhq/cli <args>`, or install it (`npm i -g @playbackhq/cli`) and call `playback <args>`
 
 CI example:
 
@@ -110,7 +108,7 @@ npx @playbackhq/cli results.json \
 
 ## Data source modes
 
-The frontend reads data through one small interface, with two transports selected by `mode` in `config.js`. Same contract on both sides, so the UI is identical - only the transport differs.
+The frontend reads data through one small interface, with two transports selected by `mode`: the `PLAYBACK_MODE` env var on Docker, or `config.js` when building from source. Same contract on both sides, so the UI is identical - only the transport differs.
 
 **`static`** (default) - fetches files, zero backend:
 
@@ -129,7 +127,7 @@ GET {baseUrl}/api/projects/:projectId/runs/:runId     -> RunReport
 GET {baseUrl}/api/projects/:projectId/tests           -> { project, histories }
 ```
 
-Set `mode: 'rest'`. A dependency-free reference server (reads CLI output, computes history server-side) ships in [`examples/rest-server.ts`](examples/rest-server.ts):
+Set `PLAYBACK_MODE=rest` (or `mode: 'rest'` in `config.js`). A dependency-free reference server (reads CLI output, computes history server-side) ships in [`examples/rest-server.ts`](examples/rest-server.ts):
 
 ```bash
 npx @playbackhq/cli results.json --project web-app   # produce playback-data/
@@ -140,27 +138,20 @@ Build your own against those three endpoints; responses must satisfy the zod sch
 
 ## Docker
 
-Run the dashboard as a container - no clone, no build on the host. `config.js` is generated from env on startup, so one image serves any data source.
-
-```bash
-docker run -p 8080:80 \
-  -e PLAYBACK_BASE_URL=https://reports.example.com \
-  -e PLAYBACK_TITLE="My Reports" \
-  ghcr.io/joris-gallot/playback:latest
-```
-
-Or build it yourself:
-
-```bash
-docker build -t playback .
-docker run -p 8080:80 -e PLAYBACK_BASE_URL=https://reports.example.com playback
-```
+The published image serves the dashboard and generates `config.js` from env on startup. Basic run is in [step 4](#4-run-the-dashboard); all env vars:
 
 | env | default | meaning |
 |-----|---------|---------|
 | `PLAYBACK_BASE_URL` | (empty) | where `manifest.json` + `reports/` live - **required** for real data |
 | `PLAYBACK_MODE` | `static` | `static` (files) or `rest` (`/api/*` endpoints) |
 | `PLAYBACK_TITLE` | `Playback` | header title |
+
+Build the image yourself instead of pulling:
+
+```bash
+docker build -t playback .
+docker run -p 8080:80 -e PLAYBACK_BASE_URL=https://reports.example.com playback
+```
 
 The bundled nginx serves on port 80, falls back SPA deep links to `index.html`, and marks `config.js` no-cache so a container restart with new env takes effect.
 
