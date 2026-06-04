@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { byInstability, formatPct, isUnstable } from '@playbackhq/core'
+import { useRouteQuery } from '@vueuse/router'
 import { ArrowLeft, ChevronRight } from 'lucide-vue-next'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,8 +19,13 @@ const { state, isLoading, error } = useProjectHistory(props.projectId)
 const project = computed(() => state.value.project)
 const histories = computed(() => state.value.histories)
 
-const search = ref('')
-const unstableOnly = ref(true)
+const search = useRouteQuery('q', '')
+const unstableOnly = useRouteQuery<string, boolean>('unstable', 'true', {
+  transform: {
+    get: v => v !== 'false',
+    set: v => (v ? 'true' : 'false'),
+  },
+})
 
 const unstableCount = computed(() => histories.value.filter(isUnstable).length)
 

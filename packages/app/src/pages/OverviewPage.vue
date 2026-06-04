@@ -8,7 +8,8 @@ import {
   latestRun,
   runHealth,
 } from '@playbackhq/core'
-import { computed, ref } from 'vue'
+import { useRouteQuery } from '@vueuse/router'
+import { computed } from 'vue'
 import ProjectCard from '@/components/project/ProjectCard.vue'
 import { Button } from '@/components/ui/button'
 import {
@@ -29,8 +30,8 @@ const projects = computed(() => manifest.value?.projects ?? [])
 const branches = computed(() => collectBranches(projects.value))
 const tags = computed(() => collectTags(projects.value))
 
-const branch = ref('all')
-const tag = ref('all')
+const branch = useRouteQuery('branch', 'all')
+const tag = useRouteQuery('tag', 'all')
 const hasFilters = computed(() => branch.value !== 'all' || tag.value !== 'all')
 
 function clearFilters() {

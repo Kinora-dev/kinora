@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import type { PwTestStatus } from '@playbackhq/core'
 import { formatDuration, formatPct, passRate } from '@playbackhq/core'
+import { useRouteQuery } from '@vueuse/router'
 import { ArrowLeft, ExternalLink, GitBranch, Paperclip } from 'lucide-vue-next'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,8 +23,8 @@ const projectName = computed(
   () => manifest.value?.projects.find(p => p.id === props.projectId)?.name ?? props.projectId,
 )
 
-const filter = ref<'all' | PwTestStatus>('all')
-const search = ref('')
+const filter = useRouteQuery<'all' | PwTestStatus>('status', 'all')
+const search = useRouteQuery('q', '')
 
 const tests = computed(() => report.value?.tests ?? [])
 const filtered = computed(() => {
