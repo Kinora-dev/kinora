@@ -4,7 +4,10 @@ A dashboard for your Playwright reports, across projects and over time.
 
 Playwright ships a great HTML report for a single run. `playback` sits one level up: it aggregates many runs into one place where you track pass rates, spot trends, and surface flaky tests over time. No backend - it's a static frontend that reads JSON you host anywhere.
 
-![Overview](docs/screenshots/overview.png)
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/screenshots/overview-light.png">
+  <img alt="Overview" src="docs/screenshots/overview-dark.png">
+</picture>
 
 ## Quick start
 
@@ -21,12 +24,12 @@ That's the full UI running on sample reports. To plug in your own, see [Use your
 
 <table>
 <tr>
-<td width="50%"><img src="docs/screenshots/project.png" alt="Project history"><br><sub><b>Project</b> - run history with pass / fail / flaky per run</sub></td>
-<td width="50%"><img src="docs/screenshots/tests.png" alt="Per-test history"><br><sub><b>Tests</b> - per-test flake and fail rates</sub></td>
+<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/screenshots/project-light.png"><img alt="Project history" src="docs/screenshots/project-dark.png"></picture><br><sub><b>Project</b> - run history with pass / fail / flaky per run</sub></td>
+<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/screenshots/tests-light.png"><img alt="Per-test history" src="docs/screenshots/tests-dark.png"></picture><br><sub><b>Tests</b> - per-test flake and fail rates</sub></td>
 </tr>
 <tr>
-<td width="50%"><img src="docs/screenshots/run.png" alt="Run detail"><br><sub><b>Run</b> - every test in one run, filterable</sub></td>
-<td width="50%"><img src="docs/screenshots/test-history.png" alt="Test timeline"><br><sub><b>Test history</b> - one test across runs, with errors</sub></td>
+<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/screenshots/run-light.png"><img alt="Run detail" src="docs/screenshots/run-dark.png"></picture><br><sub><b>Run</b> - every test in one run, filterable</sub></td>
+<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/screenshots/test-history-light.png"><img alt="Test timeline" src="docs/screenshots/test-history-dark.png"></picture><br><sub><b>Test history</b> - one test across runs, with errors</sub></td>
 </tr>
 </table>
 
