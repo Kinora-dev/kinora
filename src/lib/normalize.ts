@@ -74,6 +74,22 @@ function countsFrom(report: PlaywrightReport, tests: NormTest[]): Counts {
   }
 }
 
+function emptyCounts(): Counts {
+  return { total: 0, expected: 0, unexpected: 0, flaky: 0, skipped: 0 }
+}
+
+function countsByTagFrom(tests: NormTest[]): Record<string, Counts> {
+  const out: Record<string, Counts> = {}
+  for (const t of tests) {
+    for (const tag of t.tags) {
+      const c = (out[tag] ??= emptyCounts())
+      c.total++
+      c[t.status]++
+    }
+  }
+  return out
+}
+
 // Parse + normalize a raw Playwright JSON report into the playback contract.
 // Attachment bodies are dropped (only metadata kept) to keep payloads small.
 export function ingestPlaywrightReport(
@@ -100,6 +116,7 @@ export function ingestPlaywrightReport(
     git: meta.git,
     ci: meta.ci,
     reportPath,
+    countsByTag: countsByTagFrom(tests),
   }
   const report: RunReport = {
     schemaVersion: SCHEMA_VERSION,

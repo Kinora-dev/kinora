@@ -92,6 +92,9 @@ function buildTests(p: MockProject, seed: number): NormTest[] {
       f.titles.forEach((title, i) => {
         const status = pickStatus(rnd, healthy)
         const titlePath = [title]
+        const tags: string[] = []
+        if (i === 0) tags.push('@smoke')
+        if (f.file.includes('auth') || f.file.includes('payment')) tags.push('@critical')
         tests.push({
           testKey: makeTestKey(f.file, titlePath, browser),
           title,
@@ -104,7 +107,7 @@ function buildTests(p: MockProject, seed: number): NormTest[] {
           ok: status === 'expected' || status === 'flaky',
           duration: Math.round(400 + rnd() * 5200),
           retries: status === 'flaky' ? 1 : 0,
-          tags: i === 0 ? ['@smoke'] : [],
+          tags,
           annotations: status === 'skipped' ? [{ type: 'skip', description: 'flaky on CI' }] : [],
           errors:
             status === 'unexpected'
@@ -148,14 +151,24 @@ function buildManifest(now: number): Manifest {
       const counts = countsFrom(tests)
       const startedAt = new Date(now - d * DAY).toISOString()
       const runId = runIdFor(p.runs - d)
+      const countsByTag: Record<string, Counts> = {}
+      for (const t of tests) {
+        for (const tag of t.tags) {
+          const c = (countsByTag[tag] ??= { total: 0, expected: 0, unexpected: 0, flaky: 0, skipped: 0 })
+          c.total++
+          c[t.status]++
+        }
+      }
+      const branch = d % 7 === 0 ? 'develop' : 'main'
       runs.push({
         runId,
         projectId: p.id,
         startedAt,
         duration: tests.reduce((s, t) => s + t.duration, 0),
         counts,
+        countsByTag,
         playwrightVersion: '1.58.2',
-        git: { branch: 'main', sha: seed.toString(16).slice(0, 7) },
+        git: { branch, sha: seed.toString(16).slice(0, 7) },
         ci: { provider: 'github', runNumber: String(1000 + (p.runs - d)) },
         reportPath: `reports/${p.id}/${runId}.json`,
       })

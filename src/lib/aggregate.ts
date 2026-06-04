@@ -52,6 +52,35 @@ export function trend(p: ProjectEntry): TrendPoint[] {
     }))
 }
 
+export function collectBranches(projects: ProjectEntry[]): string[] {
+  const s = new Set<string>()
+  for (const p of projects) for (const r of p.runs) if (r.git?.branch) s.add(r.git.branch)
+  return [...s].sort()
+}
+
+export function collectTags(projects: ProjectEntry[]): string[] {
+  const s = new Set<string>()
+  for (const p of projects) for (const r of p.runs) for (const t of Object.keys(r.countsByTag)) s.add(t)
+  return [...s].sort()
+}
+
+// Branch filters runs out; tag swaps each run's counts for that tag's subset
+// (dropping runs that have no tests with the tag).
+export function filterRuns(
+  runs: RunSummary[],
+  branch: string | null,
+  tag: string | null,
+): RunSummary[] {
+  let out = runs
+  if (branch) out = out.filter((r) => r.git?.branch === branch)
+  if (tag)
+    out = out.flatMap((r) => {
+      const c = r.countsByTag[tag]
+      return c ? [{ ...r, counts: c }] : []
+    })
+  return out
+}
+
 export function formatDuration(ms: number): string {
   if (ms < 1000) return `${ms}ms`
   const s = ms / 1000

@@ -1,18 +1,55 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useManifest } from '@/composables/queries'
 import ProjectCard from '@/components/project/ProjectCard.vue'
 import StatBlock from '@/components/viz/StatBlock.vue'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
-import { denom, latestRun, runHealth, formatPct } from '@/lib/aggregate'
+import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  collectBranches,
+  collectTags,
+  denom,
+  filterRuns,
+  latestRun,
+  runHealth,
+  formatPct,
+} from '@/lib/aggregate'
 
 const { state: manifest, isLoading, error } = useManifest()
 
 const projects = computed(() => manifest.value?.projects ?? [])
+const branches = computed(() => collectBranches(projects.value))
+const tags = computed(() => collectTags(projects.value))
+
+const branch = ref('all')
+const tag = ref('all')
+const hasFilters = computed(() => branch.value !== 'all' || tag.value !== 'all')
+
+function clearFilters() {
+  branch.value = 'all'
+  tag.value = 'all'
+}
+
+// Projects with runs filtered (and, for tag, counts swapped). Empty ones drop out.
+const displayProjects = computed(() =>
+  projects.value
+    .map((p) => ({
+      ...p,
+      runs: filterRuns(p.runs, branch.value === 'all' ? null : branch.value, tag.value === 'all' ? null : tag.value),
+    }))
+    .filter((p) => p.runs.length > 0),
+)
 
 const stats = computed(() => {
-  const latest = projects.value.map(latestRun).filter((r) => r != null)
+  const latest = displayProjects.value.map(latestRun).filter((r) => r != null)
   let pass = 0
   let total = 0
   let tests = 0
@@ -23,9 +60,9 @@ const stats = computed(() => {
     tests += r.counts.total
     if (runHealth(r.counts) === 'failing') failing++
   }
-  const runs = projects.value.reduce((s, p) => s + p.runs.length, 0)
+  const runs = displayProjects.value.reduce((s, p) => s + p.runs.length, 0)
   return {
-    projects: projects.value.length,
+    projects: displayProjects.value.length,
     runs,
     tests,
     failing,
@@ -38,11 +75,44 @@ const stats = computed(() => {
   <div class="flex flex-col gap-8">
     <!-- Page header -->
     <div class="flex flex-col gap-6">
-      <div>
-        <h1 class="text-2xl font-semibold tracking-tight">Test runs overview</h1>
-        <p class="mt-1 text-sm text-muted-foreground">
-          Playwright report history across every project, one strip per run.
-        </p>
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-semibold tracking-tight">Test runs overview</h1>
+          <p class="mt-1 text-sm text-muted-foreground">
+            Playwright report history across every project, one strip per run.
+          </p>
+        </div>
+
+        <!-- Filters -->
+        <div v-if="!isLoading && !error" class="flex items-center gap-2">
+          <Select v-if="branches.length > 1" v-model="branch">
+            <SelectTrigger class="h-9 w-44 font-mono text-xs">
+              <SelectValue placeholder="Branch" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" class="font-mono text-xs">All branches</SelectItem>
+              <SelectItem v-for="b in branches" :key="b" :value="b" class="font-mono text-xs">
+                {{ b }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select v-if="tags.length" v-model="tag">
+            <SelectTrigger class="h-9 w-40 font-mono text-xs">
+              <SelectValue placeholder="Tag" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" class="font-mono text-xs">All tags</SelectItem>
+              <SelectItem v-for="t in tags" :key="t" :value="t" class="font-mono text-xs">
+                {{ t }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Button v-if="hasFilters" variant="ghost" size="sm" class="h-9 font-mono text-xs" @click="clearFilters">
+            Clear
+          </Button>
+        </div>
       </div>
 
       <div
@@ -57,15 +127,11 @@ const stats = computed(() => {
           :tone="stats.passRate >= 0.99 ? 'pass' : stats.passRate >= 0.9 ? 'flaky' : 'fail'"
         />
         <Separator orientation="vertical" class="h-10" />
-        <StatBlock label="Tests / latest" :value="stats.tests" />
+        <StatBlock :label="tag === 'all' ? 'Tests / latest' : `${tag} / latest`" :value="stats.tests" />
         <Separator orientation="vertical" class="h-10" />
         <StatBlock label="Total runs" :value="stats.runs" />
         <Separator orientation="vertical" class="h-10" />
-        <StatBlock
-          label="Failing now"
-          :value="stats.failing"
-          :tone="stats.failing > 0 ? 'fail' : 'pass'"
-        />
+        <StatBlock label="Failing now" :value="stats.failing" :tone="stats.failing > 0 ? 'fail' : 'pass'" />
       </div>
     </div>
 
@@ -82,9 +148,17 @@ const stats = computed(() => {
       <Skeleton v-for="i in 6" :key="i" class="h-64 rounded-xl" />
     </div>
 
+    <!-- Empty -->
+    <div
+      v-else-if="!displayProjects.length"
+      class="py-16 text-center font-mono text-sm text-muted-foreground"
+    >
+      No runs match these filters.
+    </div>
+
     <!-- Grid -->
     <div v-else class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-      <ProjectCard v-for="p in projects" :key="p.id" :project="p" />
+      <ProjectCard v-for="p in displayProjects" :key="p.id" :project="p" />
     </div>
   </div>
 </template>

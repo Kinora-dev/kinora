@@ -37,6 +37,9 @@ export const runSummarySchema = z.object({
   ci: ciMetaSchema.optional(),
   shards: z.number().optional(),
   reportPath: z.string(), // relative path to the full RunReport JSON
+  // Per-tag counts, precomputed at ingest so the overview can filter by tag
+  // without fetching full reports. Keys are tag names (e.g. "@smoke").
+  countsByTag: z.record(z.string(), countsSchema).default({}),
 })
 export type RunSummary = z.infer<typeof runSummarySchema>
 
