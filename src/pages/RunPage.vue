@@ -3,6 +3,7 @@ import type { PwTestStatus } from '@/contracts/playwright'
 import { ArrowLeft, ExternalLink, GitBranch, Paperclip } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -80,16 +81,18 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
             </div>
           </div>
 
-          <a
+          <Button
             v-if="report.meta.ci?.runUrl"
-            :href="report.meta.ci.runUrl"
-            target="_blank"
-            rel="noreferrer"
-            class="flex shrink-0 items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
+            as-child
+            variant="outline"
+            size="sm"
+            class="shrink-0 font-mono text-xs text-muted-foreground"
           >
-            <ExternalLink class="size-3.5" />
-            {{ report.meta.ci.provider ?? 'CI' }}<span v-if="report.meta.ci.runNumber"> #{{ report.meta.ci.runNumber }}</span>
-          </a>
+            <a :href="report.meta.ci.runUrl" target="_blank" rel="noreferrer">
+              <ExternalLink class="size-3.5" />
+              {{ report.meta.ci.provider ?? 'CI' }}<span v-if="report.meta.ci.runNumber"> #{{ report.meta.ci.runNumber }}</span>
+            </a>
+          </Button>
         </div>
 
         <div class="flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg border border-border/70 bg-card/80 px-6 py-5">
