@@ -6,6 +6,8 @@ import { z } from 'zod'
 // Empty baseUrl + dev => mock data.
 export const runtimeConfigSchema = z.object({
   baseUrl: z.string().default(''),
+  // 'static': fetch manifest.json + reports/ files. 'rest': fetch /api/* endpoints.
+  mode: z.enum(['static', 'rest']).default('static'),
   title: z.string().default('Playback'),
 })
 export type RuntimeConfig = z.infer<typeof runtimeConfigSchema>

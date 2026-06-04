@@ -10,7 +10,8 @@
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
-    "ingest": "tsx cli/playback.ts"
+    "ingest": "tsx cli/playback.ts",
+    "serve:rest": "tsx examples/rest-server.ts"
   },
   "dependencies": {
     "@lucide/vue": "^1.17.0",

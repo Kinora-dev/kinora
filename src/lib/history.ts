@@ -1,33 +1,5 @@
-import type { PwTestStatus } from '@/contracts/playwright'
-import type { RunReport } from '@/contracts/playback'
-
-export interface TestPoint {
-  runId: string
-  startedAt: string
-  status: PwTestStatus
-  duration: number
-  retries: number
-  errorMessage?: string
-}
-
-export interface TestHistory {
-  testKey: string
-  title: string
-  titlePath: string[]
-  file: string
-  projectName: string
-  points: TestPoint[] // chronological, oldest first
-  runs: number // runs where the test was present
-  passed: number
-  failed: number
-  flaky: number
-  skipped: number
-  executed: number // runs - skipped
-  flakyRate: number // flaky / executed
-  failRate: number // failed / executed
-  passRate: number // (passed + flaky) / executed
-  lastStatus: PwTestStatus
-}
+import type { RunReport, TestHistory } from '../contracts/playback'
+export type { TestHistory, TestPoint } from '../contracts/playback'
 
 // A test is interesting if it has ever failed or flaked.
 export function isUnstable(h: TestHistory): boolean {

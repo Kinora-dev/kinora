@@ -110,3 +110,41 @@ export const runReportSchema = z.object({
   tests: z.array(normTestSchema),
 })
 export type RunReport = z.infer<typeof runReportSchema>
+
+// Per-test history, derived by folding run reports. Also the response shape of
+// the REST `GET /api/projects/:id/tests` endpoint (server-computed instead).
+export const testPointSchema = z.object({
+  runId: z.string(),
+  startedAt: z.string(),
+  status: pwTestStatus,
+  duration: z.number(),
+  retries: z.number(),
+  errorMessage: z.string().optional(),
+})
+export type TestPoint = z.infer<typeof testPointSchema>
+
+export const testHistorySchema = z.object({
+  testKey: z.string(),
+  title: z.string(),
+  titlePath: z.array(z.string()),
+  file: z.string(),
+  projectName: z.string(),
+  points: z.array(testPointSchema),
+  runs: z.number(),
+  passed: z.number(),
+  failed: z.number(),
+  flaky: z.number(),
+  skipped: z.number(),
+  executed: z.number(),
+  flakyRate: z.number(),
+  failRate: z.number(),
+  passRate: z.number(),
+  lastStatus: pwTestStatus,
+})
+export type TestHistory = z.infer<typeof testHistorySchema>
+
+export const projectHistorySchema = z.object({
+  project: projectEntrySchema.nullable(),
+  histories: z.array(testHistorySchema),
+})
+export type ProjectHistory = z.infer<typeof projectHistorySchema>

@@ -2,7 +2,7 @@
 
 A clean overview of your Playwright test reports across projects and over time.
 
-Playwright already ships a great HTML report for a single run. `playback` sits one level up: it aggregates many runs (one per day, per project) into a single dashboard so you can see history, trends, and flaky tests at a glance.
+Playwright already ships a great HTML report for a single run. `playback` sits one level up: it aggregates many runs (one per day, per project) into a single dashboard where you can track history, spot trends, and surface flaky tests over time.
 
 It is a **static frontend only**. There is no backend to run. You host two kinds of JSON files anywhere static (S3, GitHub Pages, nginx, a CDN), point the frontend at that URL, and you are done. Anyone can manage their own reports and run their own UI.
 
@@ -19,8 +19,6 @@ your static host (config.baseUrl)
 1. The frontend fetches `manifest.json` first (one small file, all projects + run summaries).
 2. The overview and history views render entirely from those summaries.
 3. When you open a single run, it lazily fetches that run's full report from `reports/...`.
-
-All payloads are validated with [zod](https://zod.dev) at the fetch boundary, so a malformed file fails loudly instead of corrupting the UI. The contract lives in [`src/contracts/`](src/contracts/).
 
 ## The report format
 
@@ -40,7 +38,7 @@ Normalization from a raw Playwright report to the playback contract is implement
 Key contract types:
 
 - `Manifest` - `{ schemaVersion, generatedAt, projects: [{ id, name, runs: RunSummary[] }] }`
-- `RunSummary` - one row per run: `counts`, `duration`, `startedAt`, optional `git` / `ci`, and `reportPath`
+- `RunSummary` - one row per run: `counts`, `countsByTag` (per-tag breakdown for overview tag filtering), `duration`, `startedAt`, optional `git` / `ci`, and `reportPath`
 - `RunReport` - the full run: flattened `tests[]`, each with a stable `testKey` so history can follow the same test across runs
 
 ## Generate data (CLI)
@@ -60,7 +58,7 @@ Options:
 --name <name>         display name (defaults to id)
 --run <id>            run id (defaults to the report date, YYYY-MM-DD)
 --out <dir>           output root (default: playback-data)
---git-sha / --git-branch / --git-message
+--git-sha / --git-branch
 --ci-provider / --ci-run-url / --ci-run-number
 ```
 
@@ -93,3 +91,33 @@ VITE_PLAYBACK_BASE_URL=https://reports.example.com
 ```
 
 With an empty `baseUrl` in dev, the app serves built-in **mock data** so you can develop the UI without any server.
+
+## Data source modes
+
+The frontend talks to data through one tiny interface (`getManifest`, `getRun`, `getProjectHistory`), with two transports selected by `config.mode`. Same zod contract on both sides, so the UI is identical, only the transport differs.
+
+**`static`** (default) - fetches files, zero backend:
+
+```
+GET {baseUrl}/manifest.json
+GET {baseUrl}/reports/<project>/<run>.json
+```
+
+Per-test history is folded client-side (one fetch per run).
+
+**`rest`** - fetches an API. Use when you outgrow static: huge manifests (paginate server-side), private reports (auth), or to skip downloading every run report just to build history:
+
+```
+GET {baseUrl}/api/manifest                          -> Manifest
+GET {baseUrl}/api/projects/:projectId/runs/:runId    -> RunReport
+GET {baseUrl}/api/projects/:projectId/tests          -> { project, histories }   (server-computed)
+```
+
+Set `mode: 'rest'` in `config.js`. A dependency-free reference server (reads CLI output, computes history server-side) ships in [`examples/rest-server.ts`](examples/rest-server.ts):
+
+```bash
+pnpm ingest results.json --project web-app   # produce playback-data/
+pnpm serve:rest playback-data 8787           # serve it at http://localhost:8787/api
+```
+
+Build your own server against those three endpoints; responses must satisfy the schemas in [`src/contracts/playback.ts`](src/contracts/playback.ts) (`manifestSchema`, `runReportSchema`, `projectHistorySchema`).

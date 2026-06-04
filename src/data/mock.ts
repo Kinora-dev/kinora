@@ -186,11 +186,7 @@ export function mockManifest(): Manifest {
   return buildManifest(Date.now())
 }
 
-export function mockRunReport(reportPath: string): RunReport {
-  // reports/<projectId>/<runId>.json
-  const m = reportPath.match(/reports\/([^/]+)\/(.+)\.json$/)
-  const projectId = m?.[1] ?? PROJECTS[0].id
-  const runId = m?.[2] ?? 'run-1'
+export function mockRun(projectId: string, runId: string): RunReport {
   const p = PROJECTS.find((x) => x.id === projectId) ?? PROJECTS[0]
   const manifest = buildManifest(Date.now())
   const summary = manifest.projects

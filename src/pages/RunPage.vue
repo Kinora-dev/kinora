@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { ArrowLeft, Paperclip, GitBranch, ExternalLink } from 'lucide-vue-next'
-import { useManifest, useRunReport } from '@/composables/queries'
+import { useManifest, useRun } from '@/composables/queries'
 import TestStatusBadge from '@/components/viz/TestStatusBadge.vue'
 import StatBlock from '@/components/viz/StatBlock.vue'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -14,8 +14,7 @@ import { passRate, formatPct, formatDuration } from '@/lib/aggregate'
 
 const props = defineProps<{ projectId: string; runId: string }>()
 
-const reportPath = computed(() => `reports/${props.projectId}/${props.runId}.json`)
-const { state: report, isLoading, error } = useRunReport(reportPath.value)
+const { state: report, isLoading, error } = useRun(props.projectId, props.runId)
 const { state: manifest } = useManifest()
 
 const projectName = computed(
