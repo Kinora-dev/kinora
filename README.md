@@ -121,3 +121,15 @@ pnpm serve:rest playback-data 8787           # serve it at http://localhost:8787
 ```
 
 Build your own server against those three endpoints; responses must satisfy the schemas in [`src/contracts/playback.ts`](src/contracts/playback.ts) (`manifestSchema`, `runReportSchema`, `projectHistorySchema`).
+
+## Develop
+
+```bash
+pnpm install
+pnpm dev          # http://localhost:5173 (mock data)
+pnpm test         # vitest unit tests (normalize / history / aggregate / contracts)
+pnpm lint         # eslint (antfu config); lint:fix to autofix
+pnpm build        # type-check + production build
+```
+
+CI (lint + type-check + build + test) runs on every push and PR via [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
