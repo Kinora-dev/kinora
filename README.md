@@ -51,7 +51,7 @@ export default defineConfig({
 `results.json` inlines attachments (screenshots, traces) as base64, which makes it heavy. The CLI strips those, writes a lightweight run report, and upserts a manifest:
 
 ```bash
-pnpm ingest results.json --project web-app --name "Web App E2E"
+npx @playbackhq/cli results.json --project web-app --name "Web App E2E"
 ```
 
 Output lands in `playback-data/`:
@@ -83,7 +83,7 @@ pnpm build      # static output in packages/app/dist/
 ## CLI reference
 
 ```bash
-pnpm ingest <results.json> --project <id> [options]
+npx @playbackhq/cli <results.json> --project <id> [options]
 ```
 
 ```
@@ -95,12 +95,12 @@ pnpm ingest <results.json> --project <id> [options]
 --ci-provider / --ci-run-url / --ci-run-number
 ```
 
-Invoke as `pnpm ingest <args>`, `npx tsx packages/cli/src/playback.ts <args>`, or `playback <args>` once the CLI is installed.
+Run via `npx @playbackhq/cli <args>`, or install it (`npm i -g @playbackhq/cli`) and call `playback <args>`. Working inside this repo? `pnpm ingest <args>` runs the CLI from source.
 
 CI example:
 
 ```bash
-pnpm ingest results.json \
+npx @playbackhq/cli results.json \
   --project web-app --name "Web App E2E" \
   --run "$GITHUB_RUN_ID" \
   --git-sha "$GITHUB_SHA" --git-branch "$GITHUB_REF_NAME" \
@@ -132,8 +132,8 @@ GET {baseUrl}/api/projects/:projectId/tests           -> { project, histories }
 Set `mode: 'rest'`. A dependency-free reference server (reads CLI output, computes history server-side) ships in [`examples/rest-server.ts`](examples/rest-server.ts):
 
 ```bash
-pnpm ingest results.json --project web-app    # produce playback-data/
-pnpm serve:rest playback-data 8787            # serve at http://localhost:8787/api
+npx @playbackhq/cli results.json --project web-app   # produce playback-data/
+pnpm serve:rest playback-data 8787                   # serve at http://localhost:8787/api (repo example)
 ```
 
 Build your own against those three endpoints; responses must satisfy the zod schemas in [`packages/core/src/contracts/playback.ts`](packages/core/src/contracts/playback.ts) (`manifestSchema`, `runReportSchema`, `projectHistorySchema`).
