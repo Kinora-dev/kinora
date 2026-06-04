@@ -1,7 +1,7 @@
-import type { PlaywrightReport, PwSpec } from '@/contracts/playwright'
-import { playwrightReportSchema } from '@/contracts/playwright'
-import type { Counts, NormTest, RunReport, RunSummary } from '@/contracts/playback'
-import { SCHEMA_VERSION } from '@/contracts/playback'
+import type { PlaywrightReport, PwSpec } from '../contracts/playwright'
+import { playwrightReportSchema } from '../contracts/playwright'
+import type { Counts, NormTest, RunReport, RunSummary } from '../contracts/playback'
+import { SCHEMA_VERSION } from '../contracts/playback'
 import { makeTestKey } from './test-key'
 
 export interface IngestMeta {

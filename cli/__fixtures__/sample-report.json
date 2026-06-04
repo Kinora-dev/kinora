@@ -1,0 +1,178 @@
+{
+  "config": {
+    "version": "1.58.2",
+    "rootDir": "/repo",
+    "metadata": {}
+  },
+  "stats": {
+    "startTime": "2026-06-03T22:00:00.000Z",
+    "duration": 12450,
+    "expected": 2,
+    "unexpected": 1,
+    "flaky": 1,
+    "skipped": 1
+  },
+  "suites": [
+    {
+      "title": "auth.spec.ts",
+      "file": "tests/auth.spec.ts",
+      "line": 0,
+      "column": 0,
+      "specs": [
+        {
+          "id": "a1",
+          "title": "login works",
+          "ok": true,
+          "tags": ["@smoke"],
+          "file": "tests/auth.spec.ts",
+          "line": 10,
+          "column": 5,
+          "tests": [
+            {
+              "status": "expected",
+              "expectedStatus": "passed",
+              "projectName": "chromium",
+              "annotations": [],
+              "results": [
+                {
+                  "status": "passed",
+                  "duration": 1200,
+                  "retry": 0,
+                  "startTime": "2026-06-03T22:00:01.000Z",
+                  "attachments": [],
+                  "errors": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "title": "logout works",
+          "ok": true,
+          "tags": [],
+          "file": "tests/auth.spec.ts",
+          "line": 24,
+          "column": 5,
+          "tests": [
+            {
+              "status": "flaky",
+              "expectedStatus": "passed",
+              "projectName": "chromium",
+              "annotations": [],
+              "results": [
+                {
+                  "status": "failed",
+                  "duration": 900,
+                  "retry": 0,
+                  "startTime": "2026-06-03T22:00:03.000Z",
+                  "errors": [{ "message": "timeout waiting for navigation" }],
+                  "attachments": []
+                },
+                {
+                  "status": "passed",
+                  "duration": 850,
+                  "retry": 1,
+                  "startTime": "2026-06-03T22:00:05.000Z",
+                  "attachments": [],
+                  "errors": []
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "suites": [
+        {
+          "title": "dashboard",
+          "file": "tests/auth.spec.ts",
+          "specs": [
+            {
+              "id": "d1",
+              "title": "renders widgets",
+              "ok": true,
+              "tags": [],
+              "file": "tests/auth.spec.ts",
+              "line": 40,
+              "column": 7,
+              "tests": [
+                {
+                  "status": "expected",
+                  "expectedStatus": "passed",
+                  "projectName": "chromium",
+                  "annotations": [],
+                  "results": [
+                    { "status": "passed", "duration": 2100, "retry": 0, "attachments": [], "errors": [] }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "d2",
+              "title": "handles error state",
+              "ok": false,
+              "tags": [],
+              "file": "tests/auth.spec.ts",
+              "line": 58,
+              "column": 7,
+              "tests": [
+                {
+                  "status": "unexpected",
+                  "expectedStatus": "passed",
+                  "projectName": "chromium",
+                  "annotations": [],
+                  "results": [
+                    {
+                      "status": "failed",
+                      "duration": 5300,
+                      "retry": 0,
+                      "startTime": "2026-06-03T22:00:08.000Z",
+                      "errors": [
+                        {
+                          "message": "expect(received).toBeVisible()\n\nLocator: getByText('Error')",
+                          "stack": "Error: expect ...\n    at tests/auth.spec.ts:60:24",
+                          "location": { "file": "tests/auth.spec.ts", "line": 60, "column": 24 }
+                        }
+                      ],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "body": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/repo/test-results/handles-error/trace.zip"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "d3",
+              "title": "exports csv",
+              "ok": true,
+              "tags": [],
+              "file": "tests/auth.spec.ts",
+              "line": 72,
+              "column": 7,
+              "tests": [
+                {
+                  "status": "skipped",
+                  "expectedStatus": "skipped",
+                  "projectName": "chromium",
+                  "annotations": [{ "type": "skip", "description": "flaky on CI" }],
+                  "results": [{ "status": "skipped", "duration": 0, "retry": 0, "attachments": [], "errors": [] }]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": []
+}
