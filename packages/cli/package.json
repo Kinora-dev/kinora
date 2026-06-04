@@ -1,7 +1,7 @@
 {
   "name": "@playbackhq/cli",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "Turn Playwright JSON reports into playback data files",
   "author": "Joris Gallot",
   "license": "MIT",
