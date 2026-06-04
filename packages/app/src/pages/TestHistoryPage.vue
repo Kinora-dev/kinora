@@ -3,6 +3,7 @@ import { formatPct } from '@playbackhq/core'
 import { ArrowLeft } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import CopyLinkButton from '@/components/app/CopyLinkButton.vue'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import StatBlock from '@/components/viz/StatBlock.vue'
@@ -73,7 +74,10 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
               {{ history.file }} · {{ history.projectName }}
             </div>
           </div>
-          <TestStatusBadge :status="history.lastStatus" />
+          <div class="flex shrink-0 items-center gap-2">
+            <TestStatusBadge :status="history.lastStatus" />
+            <CopyLinkButton />
+          </div>
         </div>
 
         <div class="flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg border border-border/70 bg-card/80 px-6 py-5">
@@ -96,7 +100,7 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
           <span>Status timeline</span>
           <span>{{ history.runs }} runs · oldest → newest</span>
         </div>
-        <StatusTimeline :points="history.points" :project-id="projectId" :height="32" />
+        <StatusTimeline :points="history.points" :project-id="projectId" :height="32" :q="history.title" />
       </div>
 
       <!-- Incidents -->
@@ -107,7 +111,7 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
         <RouterLink
           v-for="p in incidents"
           :key="p.runId"
-          :to="{ name: 'run', params: { projectId, runId: p.runId } }"
+          :to="{ name: 'run', params: { projectId, runId: p.runId }, query: { q: history.title } }"
           class="block rounded-lg border border-border/70 bg-card/80 px-4 py-3 transition-colors hover:border-border"
         >
           <div class="flex items-center justify-between gap-3">

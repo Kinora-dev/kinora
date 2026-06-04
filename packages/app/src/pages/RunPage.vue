@@ -5,6 +5,7 @@ import { useRouteQuery } from '@vueuse/router'
 import { ArrowLeft, ExternalLink, GitBranch, Paperclip } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
+import CopyLinkButton from '@/components/app/CopyLinkButton.vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
@@ -98,18 +99,21 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
             </div>
           </div>
 
-          <Button
-            v-if="report.meta.ci?.runUrl"
-            as-child
-            variant="outline"
-            size="sm"
-            class="shrink-0 font-mono text-xs text-muted-foreground"
-          >
-            <a :href="report.meta.ci.runUrl" target="_blank" rel="noreferrer">
-              <ExternalLink class="size-3.5" />
-              {{ report.meta.ci.provider ?? 'CI' }}<span v-if="report.meta.ci.runNumber"> #{{ report.meta.ci.runNumber }}</span>
-            </a>
-          </Button>
+          <div class="flex shrink-0 items-center gap-2">
+            <Button
+              v-if="report.meta.ci?.runUrl"
+              as-child
+              variant="outline"
+              size="sm"
+              class="font-mono text-xs text-muted-foreground"
+            >
+              <a :href="report.meta.ci.runUrl" target="_blank" rel="noreferrer">
+                <ExternalLink class="size-3.5" />
+                {{ report.meta.ci.provider ?? 'CI' }}<span v-if="report.meta.ci.runNumber"> #{{ report.meta.ci.runNumber }}</span>
+              </a>
+            </Button>
+            <CopyLinkButton />
+          </div>
         </div>
 
         <div class="flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg border border-border/70 bg-card/80 px-6 py-5">

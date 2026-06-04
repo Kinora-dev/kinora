@@ -4,6 +4,7 @@ import { useRouteQuery } from '@vueuse/router'
 import { ArrowLeft, ChevronRight } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
+import CopyLinkButton from '@/components/app/CopyLinkButton.vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
@@ -62,13 +63,16 @@ const rows = computed(() => {
 
     <template v-else>
       <div class="flex flex-col gap-6">
-        <div>
-          <h1 class="text-2xl font-semibold tracking-tight">
-            Tests
-          </h1>
-          <p class="mt-1 text-sm text-muted-foreground">
-            Per-test history across {{ project?.runs.length ?? 0 }} runs of {{ project?.name }}.
-          </p>
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h1 class="text-2xl font-semibold tracking-tight">
+              Tests
+            </h1>
+            <p class="mt-1 text-sm text-muted-foreground">
+              Per-test history across {{ project?.runs.length ?? 0 }} runs of {{ project?.name }}.
+            </p>
+          </div>
+          <CopyLinkButton class="shrink-0" />
         </div>
 
         <div class="flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg border border-border/70 bg-card/80 px-6 py-5">

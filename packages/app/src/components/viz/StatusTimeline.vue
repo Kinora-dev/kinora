@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/tooltip'
 
 const props = withDefaults(
-  defineProps<{ points: TestPoint[], projectId: string, height?: number, link?: boolean }>(),
+  defineProps<{ points: TestPoint[], projectId: string, height?: number, link?: boolean, q?: string }>(),
   { height: 20, link: true },
 )
 
@@ -38,7 +38,7 @@ const cells = computed(() =>
         <TooltipTrigger as-child>
           <component
             :is="link ? RouterLink : 'div'"
-            :to="link ? { name: 'run', params: { projectId, runId: c.point.runId } } : undefined"
+            :to="link ? { name: 'run', params: { projectId, runId: c.point.runId }, query: q ? { q } : undefined } : undefined"
             class="group flex flex-1 items-stretch"
           >
             <span
