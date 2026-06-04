@@ -2,18 +2,20 @@
 /* eslint-disable no-console */
 import type { RunReport } from '@playbackhq/core'
 import { readFile } from 'node:fs/promises'
-import { createServer } from 'node:http'
 import path from 'node:path'
 import process from 'node:process'
+import { serve } from '@hono/node-server'
 import {
   buildTestHistories,
   manifestSchema,
   runReportSchema,
 } from '@playbackhq/core'
+import { Hono } from 'hono'
+import { cors } from 'hono/cors'
 
 // Reference REST server for playback's `rest` mode. Reads a CLI output dir
 // (manifest.json + reports/) and serves the same contract over /api/*, with
-// per-test history computed server-side. Zero dependencies. Reference only.
+// per-test history computed server-side. Reference only.
 //
 //   npx tsx examples/rest-server.ts [dataDir=playback-data] [port=8787]
 
@@ -32,46 +34,30 @@ async function loadRun(projectId: string, runId: string): Promise<RunReport> {
   return runReportSchema.parse(await readJson(`reports/${projectId}/${runId}.json`))
 }
 
-const server = createServer((req, res) => {
-  const send = (status: number, body: unknown) => {
-    res.writeHead(status, {
-      'content-type': 'application/json',
-      'access-control-allow-origin': '*', // dev convenience; tighten in production
-    })
-    res.end(JSON.stringify(body))
-  }
+const app = new Hono()
 
-  void (async () => {
-    try {
-      const url = new URL(req.url ?? '/', 'http://localhost')
-      const p = url.pathname
+app.use('/api/*', cors()) // dev convenience; tighten in production
 
-      if (p === '/api/manifest')
-        return send(200, await loadManifest())
+app.get('/api/manifest', async c => c.json(await loadManifest()))
 
-      let m = p.match(/^\/api\/projects\/([^/]+)\/runs\/(.+)$/)
-      if (m)
-        return send(200, await loadRun(decodeURIComponent(m[1]), decodeURIComponent(m[2])))
-
-      m = p.match(/^\/api\/projects\/([^/]+)\/tests$/)
-      if (m) {
-        const projectId = decodeURIComponent(m[1])
-        const manifest = await loadManifest()
-        const project = manifest.projects.find(x => x.id === projectId) ?? null
-        if (!project)
-          return send(200, { project: null, histories: [] })
-        const reports = await Promise.all(project.runs.map(r => loadRun(projectId, r.runId)))
-        return send(200, { project, histories: buildTestHistories(reports) })
-      }
-
-      send(404, { error: `no route for ${p}` })
-    }
-    catch (err) {
-      send(500, { error: String(err) })
-    }
-  })()
+app.get('/api/projects/:projectId/runs/:runId', async (c) => {
+  const { projectId, runId } = c.req.param()
+  return c.json(await loadRun(projectId, runId))
 })
 
-server.listen(port, () => {
+app.get('/api/projects/:projectId/tests', async (c) => {
+  const projectId = c.req.param('projectId')
+  const manifest = await loadManifest()
+  const project = manifest.projects.find(x => x.id === projectId) ?? null
+  if (!project)
+    return c.json({ project: null, histories: [] })
+  const reports = await Promise.all(project.runs.map(r => loadRun(projectId, r.runId)))
+  return c.json({ project, histories: buildTestHistories(reports) })
+})
+
+app.notFound(c => c.json({ error: `no route for ${c.req.path}` }, 404))
+app.onError((err, c) => c.json({ error: String(err) }, 500))
+
+serve({ fetch: app.fetch, port }, () => {
   console.log(`playback reference REST server on http://localhost:${port} (data: ${dataDir})`)
 })

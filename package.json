@@ -23,8 +23,10 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.0.0",
+    "@hono/node-server": "^2.0.4",
     "@playbackhq/core": "workspace:*",
     "eslint": "^10.3.0",
+    "hono": "^4.12.23",
     "tsx": "^4.22.4",
     "typescript": "~6.0.2"
   }

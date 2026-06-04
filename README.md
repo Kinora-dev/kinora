@@ -127,7 +127,7 @@ GET {baseUrl}/api/projects/:projectId/runs/:runId     -> RunReport
 GET {baseUrl}/api/projects/:projectId/tests           -> { project, histories }
 ```
 
-Set `PLAYBACK_MODE=rest` (or `mode: 'rest'` in `config.js`). A dependency-free reference server (reads CLI output, computes history server-side) ships in [`examples/rest-server.ts`](examples/rest-server.ts):
+Set `PLAYBACK_MODE=rest` (or `mode: 'rest'` in `config.js`). A small [Hono](https://hono.dev) reference server (reads CLI output, computes history server-side) ships in [`examples/rest-server.ts`](examples/rest-server.ts):
 
 ```bash
 npx @playbackhq/cli results.json --project web-app   # produce playback-data/
