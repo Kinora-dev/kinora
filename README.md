@@ -123,8 +123,8 @@ Per-test history is folded client-side (one fetch per run).
 
 ```
 GET {baseUrl}/api/manifest                           -> Manifest
-GET {baseUrl}/api/projects/:projectId/runs/:runId     -> RunReport
-GET {baseUrl}/api/projects/:projectId/tests           -> { project, histories }
+GET {baseUrl}/api/projects/:projectId/runs/:runId    -> RunReport
+GET {baseUrl}/api/projects/:projectId/tests          -> { project, histories }
 ```
 
 [`examples/rest-server.ts`](examples/rest-server.ts) is a small [Hono](https://hono.dev) server implementing the three endpoints above - run it or use it as a template; responses must satisfy the zod schemas in [`packages/core/src/contracts/playback.ts`](packages/core/src/contracts/playback.ts). Then set `PLAYBACK_MODE=rest` to point the dashboard at your API.
