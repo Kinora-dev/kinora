@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { Moon, Sun } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { Button } from '@/components/ui/button'
-import { isDark, toggleTheme } from '@/composables/useTheme'
+import ThemeToggle from '@/components/app/ThemeToggle.vue'
 import { config, useMock } from '@/config'
 
 const source = computed(() => {
@@ -46,11 +44,7 @@ const source = computed(() => {
       </span>
 
       <div class="ml-auto flex items-center gap-1">
-        <Button variant="ghost" size="icon" class="size-8" @click="toggleTheme()">
-          <Moon v-if="!isDark" class="size-4" />
-          <Sun v-else class="size-4" />
-          <span class="sr-only">Toggle theme</span>
-        </Button>
+        <ThemeToggle />
       </div>
     </div>
   </header>

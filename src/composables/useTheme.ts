@@ -1,4 +1,6 @@
-import { useDark, useToggle } from '@vueuse/core'
+import { useColorMode } from '@vueuse/core'
 
-export const isDark = useDark({ initialValue: 'dark' })
-export const toggleTheme = useToggle(isDark)
+export type ColorMode = 'auto' | 'light' | 'dark'
+
+// auto = follow system; persisted to localStorage by useColorMode.
+export const colorMode = useColorMode({ emitAuto: true })
