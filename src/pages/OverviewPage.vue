@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useManifest } from '@/composables/queries'
 import ProjectCard from '@/components/project/ProjectCard.vue'
-import StatBlock from '@/components/viz/StatBlock.vue'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -13,14 +9,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
+import { Skeleton } from '@/components/ui/skeleton'
+import StatBlock from '@/components/viz/StatBlock.vue'
+import { useManifest } from '@/composables/queries'
 import {
   collectBranches,
   collectTags,
   denom,
   filterRuns,
+  formatPct,
   latestRun,
   runHealth,
-  formatPct,
 } from '@/lib/aggregate'
 
 const { state: manifest, isLoading, error } = useManifest()
@@ -41,15 +41,15 @@ function clearFilters() {
 // Projects with runs filtered (and, for tag, counts swapped). Empty ones drop out.
 const displayProjects = computed(() =>
   projects.value
-    .map((p) => ({
+    .map(p => ({
       ...p,
       runs: filterRuns(p.runs, branch.value === 'all' ? null : branch.value, tag.value === 'all' ? null : tag.value),
     }))
-    .filter((p) => p.runs.length > 0),
+    .filter(p => p.runs.length > 0),
 )
 
 const stats = computed(() => {
-  const latest = displayProjects.value.map(latestRun).filter((r) => r != null)
+  const latest = displayProjects.value.map(latestRun).filter(r => r != null)
   let pass = 0
   let total = 0
   let tests = 0
@@ -58,7 +58,8 @@ const stats = computed(() => {
     pass += r.counts.expected + r.counts.flaky
     total += denom(r.counts)
     tests += r.counts.total
-    if (runHealth(r.counts) === 'failing') failing++
+    if (runHealth(r.counts) === 'failing')
+      failing++
   }
   const runs = displayProjects.value.reduce((s, p) => s + p.runs.length, 0)
   return {
@@ -77,7 +78,9 @@ const stats = computed(() => {
     <div class="flex flex-col gap-6">
       <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 class="text-2xl font-semibold tracking-tight">Test runs overview</h1>
+          <h1 class="text-2xl font-semibold tracking-tight">
+            Test runs overview
+          </h1>
           <p class="mt-1 text-sm text-muted-foreground">
             Playwright report history across every project, one strip per run.
           </p>
@@ -90,7 +93,9 @@ const stats = computed(() => {
               <SelectValue placeholder="Branch" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all" class="font-mono text-xs">All branches</SelectItem>
+              <SelectItem value="all" class="font-mono text-xs">
+                All branches
+              </SelectItem>
               <SelectItem v-for="b in branches" :key="b" :value="b" class="font-mono text-xs">
                 {{ b }}
               </SelectItem>
@@ -102,7 +107,9 @@ const stats = computed(() => {
               <SelectValue placeholder="Tag" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all" class="font-mono text-xs">All tags</SelectItem>
+              <SelectItem value="all" class="font-mono text-xs">
+                All tags
+              </SelectItem>
               <SelectItem v-for="t in tags" :key="t" :value="t" class="font-mono text-xs">
                 {{ t }}
               </SelectItem>

@@ -1,17 +1,17 @@
 <script setup lang="ts">
+import { ArrowLeft, ChevronRight } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { ArrowLeft, ChevronRight } from 'lucide-vue-next'
-import { useProjectHistory } from '@/composables/queries'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Separator } from '@/components/ui/separator'
+import { Skeleton } from '@/components/ui/skeleton'
+import StatBlock from '@/components/viz/StatBlock.vue'
 import StatusTimeline from '@/components/viz/StatusTimeline.vue'
 import TestStatusBadge from '@/components/viz/TestStatusBadge.vue'
-import StatBlock from '@/components/viz/StatBlock.vue'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Separator } from '@/components/ui/separator'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { byInstability, isUnstable } from '@/lib/history'
+import { useProjectHistory } from '@/composables/queries'
 import { formatPct } from '@/lib/aggregate'
+import { byInstability, isUnstable } from '@/lib/history'
 
 const props = defineProps<{ projectId: string }>()
 const { state, isLoading, error } = useProjectHistory(props.projectId)
@@ -27,12 +27,12 @@ const unstableCount = computed(() => histories.value.filter(isUnstable).length)
 const rows = computed(() => {
   const q = search.value.trim().toLowerCase()
   return histories.value
-    .filter((h) => (unstableOnly.value ? isUnstable(h) : true))
+    .filter(h => (unstableOnly.value ? isUnstable(h) : true))
     .filter(
-      (h) =>
-        !q ||
-        h.titlePath.join(' ').toLowerCase().includes(q) ||
-        h.file.toLowerCase().includes(q),
+      h =>
+        !q
+        || h.titlePath.join(' ').toLowerCase().includes(q)
+        || h.file.toLowerCase().includes(q),
     )
     .sort(byInstability)
 })
@@ -58,7 +58,9 @@ const rows = computed(() => {
     <template v-else>
       <div class="flex flex-col gap-6">
         <div>
-          <h1 class="text-2xl font-semibold tracking-tight">Tests</h1>
+          <h1 class="text-2xl font-semibold tracking-tight">
+            Tests
+          </h1>
           <p class="mt-1 text-sm text-muted-foreground">
             Per-test history across {{ project?.runs.length ?? 0 }} runs of {{ project?.name }}.
           </p>
@@ -111,13 +113,17 @@ const rows = computed(() => {
               <div class="font-mono text-sm tabular-nums" :class="h.flaky ? 'text-flaky' : 'text-muted-foreground'">
                 {{ formatPct(h.flakyRate) }}
               </div>
-              <div class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">flaky</div>
+              <div class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                flaky
+              </div>
             </div>
             <div class="w-14 text-right">
               <div class="font-mono text-sm tabular-nums" :class="h.failed ? 'text-fail' : 'text-muted-foreground'">
                 {{ formatPct(h.failRate) }}
               </div>
-              <div class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">fail</div>
+              <div class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                fail
+              </div>
             </div>
             <ChevronRight class="size-4 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5" />
           </div>

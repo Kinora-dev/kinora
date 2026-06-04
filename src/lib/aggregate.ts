@@ -14,9 +14,12 @@ export function passRate(c: Counts): number {
 }
 
 export function runHealth(c: Counts): RunHealth {
-  if (c.total === 0) return 'empty'
-  if (c.unexpected > 0) return 'failing'
-  if (c.flaky > 0) return 'flaky'
+  if (c.total === 0)
+    return 'empty'
+  if (c.unexpected > 0)
+    return 'failing'
+  if (c.flaky > 0)
+    return 'flaky'
   return 'passing'
 }
 
@@ -41,7 +44,7 @@ export interface TrendPoint {
 export function trend(p: ProjectEntry): TrendPoint[] {
   return [...p.runs]
     .sort((a, b) => Date.parse(a.startedAt) - Date.parse(b.startedAt))
-    .map((r) => ({
+    .map(r => ({
       runId: r.runId,
       startedAt: r.startedAt,
       passRate: passRate(r.counts),
@@ -54,13 +57,22 @@ export function trend(p: ProjectEntry): TrendPoint[] {
 
 export function collectBranches(projects: ProjectEntry[]): string[] {
   const s = new Set<string>()
-  for (const p of projects) for (const r of p.runs) if (r.git?.branch) s.add(r.git.branch)
+  for (const p of projects) {
+    for (const r of p.runs) {
+      if (r.git?.branch)
+        s.add(r.git.branch)
+    }
+  }
   return [...s].sort()
 }
 
 export function collectTags(projects: ProjectEntry[]): string[] {
   const s = new Set<string>()
-  for (const p of projects) for (const r of p.runs) for (const t of Object.keys(r.countsByTag)) s.add(t)
+  for (const p of projects) {
+    for (const r of p.runs) {
+      for (const t of Object.keys(r.countsByTag)) s.add(t)
+    }
+  }
   return [...s].sort()
 }
 
@@ -72,19 +84,23 @@ export function filterRuns(
   tag: string | null,
 ): RunSummary[] {
   let out = runs
-  if (branch) out = out.filter((r) => r.git?.branch === branch)
-  if (tag)
+  if (branch)
+    out = out.filter(r => r.git?.branch === branch)
+  if (tag) {
     out = out.flatMap((r) => {
       const c = r.countsByTag[tag]
       return c ? [{ ...r, counts: c }] : []
     })
+  }
   return out
 }
 
 export function formatDuration(ms: number): string {
-  if (ms < 1000) return `${ms}ms`
+  if (ms < 1000)
+    return `${ms}ms`
   const s = ms / 1000
-  if (s < 60) return `${s.toFixed(1)}s`
+  if (s < 60)
+    return `${s.toFixed(1)}s`
   const m = Math.floor(s / 60)
   return `${m}m ${Math.round(s % 60)}s`
 }

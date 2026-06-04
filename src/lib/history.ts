@@ -1,4 +1,5 @@
 import type { RunReport, TestHistory } from '../contracts/playback'
+
 export type { TestHistory, TestPoint } from '../contracts/playback'
 
 // A test is interesting if it has ever failed or flaked.
@@ -52,9 +53,12 @@ export function buildTestHistories(reports: RunReport[]): TestHistory[] {
   for (const h of byKey.values()) {
     for (const p of h.points) {
       h.runs++
-      if (p.status === 'expected') h.passed++
-      else if (p.status === 'unexpected') h.failed++
-      else if (p.status === 'flaky') h.flaky++
+      if (p.status === 'expected')
+        h.passed++
+      else if (p.status === 'unexpected')
+        h.failed++
+      else if (p.status === 'flaky')
+        h.flaky++
       else h.skipped++
     }
     h.executed = h.runs - h.skipped

@@ -1,16 +1,18 @@
 <script setup lang="ts">
+import { Moon, Sun } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { Moon, Sun } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { isDark, toggleTheme } from '@/composables/useTheme'
 import { config, useMock } from '@/config'
 
 const source = computed(() => {
-  if (useMock) return { label: 'DEMO', detail: 'mock data' }
+  if (useMock)
+    return { label: 'DEMO', detail: 'mock data' }
   try {
     return { label: 'LIVE', detail: new URL(config.baseUrl).host }
-  } catch {
+  }
+  catch {
     return { label: 'LIVE', detail: config.baseUrl || 'unset' }
   }
 })

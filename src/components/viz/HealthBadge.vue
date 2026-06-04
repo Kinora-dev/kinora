@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import type { RunHealth } from '@/lib/aggregate'
+import { computed } from 'vue'
 
-const props = defineProps<{ health: RunHealth; size?: 'sm' | 'md' }>()
+const props = defineProps<{ health: RunHealth, size?: 'sm' | 'md' }>()
 
-const map: Record<RunHealth, { label: string; dot: string; text: string; ring: string }> = {
+const map: Record<RunHealth, { label: string, dot: string, text: string, ring: string }> = {
   passing: { label: 'Passing', dot: 'bg-pass', text: 'text-pass', ring: 'ring-pass/25' },
   flaky: { label: 'Flaky', dot: 'bg-flaky', text: 'text-flaky', ring: 'ring-flaky/25' },
   failing: { label: 'Failing', dot: 'bg-fail', text: 'text-fail', ring: 'ring-fail/25' },

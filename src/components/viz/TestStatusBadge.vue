@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import type { PwTestStatus } from '@/contracts/playwright'
+import { computed } from 'vue'
 import { pwStatusMeta } from '@/lib/status'
 
 const props = defineProps<{ status: PwTestStatus }>()

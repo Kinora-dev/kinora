@@ -27,8 +27,8 @@ The source of truth is Playwright's built-in **`json` reporter**:
 ```ts
 // playwright.config.ts
 export default defineConfig({
-  reporter: [["json", { outputFile: "results.json" }]],
-});
+  reporter: [['json', { outputFile: 'results.json' }]],
+})
 ```
 
 `results.json` is self-contained and machine-readable. The one catch: it inlines attachment bodies (screenshots, traces) as base64, which makes it heavy. `playback` strips those bodies on ingest and keeps only metadata, producing the two lightweight documents above.
@@ -79,9 +79,9 @@ Edit `public/config.js` (shipped to the build output, **no rebuild needed**):
 
 ```js
 window.__PLAYBACK__ = {
-  baseUrl: "https://reports.example.com", // where manifest.json + reports/ live
-  title: "Playback",
-};
+  baseUrl: 'https://reports.example.com', // where manifest.json + reports/ live
+  title: 'Playback',
+}
 ```
 
 Or at build time via `.env`:

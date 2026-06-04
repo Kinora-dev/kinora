@@ -2,7 +2,7 @@ import type { PwTestStatus } from '@/contracts/playwright'
 
 export const pwStatusMeta: Record<
   PwTestStatus,
-  { label: string; dot: string; text: string; cell: string }
+  { label: string, dot: string, text: string, cell: string }
 > = {
   expected: { label: 'Pass', dot: 'bg-pass', text: 'text-pass', cell: 'bg-pass' },
   unexpected: { label: 'Fail', dot: 'bg-fail', text: 'text-fail', cell: 'bg-fail' },

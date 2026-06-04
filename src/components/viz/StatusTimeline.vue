@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { TestPoint } from '@/lib/history'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import {
@@ -7,11 +8,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import type { TestPoint } from '@/lib/history'
 import { pwStatusMeta } from '@/lib/status'
 
 const props = withDefaults(
-  defineProps<{ points: TestPoint[]; projectId: string; height?: number; link?: boolean }>(),
+  defineProps<{ points: TestPoint[], projectId: string, height?: number, link?: boolean }>(),
   { height: 20, link: true },
 )
 
@@ -23,7 +23,7 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
 })
 
 const cells = computed(() =>
-  props.points.map((p) => ({
+  props.points.map(p => ({
     point: p,
     meta: pwStatusMeta[p.status],
     date: dateFmt.format(new Date(p.startedAt)),
@@ -48,8 +48,12 @@ const cells = computed(() =>
           </component>
         </TooltipTrigger>
         <TooltipContent class="font-mono text-xs">
-          <div class="font-semibold">{{ c.date }}</div>
-          <div class="mt-0.5" :class="c.meta.text">{{ c.meta.label }}</div>
+          <div class="font-semibold">
+            {{ c.date }}
+          </div>
+          <div class="mt-0.5" :class="c.meta.text">
+            {{ c.meta.label }}
+          </div>
           <div v-if="c.point.retries" class="text-muted-foreground">
             {{ c.point.retries }} retry
           </div>

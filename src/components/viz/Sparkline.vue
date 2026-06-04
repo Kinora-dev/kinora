@@ -17,7 +17,8 @@ const pad = 3
 
 const points = computed(() => {
   const vs = props.values
-  if (vs.length === 0) return []
+  if (vs.length === 0)
+    return []
   const span = Math.max(1e-6, props.max - props.min)
   const stepX = vs.length === 1 ? 0 : (props.width - pad * 2) / (vs.length - 1)
   return vs.map((v, i) => {
@@ -31,7 +32,8 @@ const points = computed(() => {
 const line = computed(() => points.value.map(([x, y]) => `${x},${y}`).join(' '))
 const area = computed(() => {
   const p = points.value
-  if (p.length === 0) return ''
+  if (p.length === 0)
+    return ''
   const top = p.map(([x, y]) => `${x},${y}`).join(' ')
   return `${pad},${props.height - pad} ${top} ${props.width - pad},${props.height - pad}`
 })

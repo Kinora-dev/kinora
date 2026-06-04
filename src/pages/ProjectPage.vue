@@ -1,13 +1,9 @@
 <script setup lang="ts">
+import { ArrowLeft, ArrowRight } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { ArrowLeft, ArrowRight } from 'lucide-vue-next'
-import { useManifest } from '@/composables/queries'
-import HealthBadge from '@/components/viz/HealthBadge.vue'
-import Sparkline from '@/components/viz/Sparkline.vue'
-import StatBlock from '@/components/viz/StatBlock.vue'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
   TableBody,
@@ -16,25 +12,29 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import HealthBadge from '@/components/viz/HealthBadge.vue'
+import Sparkline from '@/components/viz/Sparkline.vue'
+import StatBlock from '@/components/viz/StatBlock.vue'
+import { useManifest } from '@/composables/queries'
 import {
+  formatDuration,
+  formatPct,
   latestRun,
   passRate,
   runHealth,
   sortedRuns,
   trend,
-  formatPct,
-  formatDuration,
 } from '@/lib/aggregate'
 
 const props = defineProps<{ projectId: string }>()
 const { state: manifest, isLoading, error } = useManifest()
 
 const project = computed(() =>
-  manifest.value?.projects.find((p) => p.id === props.projectId),
+  manifest.value?.projects.find(p => p.id === props.projectId),
 )
 const runs = computed(() => (project.value ? sortedRuns(project.value) : []))
 const latest = computed(() => (project.value ? latestRun(project.value) : undefined))
-const series = computed(() => (project.value ? trend(project.value).map((t) => t.passRate) : []))
+const series = computed(() => (project.value ? trend(project.value).map(t => t.passRate) : []))
 const health = computed(() => (latest.value ? runHealth(latest.value.counts) : 'empty'))
 const toneText = computed(() =>
   health.value === 'passing' ? 'text-pass' : health.value === 'flaky' ? 'text-flaky' : 'text-fail',
@@ -64,14 +64,18 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
       <Skeleton class="h-28 rounded-xl" />
       <Skeleton class="h-96 rounded-xl" />
     </template>
-    <div v-else-if="!project" class="text-sm text-muted-foreground">Project not found.</div>
+    <div v-else-if="!project" class="text-sm text-muted-foreground">
+      Project not found.
+    </div>
 
     <template v-else>
       <!-- Header -->
       <div class="flex flex-col gap-6">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <h1 class="text-2xl font-semibold tracking-tight">{{ project.name }}</h1>
+            <h1 class="text-2xl font-semibold tracking-tight">
+              {{ project.name }}
+            </h1>
             <p v-if="project.description" class="mt-1 text-sm text-muted-foreground">
               {{ project.description }}
             </p>
@@ -109,13 +113,27 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
         <Table>
           <TableHeader>
             <TableRow class="hover:bg-transparent">
-              <TableHead class="font-mono text-[10px] uppercase tracking-wider">Run</TableHead>
-              <TableHead class="font-mono text-[10px] uppercase tracking-wider">Health</TableHead>
-              <TableHead class="text-right font-mono text-[10px] uppercase tracking-wider">Pass</TableHead>
-              <TableHead class="text-right font-mono text-[10px] uppercase tracking-wider">Fail</TableHead>
-              <TableHead class="text-right font-mono text-[10px] uppercase tracking-wider">Flaky</TableHead>
-              <TableHead class="text-right font-mono text-[10px] uppercase tracking-wider">Duration</TableHead>
-              <TableHead class="text-right font-mono text-[10px] uppercase tracking-wider">SHA</TableHead>
+              <TableHead class="font-mono text-[10px] uppercase tracking-wider">
+                Run
+              </TableHead>
+              <TableHead class="font-mono text-[10px] uppercase tracking-wider">
+                Health
+              </TableHead>
+              <TableHead class="text-right font-mono text-[10px] uppercase tracking-wider">
+                Pass
+              </TableHead>
+              <TableHead class="text-right font-mono text-[10px] uppercase tracking-wider">
+                Fail
+              </TableHead>
+              <TableHead class="text-right font-mono text-[10px] uppercase tracking-wider">
+                Flaky
+              </TableHead>
+              <TableHead class="text-right font-mono text-[10px] uppercase tracking-wider">
+                Duration
+              </TableHead>
+              <TableHead class="text-right font-mono text-[10px] uppercase tracking-wider">
+                SHA
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -125,13 +143,25 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
               class="cursor-pointer"
               @click="$router.push({ name: 'run', params: { projectId: project.id, runId: r.runId } })"
             >
-              <TableCell class="font-mono text-xs">{{ dateFmt.format(new Date(r.startedAt)) }}</TableCell>
+              <TableCell class="font-mono text-xs">
+                {{ dateFmt.format(new Date(r.startedAt)) }}
+              </TableCell>
               <TableCell><HealthBadge :health="runHealth(r.counts)" /></TableCell>
-              <TableCell class="text-right font-mono text-xs tabular-nums">{{ formatPct(passRate(r.counts)) }}</TableCell>
-              <TableCell class="text-right font-mono text-xs tabular-nums" :class="r.counts.unexpected ? 'text-fail' : 'text-muted-foreground'">{{ r.counts.unexpected }}</TableCell>
-              <TableCell class="text-right font-mono text-xs tabular-nums" :class="r.counts.flaky ? 'text-flaky' : 'text-muted-foreground'">{{ r.counts.flaky }}</TableCell>
-              <TableCell class="text-right font-mono text-xs tabular-nums text-muted-foreground">{{ formatDuration(r.duration) }}</TableCell>
-              <TableCell class="text-right font-mono text-xs text-muted-foreground">{{ r.git?.sha ?? '-' }}</TableCell>
+              <TableCell class="text-right font-mono text-xs tabular-nums">
+                {{ formatPct(passRate(r.counts)) }}
+              </TableCell>
+              <TableCell class="text-right font-mono text-xs tabular-nums" :class="r.counts.unexpected ? 'text-fail' : 'text-muted-foreground'">
+                {{ r.counts.unexpected }}
+              </TableCell>
+              <TableCell class="text-right font-mono text-xs tabular-nums" :class="r.counts.flaky ? 'text-flaky' : 'text-muted-foreground'">
+                {{ r.counts.flaky }}
+              </TableCell>
+              <TableCell class="text-right font-mono text-xs tabular-nums text-muted-foreground">
+                {{ formatDuration(r.duration) }}
+              </TableCell>
+              <TableCell class="text-right font-mono text-xs text-muted-foreground">
+                {{ r.git?.sha ?? '-' }}
+              </TableCell>
             </TableRow>
           </TableBody>
         </Table>

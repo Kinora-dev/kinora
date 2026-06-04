@@ -1,13 +1,13 @@
 <script setup lang="ts">
+import type { ProjectEntry } from '@/contracts/playback'
+import { ArrowDownRight, ArrowRight, ArrowUpRight } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { ArrowRight, ArrowUpRight, ArrowDownRight } from 'lucide-vue-next'
 import { Card } from '@/components/ui/card'
 import HealthBadge from '@/components/viz/HealthBadge.vue'
-import Sparkline from '@/components/viz/Sparkline.vue'
 import RunStrip from '@/components/viz/RunStrip.vue'
-import type { ProjectEntry } from '@/contracts/playback'
-import { latestRun, passRate, runHealth, sortedRuns, trend, formatPct, formatDuration } from '@/lib/aggregate'
+import Sparkline from '@/components/viz/Sparkline.vue'
+import { formatDuration, formatPct, latestRun, passRate, runHealth, sortedRuns, trend } from '@/lib/aggregate'
 
 const props = defineProps<{ project: ProjectEntry }>()
 
@@ -20,7 +20,7 @@ const prevRate = computed(() => {
   return r ? passRate(r.counts) : null
 })
 const delta = computed(() => (prevRate.value == null ? null : rate.value - prevRate.value))
-const series = computed(() => trend(props.project).map((t) => t.passRate))
+const series = computed(() => trend(props.project).map(t => t.passRate))
 
 const toneText = computed(() =>
   health.value === 'passing'
@@ -33,11 +33,14 @@ const toneText = computed(() =>
 )
 
 const rel = computed(() => {
-  if (!latest.value) return ''
+  if (!latest.value)
+    return ''
   const diff = Date.now() - Date.parse(latest.value.startedAt)
   const h = Math.round(diff / 3_600_000)
-  if (h < 1) return 'just now'
-  if (h < 24) return `${h}h ago`
+  if (h < 1)
+    return 'just now'
+  if (h < 24)
+    return `${h}h ago`
   return `${Math.round(h / 24)}d ago`
 })
 </script>

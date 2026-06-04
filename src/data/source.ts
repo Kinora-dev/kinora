@@ -1,20 +1,21 @@
+import type { Manifest, ProjectHistory, RunReport } from '@/contracts/playback'
 import { config, useMock } from '@/config'
 import {
+
   manifestSchema,
-  runReportSchema,
+
   projectHistorySchema,
-  type Manifest,
-  type RunReport,
-  type ProjectHistory,
+
+  runReportSchema,
 } from '@/contracts/playback'
 import { buildTestHistories } from '@/lib/history'
 import { mockManifest, mockRun } from './mock'
 
 // One contract, swappable transport. The UI only ever calls these three.
 interface DataSource {
-  getManifest(): Promise<Manifest>
-  getRun(projectId: string, runId: string): Promise<RunReport>
-  getProjectHistory(projectId: string): Promise<ProjectHistory>
+  getManifest: () => Promise<Manifest>
+  getRun: (projectId: string, runId: string) => Promise<RunReport>
+  getProjectHistory: (projectId: string) => Promise<ProjectHistory>
 }
 
 function base(): string {
@@ -23,7 +24,8 @@ function base(): string {
 
 async function fetchJson(url: string): Promise<unknown> {
   const res = await fetch(url, { headers: { accept: 'application/json' } })
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`)
+  if (!res.ok)
+    throw new Error(`${res.status} ${res.statusText} for ${url}`)
   return res.json()
 }
 
@@ -31,9 +33,10 @@ async function fetchJson(url: string): Promise<unknown> {
 // Used when the transport has no dedicated history endpoint (static, mock).
 async function foldHistory(src: DataSource, projectId: string): Promise<ProjectHistory> {
   const manifest = await src.getManifest()
-  const project = manifest.projects.find((p) => p.id === projectId) ?? null
-  if (!project) return { project: null, histories: [] }
-  const reports = await Promise.all(project.runs.map((r) => src.getRun(projectId, r.runId)))
+  const project = manifest.projects.find(p => p.id === projectId) ?? null
+  if (!project)
+    return { project: null, histories: [] }
+  const reports = await Promise.all(project.runs.map(r => src.getRun(projectId, r.runId)))
   return { project, histories: buildTestHistories(reports) }
 }
 
@@ -41,7 +44,7 @@ const staticSource: DataSource = {
   getManifest: async () => manifestSchema.parse(await fetchJson(`${base()}/manifest.json`)),
   getRun: async (p, r) =>
     runReportSchema.parse(await fetchJson(`${base()}/reports/${p}/${r}.json`)),
-  getProjectHistory: (p) => foldHistory(staticSource, p),
+  getProjectHistory: p => foldHistory(staticSource, p),
 }
 
 const restSource: DataSource = {
@@ -51,7 +54,7 @@ const restSource: DataSource = {
       await fetchJson(`${base()}/api/projects/${encodeURIComponent(p)}/runs/${encodeURIComponent(r)}`),
     ),
   // Server-side aggregation: one request, no downloading every report.
-  getProjectHistory: async (p) =>
+  getProjectHistory: async p =>
     projectHistorySchema.parse(
       await fetchJson(`${base()}/api/projects/${encodeURIComponent(p)}/tests`),
     ),
@@ -60,7 +63,7 @@ const restSource: DataSource = {
 const mockSource: DataSource = {
   getManifest: async () => mockManifest(),
   getRun: async (p, r) => mockRun(p, r),
-  getProjectHistory: (p) => foldHistory(mockSource, p),
+  getProjectHistory: p => foldHistory(mockSource, p),
 }
 
 const source: DataSource = useMock

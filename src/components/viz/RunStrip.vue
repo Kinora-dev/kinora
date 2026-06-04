@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { RunSummary } from '@/contracts/playback'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import {
@@ -7,11 +8,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import type { RunSummary } from '@/contracts/playback'
-import { passRate, runHealth, formatPct } from '@/lib/aggregate'
+import { formatPct, passRate, runHealth } from '@/lib/aggregate'
 
 const props = withDefaults(
-  defineProps<{ runs: RunSummary[]; limit?: number; height?: number }>(),
+  defineProps<{ runs: RunSummary[], limit?: number, height?: number }>(),
   { limit: 30, height: 38 },
 )
 
@@ -59,7 +59,9 @@ const bars = computed(() =>
           </RouterLink>
         </TooltipTrigger>
         <TooltipContent class="font-mono text-xs">
-          <div class="font-semibold">{{ b.date }}</div>
+          <div class="font-semibold">
+            {{ b.date }}
+          </div>
           <div class="mt-0.5 tabular-nums text-muted-foreground">
             {{ formatPct(b.pct) }} pass
           </div>

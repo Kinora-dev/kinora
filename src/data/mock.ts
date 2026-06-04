@@ -6,14 +6,14 @@ import type {
   RunReport,
   RunSummary,
 } from '@/contracts/playback'
+import type { PwTestStatus } from '@/contracts/playwright'
 import { SCHEMA_VERSION } from '@/contracts/playback'
 import { makeTestKey } from '@/lib/test-key'
-import type { PwTestStatus } from '@/contracts/playwright'
 
 function mulberry32(seed: number) {
   return () => {
     seed |= 0
-    seed = (seed + 0x6d2b79f5) | 0
+    seed = (seed + 0x6D2B79F5) | 0
     let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296
@@ -34,7 +34,7 @@ interface MockProject {
   name: string
   description: string
   browsers: string[]
-  files: { file: string; titles: string[] }[]
+  files: { file: string, titles: string[] }[]
   runs: number
 }
 
@@ -76,9 +76,12 @@ const DAY = 86_400_000
 
 function pickStatus(rnd: () => number, healthy: number): PwTestStatus {
   const r = rnd()
-  if (r < healthy) return 'expected'
-  if (r < healthy + 0.05) return 'skipped'
-  if (r < healthy + 0.11) return 'flaky'
+  if (r < healthy)
+    return 'expected'
+  if (r < healthy + 0.05)
+    return 'skipped'
+  if (r < healthy + 0.11)
+    return 'flaky'
   return 'unexpected'
 }
 
@@ -93,8 +96,10 @@ function buildTests(p: MockProject, seed: number): NormTest[] {
         const status = pickStatus(rnd, healthy)
         const titlePath = [title]
         const tags: string[] = []
-        if (i === 0) tags.push('@smoke')
-        if (f.file.includes('auth') || f.file.includes('payment')) tags.push('@critical')
+        if (i === 0)
+          tags.push('@smoke')
+        if (f.file.includes('auth') || f.file.includes('payment'))
+          tags.push('@critical')
         tests.push({
           testKey: makeTestKey(f.file, titlePath, browser),
           title,
@@ -187,11 +192,12 @@ export function mockManifest(): Manifest {
 }
 
 export function mockRun(projectId: string, runId: string): RunReport {
-  const p = PROJECTS.find((x) => x.id === projectId) ?? PROJECTS[0]
+  const p = PROJECTS.find(x => x.id === projectId) ?? PROJECTS[0]
   const manifest = buildManifest(Date.now())
   const summary = manifest.projects
-    .find((x) => x.id === projectId)
-    ?.runs.find((r) => r.runId === runId)
+    .find(x => x.id === projectId)
+    ?.runs
+    .find(r => r.runId === runId)
   const dayIndex = summary
     ? Math.round((Date.now() - Date.parse(summary.startedAt)) / DAY)
     : 0

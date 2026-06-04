@@ -1,13 +1,13 @@
 <script setup lang="ts">
+import { ArrowLeft } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { ArrowLeft } from 'lucide-vue-next'
-import { useProjectHistory } from '@/composables/queries'
+import { Separator } from '@/components/ui/separator'
+import { Skeleton } from '@/components/ui/skeleton'
+import StatBlock from '@/components/viz/StatBlock.vue'
 import StatusTimeline from '@/components/viz/StatusTimeline.vue'
 import TestStatusBadge from '@/components/viz/TestStatusBadge.vue'
-import StatBlock from '@/components/viz/StatBlock.vue'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Separator } from '@/components/ui/separator'
+import { useProjectHistory } from '@/composables/queries'
 import { formatPct } from '@/lib/aggregate'
 
 const props = defineProps<{ projectId: string }>()
@@ -20,12 +20,12 @@ const testKey = computed(() => {
 })
 
 const project = computed(() => state.value.project)
-const history = computed(() => state.value.histories.find((h) => h.testKey === testKey.value))
+const history = computed(() => state.value.histories.find(h => h.testKey === testKey.value))
 
 // Failures and flakes, most recent first.
 const incidents = computed(() =>
   history.value
-    ? [...history.value.points].reverse().filter((p) => p.status === 'unexpected' || p.status === 'flaky')
+    ? [...history.value.points].reverse().filter(p => p.status === 'unexpected' || p.status === 'flaky')
     : [],
 )
 
@@ -54,14 +54,18 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
       <Skeleton class="h-28 rounded-xl" />
       <Skeleton class="h-64 rounded-xl" />
     </template>
-    <div v-else-if="!history" class="text-sm text-muted-foreground">Test not found in history.</div>
+    <div v-else-if="!history" class="text-sm text-muted-foreground">
+      Test not found in history.
+    </div>
 
     <template v-else>
       <!-- Header -->
       <div class="flex flex-col gap-6">
         <div class="flex items-start justify-between gap-4">
           <div class="min-w-0">
-            <h1 class="text-xl font-semibold tracking-tight">{{ history.title }}</h1>
+            <h1 class="text-xl font-semibold tracking-tight">
+              {{ history.title }}
+            </h1>
             <div class="mt-1 font-mono text-xs text-muted-foreground">
               {{ history.titlePath.slice(0, -1).join(' › ') || history.file }}
             </div>
@@ -75,8 +79,10 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
         <div class="flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg border border-border/70 bg-card/40 px-6 py-5">
           <StatBlock label="Runs" :value="history.runs" />
           <Separator orientation="vertical" class="h-10" />
-          <StatBlock label="Pass rate" :value="formatPct(history.passRate)"
-            :tone="history.failed ? 'fail' : history.flaky ? 'flaky' : 'pass'" />
+          <StatBlock
+            label="Pass rate" :value="formatPct(history.passRate)"
+            :tone="history.failed ? 'fail' : history.flaky ? 'flaky' : 'pass'"
+          />
           <Separator orientation="vertical" class="h-10" />
           <StatBlock label="Flaky rate" :value="formatPct(history.flakyRate)" :tone="history.flaky ? 'flaky' : 'default'" />
           <Separator orientation="vertical" class="h-10" />

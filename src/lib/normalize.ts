@@ -1,7 +1,7 @@
-import type { PlaywrightReport, PwSpec } from '../contracts/playwright'
-import { playwrightReportSchema } from '../contracts/playwright'
 import type { Counts, NormTest, RunReport, RunSummary } from '../contracts/playback'
+import type { PlaywrightReport, PwSpec } from '../contracts/playwright'
 import { SCHEMA_VERSION } from '../contracts/playback'
+import { playwrightReportSchema } from '../contracts/playwright'
 import { makeTestKey } from './test-key'
 
 export interface IngestMeta {
@@ -27,7 +27,8 @@ function flattenSpecs(
       titlePath: suite.title ? [...parent.titlePath, suite.title] : parent.titlePath,
     }
     for (const spec of suite.specs) normalizeSpec(spec, ctx, out)
-    if (suite.suites) flattenSpecs(suite.suites, ctx, out)
+    if (suite.suites)
+      flattenSpecs(suite.suites, ctx, out)
   }
 }
 
@@ -49,11 +50,11 @@ function normalizeSpec(spec: PwSpec, ctx: WalkCtx, out: NormTest[]): void {
       duration: test.results.reduce((s, r) => s + r.duration, 0),
       retries: Math.max(0, test.results.length - 1),
       tags: spec.tags,
-      annotations: test.annotations.map((a) => ({ type: a.type, description: a.description })),
-      errors: (last?.errors ?? []).flatMap((e) =>
+      annotations: test.annotations.map(a => ({ type: a.type, description: a.description })),
+      errors: (last?.errors ?? []).flatMap(e =>
         e.message ? [{ message: e.message, stack: e.stack, location: e.location }] : [],
       ),
-      attachments: (last?.attachments ?? []).map((a) => ({
+      attachments: (last?.attachments ?? []).map(a => ({
         name: a.name,
         contentType: a.contentType,
         path: a.path,
@@ -95,7 +96,7 @@ function countsByTagFrom(tests: NormTest[]): Record<string, Counts> {
 export function ingestPlaywrightReport(
   raw: unknown,
   meta: IngestMeta,
-): { summary: RunSummary; report: RunReport } {
+): { summary: RunSummary, report: RunReport } {
   const parsed: PlaywrightReport = playwrightReportSchema.parse(raw)
   const tests: NormTest[] = []
   flattenSpecs(parsed.suites, { titlePath: [], file: '' }, tests)

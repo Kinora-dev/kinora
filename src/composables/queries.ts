@@ -1,5 +1,5 @@
 import { useAsyncState } from '@vueuse/core'
-import { getManifest, getRun, getProjectHistory } from '@/data/source'
+import { getManifest, getProjectHistory, getRun } from '@/data/source'
 
 export function useManifest() {
   return useAsyncState(() => getManifest(), null, { immediate: true })

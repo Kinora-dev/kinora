@@ -1,24 +1,24 @@
 <script setup lang="ts">
+import type { PwTestStatus } from '@/contracts/playwright'
+import { ArrowLeft, ExternalLink, GitBranch, Paperclip } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { ArrowLeft, Paperclip, GitBranch, ExternalLink } from 'lucide-vue-next'
-import { useManifest, useRun } from '@/composables/queries'
-import TestStatusBadge from '@/components/viz/TestStatusBadge.vue'
-import StatBlock from '@/components/viz/StatBlock.vue'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Separator } from '@/components/ui/separator'
 import { Input } from '@/components/ui/input'
+import { Separator } from '@/components/ui/separator'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import type { PwTestStatus } from '@/contracts/playwright'
-import { passRate, formatPct, formatDuration } from '@/lib/aggregate'
+import StatBlock from '@/components/viz/StatBlock.vue'
+import TestStatusBadge from '@/components/viz/TestStatusBadge.vue'
+import { useManifest, useRun } from '@/composables/queries'
+import { formatDuration, formatPct, passRate } from '@/lib/aggregate'
 
-const props = defineProps<{ projectId: string; runId: string }>()
+const props = defineProps<{ projectId: string, runId: string }>()
 
 const { state: report, isLoading, error } = useRun(props.projectId, props.runId)
 const { state: manifest } = useManifest()
 
 const projectName = computed(
-  () => manifest.value?.projects.find((p) => p.id === props.projectId)?.name ?? props.projectId,
+  () => manifest.value?.projects.find(p => p.id === props.projectId)?.name ?? props.projectId,
 )
 
 const filter = ref<'all' | PwTestStatus>('all')
@@ -28,7 +28,8 @@ const tests = computed(() => report.value?.tests ?? [])
 const filtered = computed(() => {
   const q = search.value.trim().toLowerCase()
   return tests.value.filter((t) => {
-    if (filter.value !== 'all' && t.status !== filter.value) return false
+    if (filter.value !== 'all' && t.status !== filter.value)
+      return false
     if (q && !t.titlePath.join(' ').toLowerCase().includes(q) && !t.file.toLowerCase().includes(q))
       return false
     return true
@@ -66,7 +67,9 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
       <div class="flex flex-col gap-6">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <h1 class="font-mono text-xl font-semibold tracking-tight">{{ report.runId }}</h1>
+            <h1 class="font-mono text-xl font-semibold tracking-tight">
+              {{ report.runId }}
+            </h1>
             <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-xs text-muted-foreground">
               <span>{{ dateFmt.format(new Date(report.startedAt)) }}</span>
               <span v-if="report.meta.git?.branch" class="flex items-center gap-1">
@@ -90,8 +93,10 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
         </div>
 
         <div class="flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg border border-border/70 bg-card/40 px-6 py-5">
-          <StatBlock label="Pass rate" :value="formatPct(passRate(report.counts))"
-            :tone="report.counts.unexpected ? 'fail' : report.counts.flaky ? 'flaky' : 'pass'" />
+          <StatBlock
+            label="Pass rate" :value="formatPct(passRate(report.counts))"
+            :tone="report.counts.unexpected ? 'fail' : report.counts.flaky ? 'flaky' : 'pass'"
+          />
           <Separator orientation="vertical" class="h-10" />
           <StatBlock label="Total" :value="report.counts.total" />
           <Separator orientation="vertical" class="h-10" />
@@ -109,10 +114,18 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
       <div class="flex flex-wrap items-center justify-between gap-3">
         <Tabs v-model="filter">
           <TabsList class="font-mono">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="unexpected" class="data-[state=active]:text-fail">Failing</TabsTrigger>
-            <TabsTrigger value="flaky" class="data-[state=active]:text-flaky">Flaky</TabsTrigger>
-            <TabsTrigger value="skipped">Skipped</TabsTrigger>
+            <TabsTrigger value="all">
+              All
+            </TabsTrigger>
+            <TabsTrigger value="unexpected" class="data-[state=active]:text-fail">
+              Failing
+            </TabsTrigger>
+            <TabsTrigger value="flaky" class="data-[state=active]:text-flaky">
+              Flaky
+            </TabsTrigger>
+            <TabsTrigger value="skipped">
+              Skipped
+            </TabsTrigger>
           </TabsList>
         </Tabs>
         <Input v-model="search" placeholder="Filter by title or file..." class="h-9 w-64 font-mono text-xs" />
@@ -146,8 +159,12 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
               </div>
             </div>
             <div class="shrink-0 text-right font-mono text-[11px] text-muted-foreground">
-              <div class="tabular-nums">{{ formatDuration(t.duration) }}</div>
-              <div v-if="t.retries" class="tabular-nums text-flaky">{{ t.retries }} retry</div>
+              <div class="tabular-nums">
+                {{ formatDuration(t.duration) }}
+              </div>
+              <div v-if="t.retries" class="tabular-nums text-flaky">
+                {{ t.retries }} retry
+              </div>
             </div>
           </div>
 
