@@ -127,7 +127,7 @@ GET {baseUrl}/api/projects/:projectId/runs/:runId    -> RunReport
 GET {baseUrl}/api/projects/:projectId/tests          -> { project, histories }
 ```
 
-[`examples/rest-server.ts`](examples/rest-server.ts) is a small [Hono](https://hono.dev) server implementing the three endpoints above - run it or use it as a template; responses must satisfy the zod schemas in [`packages/core/src/contracts/playback.ts`](packages/core/src/contracts/playback.ts). Then set `PLAYBACK_MODE=rest` to point the dashboard at your API.
+[`examples/rest-server.ts`](examples/rest-server.ts) is a small [Hono](https://hono.dev) server implementing the three endpoints above - run it or use it as a template. Install [`@playbackhq/core`](https://www.npmjs.com/package/@playbackhq/core) for the zod schemas and helpers your responses must satisfy (`manifestSchema`, `runReportSchema`, `projectHistorySchema`, `buildTestHistories`). Then set `PLAYBACK_MODE=rest` to point the dashboard at your API.
 
 ## Docker
 

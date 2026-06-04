@@ -12,6 +12,7 @@
     "dev": "pnpm --filter @playbackhq/app dev",
     "build": "pnpm --filter @playbackhq/app build",
     "build:cli": "pnpm --filter @playbackhq/cli build",
+    "build:core": "pnpm --filter @playbackhq/core build",
     "preview": "pnpm --filter @playbackhq/app preview",
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",

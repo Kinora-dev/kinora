@@ -1,20 +1,54 @@
 {
   "name": "@playbackhq/core",
   "type": "module",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.0.1",
+  "description": "Contracts (zod schemas) and helpers for playback - build a rest data source for the Playwright report dashboard",
+  "author": "Joris Gallot",
+  "license": "MIT",
+  "homepage": "https://github.com/joris-gallot/playback#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joris-gallot/playback.git",
+    "directory": "packages/core"
+  },
+  "bugs": "https://github.com/joris-gallot/playback/issues",
+  "keywords": [
+    "playwright",
+    "test-report",
+    "flaky-tests",
+    "ci",
+    "dashboard"
+  ],
   "exports": {
     ".": "./src/index.ts"
   },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.mts",
+        "import": "./dist/index.mjs"
+      }
+    }
+  },
   "scripts": {
+    "build": "tsdown",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepublishOnly": "tsdown"
   },
   "dependencies": {
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^24.12.3",
+    "tsdown": "^0.22.2",
     "typescript": "~6.0.2",
     "vitest": "^4.1.8"
   }
