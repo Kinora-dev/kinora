@@ -27,16 +27,32 @@ const filter = useRouteQuery<'all' | PwTestStatus>('status', 'all')
 const search = useRouteQuery('q', '')
 
 const tests = computed(() => report.value?.tests ?? [])
-const filtered = computed(() => {
+
+// Search-matched set, before the status tab. Tab counts derive from this so
+// they track the search box; the tab itself only narrows the visible list.
+const searchMatched = computed(() => {
   const q = search.value.trim().toLowerCase()
-  return tests.value.filter((t) => {
-    if (filter.value !== 'all' && t.status !== filter.value)
-      return false
-    if (q && !t.titlePath.join(' ').toLowerCase().includes(q) && !t.file.toLowerCase().includes(q))
-      return false
-    return true
-  })
+  if (!q)
+    return tests.value
+  return tests.value.filter(
+    t => t.titlePath.join(' ').toLowerCase().includes(q) || t.file.toLowerCase().includes(q),
+  )
 })
+
+const tabCounts = computed(() => {
+  const c = { all: searchMatched.value.length, unexpected: 0, flaky: 0, skipped: 0 }
+  for (const t of searchMatched.value) {
+    if (t.status === 'unexpected' || t.status === 'flaky' || t.status === 'skipped')
+      c[t.status]++
+  }
+  return c
+})
+
+const filtered = computed(() =>
+  filter.value === 'all'
+    ? searchMatched.value
+    : searchMatched.value.filter(t => t.status === filter.value),
+)
 
 const dateFmt = new Intl.DateTimeFormat(undefined, {
   weekday: 'short',
@@ -119,16 +135,16 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
         <Tabs v-model="filter">
           <TabsList class="font-mono">
             <TabsTrigger value="all">
-              All
+              All <span class="ml-1.5 tabular-nums text-muted-foreground">{{ tabCounts.all }}</span>
             </TabsTrigger>
             <TabsTrigger value="unexpected" class="data-[state=active]:text-fail">
-              Failing
+              Failing <span class="ml-1.5 tabular-nums text-muted-foreground">{{ tabCounts.unexpected }}</span>
             </TabsTrigger>
             <TabsTrigger value="flaky" class="data-[state=active]:text-flaky">
-              Flaky
+              Flaky <span class="ml-1.5 tabular-nums text-muted-foreground">{{ tabCounts.flaky }}</span>
             </TabsTrigger>
             <TabsTrigger value="skipped">
-              Skipped
+              Skipped <span class="ml-1.5 tabular-nums text-muted-foreground">{{ tabCounts.skipped }}</span>
             </TabsTrigger>
           </TabsList>
         </Tabs>
