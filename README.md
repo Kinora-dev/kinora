@@ -18,7 +18,7 @@ pnpm install
 pnpm dev        # http://localhost:5173 - shows mock data
 ```
 
-That's the full UI running on sample reports. To plug in your own, see [Use your own reports](#use-your-own-reports).
+That's the full UI running on sample reports. To plug in your own, see [Set up your own reports](#set-up-your-own-reports).
 
 ## Screenshots
 
@@ -33,9 +33,9 @@ That's the full UI running on sample reports. To plug in your own, see [Use your
 </tr>
 </table>
 
-## Use your own reports
+## Set up your own reports
 
-Two halves, neither needs a clone: produce data with the CLI, then run the dashboard pointed at it.
+Produce your data with the CLI, then point the dashboard at it
 
 ### 1. Emit Playwright's JSON report
 
