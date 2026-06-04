@@ -2,22 +2,14 @@
 import { ArrowLeft, ArrowRight } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
+import RunHistoryTable from '@/components/project/RunHistoryTable.vue'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import HealthBadge from '@/components/viz/HealthBadge.vue'
 import Sparkline from '@/components/viz/Sparkline.vue'
 import StatBlock from '@/components/viz/StatBlock.vue'
 import { useManifest } from '@/composables/queries'
 import {
-  formatDuration,
   formatPct,
   latestRun,
   passRate,
@@ -39,13 +31,6 @@ const health = computed(() => (latest.value ? runHealth(latest.value.counts) : '
 const toneText = computed(() =>
   health.value === 'passing' ? 'text-pass' : health.value === 'flaky' ? 'text-flaky' : 'text-fail',
 )
-
-const dateFmt = new Intl.DateTimeFormat(undefined, {
-  month: 'short',
-  day: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-})
 </script>
 
 <template>
@@ -109,63 +94,7 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
       </div>
 
       <!-- Run history -->
-      <div class="rounded-xl border border-border/70 bg-card/40 overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow class="hover:bg-transparent">
-              <TableHead class="font-mono text-[10px] uppercase tracking-wider">
-                Run
-              </TableHead>
-              <TableHead class="font-mono text-[10px] uppercase tracking-wider">
-                Health
-              </TableHead>
-              <TableHead class="text-right font-mono text-[10px] uppercase tracking-wider">
-                Pass
-              </TableHead>
-              <TableHead class="text-right font-mono text-[10px] uppercase tracking-wider">
-                Fail
-              </TableHead>
-              <TableHead class="text-right font-mono text-[10px] uppercase tracking-wider">
-                Flaky
-              </TableHead>
-              <TableHead class="text-right font-mono text-[10px] uppercase tracking-wider">
-                Duration
-              </TableHead>
-              <TableHead class="text-right font-mono text-[10px] uppercase tracking-wider">
-                SHA
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow
-              v-for="r in runs"
-              :key="r.runId"
-              class="cursor-pointer"
-              @click="$router.push({ name: 'run', params: { projectId: project.id, runId: r.runId } })"
-            >
-              <TableCell class="font-mono text-xs">
-                {{ dateFmt.format(new Date(r.startedAt)) }}
-              </TableCell>
-              <TableCell><HealthBadge :health="runHealth(r.counts)" /></TableCell>
-              <TableCell class="text-right font-mono text-xs tabular-nums">
-                {{ formatPct(passRate(r.counts)) }}
-              </TableCell>
-              <TableCell class="text-right font-mono text-xs tabular-nums" :class="r.counts.unexpected ? 'text-fail' : 'text-muted-foreground'">
-                {{ r.counts.unexpected }}
-              </TableCell>
-              <TableCell class="text-right font-mono text-xs tabular-nums" :class="r.counts.flaky ? 'text-flaky' : 'text-muted-foreground'">
-                {{ r.counts.flaky }}
-              </TableCell>
-              <TableCell class="text-right font-mono text-xs tabular-nums text-muted-foreground">
-                {{ formatDuration(r.duration) }}
-              </TableCell>
-              <TableCell class="text-right font-mono text-xs text-muted-foreground">
-                {{ r.git?.sha ?? '-' }}
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </div>
+      <RunHistoryTable :runs="runs" :project-id="project.id" />
     </template>
   </div>
 </template>
