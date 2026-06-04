@@ -13,7 +13,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "typecheck": "vue-tsc -b --noEmit",
+    "typecheck": "vue-tsc --noEmit",
     "preview": "vite preview",
     "ingest": "tsx cli/playback.ts",
     "serve:rest": "tsx examples/rest-server.ts",
