@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import type { ColorMode } from '@/composables/useTheme'
-import { Monitor, Moon, Sun } from 'lucide-vue-next'
-import { computed } from 'vue'
-import { Button } from '@/components/ui/button'
+import { Button } from '@playbackhq/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +9,9 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from '@playbackhq/ui/dropdown-menu'
+import { Monitor, Moon, Sun } from 'lucide-vue-next'
+import { computed } from 'vue'
 import { colorMode } from '@/composables/useTheme'
 
 const options = [

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { formatPct } from '@playbackhq/core'
+import { Separator } from '@playbackhq/ui/separator'
+import { Skeleton } from '@playbackhq/ui/skeleton'
 import { ArrowLeft } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import CopyLinkButton from '@/components/app/CopyLinkButton.vue'
-import { Separator } from '@/components/ui/separator'
-import { Skeleton } from '@/components/ui/skeleton'
 import StatBlock from '@/components/viz/StatBlock.vue'
 import StatusTimeline from '@/components/viz/StatusTimeline.vue'
 import TestStatusBadge from '@/components/viz/TestStatusBadge.vue'

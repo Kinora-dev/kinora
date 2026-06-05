@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import type { RunSummary } from '@playbackhq/core'
 import { formatPct, passRate, runHealth } from '@playbackhq/core'
-import { computed } from 'vue'
-import { RouterLink } from 'vue-router'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip'
+} from '@playbackhq/ui/tooltip'
+import { computed } from 'vue'
+import { RouterLink } from 'vue-router'
 
 const props = withDefaults(
   defineProps<{ runs: RunSummary[], limit?: number, height?: number }>(),

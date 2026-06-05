@@ -2,10 +2,6 @@
 import type { RunHealth, RunSummary } from '@playbackhq/core'
 import type { ColumnDef, SortingState } from '@tanstack/vue-table'
 import { formatDuration, formatPct, passRate, runHealth } from '@playbackhq/core'
-import { getCoreRowModel, getSortedRowModel, useVueTable } from '@tanstack/vue-table'
-import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-vue-next'
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
 import {
   Table,
   TableBody,
@@ -13,8 +9,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { valueUpdater } from '@/components/ui/table/utils'
+} from '@playbackhq/ui/table'
+import { valueUpdater } from '@playbackhq/ui/table/utils'
+import { getCoreRowModel, getSortedRowModel, useVueTable } from '@tanstack/vue-table'
+import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-vue-next'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import HealthBadge from '@/components/viz/HealthBadge.vue'
 
 const props = defineProps<{ runs: RunSummary[], projectId: string }>()

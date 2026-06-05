@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import type { TestPoint } from '@playbackhq/core'
 import { pwStatusMeta } from '@playbackhq/core'
-import { computed } from 'vue'
-import { RouterLink } from 'vue-router'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip'
+} from '@playbackhq/ui/tooltip'
+import { computed } from 'vue'
+import { RouterLink } from 'vue-router'
 
 const props = withDefaults(
   defineProps<{ points: TestPoint[], projectId: string, height?: number, link?: boolean, q?: string }>(),

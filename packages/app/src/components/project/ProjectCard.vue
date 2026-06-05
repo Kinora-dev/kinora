@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import type { ProjectEntry } from '@playbackhq/core'
 import { formatDuration, formatPct, latestRun, passRate, runHealth, sortedRuns, trend } from '@playbackhq/core'
+import { Card } from '@playbackhq/ui/card'
 import { ArrowDownRight, ArrowRight, ArrowUpRight } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { Card } from '@/components/ui/card'
 import HealthBadge from '@/components/viz/HealthBadge.vue'
 import RunStrip from '@/components/viz/RunStrip.vue'
 import Sparkline from '@/components/viz/Sparkline.vue'

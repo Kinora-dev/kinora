@@ -7,12 +7,12 @@ import {
   sortedRuns,
   trend,
 } from '@playbackhq/core'
+import { Separator } from '@playbackhq/ui/separator'
+import { Skeleton } from '@playbackhq/ui/skeleton'
 import { ArrowLeft, ArrowRight } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import RunHistoryTable from '@/components/project/RunHistoryTable.vue'
-import { Separator } from '@/components/ui/separator'
-import { Skeleton } from '@/components/ui/skeleton'
 import HealthBadge from '@/components/viz/HealthBadge.vue'
 import Sparkline from '@/components/viz/Sparkline.vue'
 import StatBlock from '@/components/viz/StatBlock.vue'

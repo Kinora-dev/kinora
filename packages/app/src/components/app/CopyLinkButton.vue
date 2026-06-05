@@ -1,8 +1,8 @@
 <script setup lang="ts">
+import { Button } from '@playbackhq/ui/button'
 import { Check, Link2 } from 'lucide-vue-next'
 import { ref } from 'vue'
 import { toast } from 'vue-sonner'
-import { Button } from '@/components/ui/button'
 
 const copied = ref(false)
 

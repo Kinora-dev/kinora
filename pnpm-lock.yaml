@@ -38,6 +38,9 @@ importers:
       '@playbackhq/core':
         specifier: workspace:*
         version: link:../core
+      '@playbackhq/ui':
+        specifier: workspace:*
+        version: link:../ui
       '@tanstack/vue-table':
         specifier: ^8.21.3
         version: 8.21.3(vue@3.5.35(typescript@6.0.3))
@@ -149,6 +152,9 @@ importers:
 
   packages/trace-viewer:
     dependencies:
+      '@playbackhq/ui':
+        specifier: workspace:*
+        version: link:../ui
       '@vueuse/core':
         specifier: ^14.3.0
         version: 14.3.0(vue@3.5.35(typescript@6.0.3))
@@ -192,6 +198,46 @@ importers:
       vitest:
         specifier: ^4.1.8
         version: 4.1.8(@types/node@24.13.0)(vite@8.0.16(@types/node@24.13.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+      vue-tsc:
+        specifier: ^3.1.2
+        version: 3.3.3(typescript@6.0.3)
+
+  packages/ui:
+    dependencies:
+      '@lucide/vue':
+        specifier: ^1.17.0
+        version: 1.17.0(vue@3.5.35(typescript@6.0.3))
+      '@tanstack/vue-table':
+        specifier: ^8.21.3
+        version: 8.21.3(vue@3.5.35(typescript@6.0.3))
+      '@vueuse/core':
+        specifier: ^14.3.0
+        version: 14.3.0(vue@3.5.35(typescript@6.0.3))
+      class-variance-authority:
+        specifier: ^0.7.1
+        version: 0.7.1
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+      reka-ui:
+        specifier: ^2.9.9
+        version: 2.9.9(vue@3.5.35(typescript@6.0.3))
+      tailwind-merge:
+        specifier: ^3.6.0
+        version: 3.6.0
+      vue-sonner:
+        specifier: ^2.0.9
+        version: 2.0.9
+    devDependencies:
+      '@types/node':
+        specifier: ^24.12.3
+        version: 24.13.0
+      typescript:
+        specifier: ~6.0.2
+        version: 6.0.3
+      vue:
+        specifier: ^3.5.34
+        version: 3.5.35(typescript@6.0.3)
       vue-tsc:
         specifier: ^3.1.2
         version: 3.3.3(typescript@6.0.3)

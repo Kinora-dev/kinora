@@ -1,0 +1,38 @@
+{
+  "name": "@playbackhq/ui",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shared shadcn-vue design system (components + tokens) for playback frontends",
+  "author": "Joris Gallot",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./utils": "./src/lib/utils.ts",
+    "./table/utils": "./src/components/ui/table/utils.ts",
+    "./style.css": "./src/style.css",
+    "./*": "./src/components/ui/*/index.ts"
+  },
+  "scripts": {
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.34"
+  },
+  "dependencies": {
+    "@lucide/vue": "^1.17.0",
+    "@tanstack/vue-table": "^8.21.3",
+    "@vueuse/core": "^14.3.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "reka-ui": "^2.9.9",
+    "tailwind-merge": "^3.6.0",
+    "vue-sonner": "^2.0.9"
+  },
+  "devDependencies": {
+    "@types/node": "^24.12.3",
+    "typescript": "~6.0.2",
+    "vue": "^3.5.34",
+    "vue-tsc": "^3.1.2"
+  }
+}

@@ -8,19 +8,19 @@ import {
   latestRun,
   runHealth,
 } from '@playbackhq/core'
-import { useRouteQuery } from '@vueuse/router'
-import { computed } from 'vue'
-import ProjectCard from '@/components/project/ProjectCard.vue'
-import { Button } from '@/components/ui/button'
+import { Button } from '@playbackhq/ui/button'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Separator } from '@/components/ui/separator'
-import { Skeleton } from '@/components/ui/skeleton'
+} from '@playbackhq/ui/select'
+import { Separator } from '@playbackhq/ui/separator'
+import { Skeleton } from '@playbackhq/ui/skeleton'
+import { useRouteQuery } from '@vueuse/router'
+import { computed } from 'vue'
+import ProjectCard from '@/components/project/ProjectCard.vue'
 import StatBlock from '@/components/viz/StatBlock.vue'
 import { useManifest } from '@/composables/queries'
 

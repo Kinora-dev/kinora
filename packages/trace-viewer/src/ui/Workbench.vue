@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@playbackhq/ui/resizable'
+import { useStorage } from '@vueuse/core'
 import { Loader2 } from 'lucide-vue-next'
 import { onMounted } from 'vue'
 import ActionsList from './components/ActionsList.vue'
@@ -6,13 +8,13 @@ import DetailTabs from './components/DetailTabs.vue'
 import SnapshotPlayer from './components/SnapshotPlayer.vue'
 import Timeline from './components/Timeline.vue'
 import { useKeyboardNav } from './lib/useKeyboardNav'
-import { useResizable } from './lib/useResizable'
 import { useTraceStore } from './store'
 
 const store = useTraceStore()
 
-const left = useResizable('left-width', 300, { axis: 'x', min: 220, max: 520 })
-const bottom = useResizable('bottom-height', 320, { axis: 'y', min: 140, max: 640, invert: true })
+// Persisted panel sizes (percentages).
+const cols = useStorage('pb-tv-cols', [22, 78])
+const rows = useStorage('pb-tv-rows', [62, 38])
 
 useKeyboardNav()
 
@@ -24,28 +26,23 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex h-full flex-col bg-background text-foreground">
-    <!-- top bar: brand + timeline -->
-    <header class="flex shrink-0 items-stretch border-b border-border">
-      <div
-        class="flex shrink-0 items-center gap-2.5 border-r border-border px-4"
-        :style="{ width: `${left.size.value}px` }"
-      >
-        <span class="size-2 rounded-full bg-signal" style="animation: rec-pulse 2s ease-in-out infinite" />
-        <span class="text-sm font-semibold tracking-tight">playback</span>
-        <span class="font-mono text-[11px] text-muted-foreground">trace</span>
-      </div>
-      <div class="min-w-0 flex-1">
-        <Timeline v-if="store.status.value === 'ready'" />
-      </div>
+  <div class="grid h-full grid-rows-[auto_minmax(0,1fr)] bg-background text-foreground">
+    <!-- global top bar -->
+    <header class="flex h-11 items-center gap-2.5 border-b border-border px-4">
+      <span class="size-2 rounded-full bg-signal" style="animation: rec-pulse 2s ease-in-out infinite" />
+      <span class="text-sm font-semibold tracking-tight">playback</span>
+      <span class="font-mono text-[11px] text-muted-foreground">trace</span>
+      <span v-if="store.model.value?.title" class="ml-2 truncate text-xs text-muted-foreground">
+        · {{ store.model.value.title }}
+      </span>
     </header>
 
     <!-- loading / error -->
-    <div v-if="store.status.value === 'loading' || store.status.value === 'idle'" class="flex flex-1 items-center justify-center gap-2 text-sm text-muted-foreground">
+    <div v-if="store.status.value === 'loading' || store.status.value === 'idle'" class="flex items-center justify-center gap-2 text-sm text-muted-foreground">
       <Loader2 class="size-4 animate-spin" />
       Loading trace…
     </div>
-    <div v-else-if="store.status.value === 'error'" class="flex flex-1 items-center justify-center p-8">
+    <div v-else-if="store.status.value === 'error'" class="flex items-center justify-center p-8">
       <div class="max-w-md rounded-lg border border-fail/30 bg-fail/5 p-4 text-sm text-fail">
         <div class="mb-1 font-semibold">
           Failed to load trace
@@ -57,28 +54,32 @@ onMounted(() => {
     </div>
 
     <!-- workbench -->
-    <div v-else class="flex min-h-0 flex-1">
-      <aside class="shrink-0 overflow-hidden" :style="{ width: `${left.size.value}px` }">
+    <ResizablePanelGroup
+      v-else
+      direction="horizontal"
+      @layout="(s: number[]) => (cols = s)"
+    >
+      <ResizablePanel :default-size="cols[0]" :min-size="14" :max-size="40">
         <ActionsList />
-      </aside>
-      <div
-        class="w-px shrink-0 cursor-col-resize bg-border transition-colors hover:bg-signal/60"
-        :class="left.dragging.value && 'bg-signal'"
-        @pointerdown="left.start"
-      />
-      <main class="flex min-w-0 flex-1 flex-col">
-        <div class="min-h-0 flex-1">
-          <SnapshotPlayer />
+      </ResizablePanel>
+      <ResizableHandle with-handle />
+      <ResizablePanel :default-size="cols[1]">
+        <div class="grid h-full grid-rows-[auto_minmax(0,1fr)]">
+          <Timeline />
+          <ResizablePanelGroup
+            direction="vertical"
+            @layout="(s: number[]) => (rows = s)"
+          >
+            <ResizablePanel :default-size="rows[0]" :min-size="20">
+              <SnapshotPlayer />
+            </ResizablePanel>
+            <ResizableHandle with-handle />
+            <ResizablePanel :default-size="rows[1]" :min-size="15">
+              <DetailTabs />
+            </ResizablePanel>
+          </ResizablePanelGroup>
         </div>
-        <div
-          class="h-px shrink-0 cursor-row-resize bg-border transition-colors hover:bg-signal/60"
-          :class="bottom.dragging.value && 'bg-signal'"
-          @pointerdown="bottom.start"
-        />
-        <div class="min-h-0 shrink-0" :style="{ height: `${bottom.size.value}px` }">
-          <DetailTabs />
-        </div>
-      </main>
-    </div>
+      </ResizablePanel>
+    </ResizablePanelGroup>
   </div>
 </template>

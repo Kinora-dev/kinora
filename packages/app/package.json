@@ -15,6 +15,7 @@
   "dependencies": {
     "@lucide/vue": "^1.17.0",
     "@playbackhq/core": "workspace:*",
+    "@playbackhq/ui": "workspace:*",
     "@tanstack/vue-table": "^8.21.3",
     "@vueuse/core": "^14.3.0",
     "@vueuse/router": "^14.3.0",
