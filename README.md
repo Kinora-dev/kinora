@@ -4,6 +4,8 @@ A dashboard for your Playwright reports, across projects and over time.
 
 Playwright ships a great HTML report for a single run. `playback` sits one level up: it aggregates many runs into one place where you track pass rates, spot trends, and surface flaky tests over time. No backend - it's a static frontend that reads JSON you host anywhere.
 
+It also bundles its own Playwright **trace viewer**: ingest keeps each test's `trace.zip`, and failing tests get a "View trace" button that opens the full DOM/timeline/network debugger - no separate tooling.
+
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="docs/screenshots/overview-light.png">
   <img alt="Overview" src="docs/screenshots/overview-dark.png">
@@ -43,12 +45,14 @@ Produce your data with the CLI, then point the dashboard at it
 // playwright.config.ts
 export default defineConfig({
   reporter: [['json', { outputFile: 'results.json' }]],
+  // enable tracing so "View trace" works (on / retain-on-failure / on-first-retry)
+  use: { trace: 'retain-on-failure' },
 })
 ```
 
 ### 2. Ingest it with the CLI
 
-`results.json` inlines attachments (screenshots, traces) as base64, which makes it heavy. The CLI strips those, writes a lightweight run report, and upserts a manifest:
+`results.json` is heavy (inline attachment bodies). The CLI strips those into a lightweight run report, upserts a manifest, and copies each test's `trace.zip` into `artifacts/` so the dashboard can open it in the trace viewer:
 
 ```bash
 npx @playbackhq/cli results.json --project web-app --name "Web App E2E"
@@ -58,8 +62,9 @@ Output lands in `playback-data/`:
 
 - `manifest.json` - index of projects and runs
 - `reports/web-app/<date>.json` - one file per run
+- `artifacts/web-app/<run>/<sha>.zip` - copied traces (if any)
 
-Run it once per project per run; re-running the same `--run` replaces that entry. Full flags in [CLI reference](#cli-reference).
+Because traces are copied from disk, **run the CLI where Playwright's `test-results/` still exists** (your CI job, before teardown). Point `--results-dir` at it if it isn't `./test-results`. Run once per project per run; re-running the same `--run` replaces that entry. Full flags in [CLI reference](#cli-reference).
 
 ### 3. Host the data
 
@@ -89,6 +94,7 @@ npx @playbackhq/cli <results.json> --project <id> [options]
 --name <name>         display name (defaults to id)
 --run <id>            run id (defaults to report date, YYYY-MM-DD)
 --out <dir>           output root (default: playback-data)
+--results-dir <dir>   Playwright test-results dir, to resolve trace.zip (default: test-results)
 --git-sha / --git-branch
 --ci-provider / --ci-run-url / --ci-run-number
 ```
@@ -135,9 +141,10 @@ The published image serves the dashboard and generates `config.js` from env on s
 
 | env | default | meaning |
 |-----|---------|---------|
-| `PLAYBACK_BASE_URL` | (empty) | where `manifest.json` + `reports/` live - **required** for real data |
+| `PLAYBACK_BASE_URL` | (empty) | where `manifest.json` + `reports/` + `artifacts/` live - **required** for real data |
 | `PLAYBACK_MODE` | `static` | `static` (files) or `rest` (`/api/*` endpoints) |
 | `PLAYBACK_TITLE` | `Playback` | header title |
+| `PLAYBACK_VIEWER_URL` | `/trace/` | where the bundled trace viewer is served |
 
 Build the image yourself instead of pulling:
 
