@@ -2,15 +2,17 @@
 import { eventsForAction } from '@isomorphic/trace/traceModel'
 import { cn } from '@playbackhq/ui'
 import { computed, ref } from 'vue'
+import { resourcesForAction } from '../lib/network'
 import { useTraceStore } from '../store'
 import CallView from './CallView.vue'
 import ConsoleView from './ConsoleView.vue'
 import ErrorsView from './ErrorsView.vue'
 import LogView from './LogView.vue'
+import NetworkView from './NetworkView.vue'
 import SourceView from './SourceView.vue'
 
 const store = useTraceStore()
-type Tab = 'source' | 'call' | 'log' | 'errors' | 'console'
+type Tab = 'source' | 'call' | 'log' | 'network' | 'errors' | 'console'
 const active = ref<Tab>('source')
 
 const errorCount = computed(() => store.model.value?.errorDescriptors.length ?? 0)
@@ -20,11 +22,15 @@ const consoleCount = computed(() => {
     return 0
   return eventsForAction(action).filter(e => e.type === 'console').length
 })
+const networkCount = computed(() =>
+  resourcesForAction(store.model.value?.resources ?? [], store.selectedAction.value).length,
+)
 
 const tabs = computed<{ id: Tab, label: string, count?: number }[]>(() => [
   { id: 'source', label: 'Source' },
   { id: 'call', label: 'Call' },
   { id: 'log', label: 'Log' },
+  { id: 'network', label: 'Network', count: networkCount.value },
   { id: 'errors', label: 'Errors', count: errorCount.value },
   { id: 'console', label: 'Console', count: consoleCount.value },
 ])
@@ -61,6 +67,7 @@ const tabs = computed<{ id: Tab, label: string, count?: number }[]>(() => [
       <SourceView v-if="active === 'source'" />
       <CallView v-else-if="active === 'call'" />
       <LogView v-else-if="active === 'log'" />
+      <NetworkView v-else-if="active === 'network'" />
       <ErrorsView v-else-if="active === 'errors'" />
       <ConsoleView v-else />
     </div>

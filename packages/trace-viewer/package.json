@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@playbackhq/ui": "workspace:*",
+    "@tanstack/vue-table": "^8.21.3",
     "@vueuse/core": "^14.3.0",
     "@zip.js/zip.js": "2.7.29",
     "clsx": "^2.1.1",
