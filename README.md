@@ -15,7 +15,7 @@ Try it with built-in demo data:
 
 ```bash
 pnpm install
-pnpm dev        # http://localhost:5173 - shows mock data
+pnpm dev:app  # http://localhost:5173 - shows mock data
 ```
 
 That's the full UI running on sample reports. To plug in your own, see [Set up your own reports](#set-up-your-own-reports).

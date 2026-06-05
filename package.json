@@ -9,11 +9,14 @@
     "node": "24.12.0"
   },
   "scripts": {
-    "dev": "pnpm --filter @playbackhq/app dev",
-    "build": "pnpm --filter @playbackhq/app build",
+    "dev:app": "pnpm --filter @playbackhq/app dev",
+    "dev:viewer": "pnpm --filter @playbackhq/trace-viewer dev",
+    "build:app": "pnpm --filter @playbackhq/app build",
+    "build:viewer": "pnpm --filter @playbackhq/trace-viewer build",
     "build:cli": "pnpm --filter @playbackhq/cli build",
     "build:core": "pnpm --filter @playbackhq/core build",
     "preview": "pnpm --filter @playbackhq/app preview",
+    "preview:viewer": "pnpm --filter @playbackhq/trace-viewer preview",
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
