@@ -22,10 +22,21 @@ upstream so the vendored files compile unedited and re-syncing stays a plain re-
 
 Keep this list short; every entry is a re-sync cost.
 
-1. `src/sw/traceLoaderBackends.ts` - `entry.getData` cast to `zip.FileEntry`
-   (zip.js >=2.8 split `Entry` into `FileEntry | DirectoryEntry`).
-2. `src/core/protocol/channels.ts` - hand-written minimal type stub instead of
+1. `src/core/protocol/channels.ts` - hand-written minimal type stub instead of
    the full upstream `@protocol/channels` (which pulls the whole protocol).
+
+The vendored files themselves are unedited. `@zip.js/zip.js` is pinned to the
+exact version Playwright ships (`2.7.29`): newer 2.8.x dropped the
+`lib/zip-no-worker-inflate.js` subpath the service worker imports and split the
+`Entry` type, both of which would force edits to vendored files. Pinning keeps
+them pristine.
+
+## Browser harness
+
+`index.html` + `src/main.ts` register the service worker
+(`vite.sw.config.ts` bundles `src/sw-main.ts` to `public/sw.bundle.js`), load a
+trace from `public/fixtures/`, and render one DOM snapshot in an iframe. Run
+`pnpm dev`. This is a throwaway proof; the real Vue UI replaces `src/main.ts`.
 
 ## License
 

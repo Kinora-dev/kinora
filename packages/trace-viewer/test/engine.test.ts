@@ -1,4 +1,4 @@
-import type { Entry, FileEntry } from '@zip.js/zip.js'
+import type { Entry } from '@zip.js/zip.js'
 import type { TraceLoaderBackend } from '../src/core/isomorphic/trace/traceLoader'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -29,7 +29,7 @@ class FileZipBackend implements TraceLoaderBackend {
   async hasEntry(name: string): Promise<boolean> { return this.entries.has(name) }
 
   async readText(name: string): Promise<string | undefined> {
-    const entry = this.entries.get(name) as FileEntry | undefined
+    const entry = this.entries.get(name)
     if (!entry?.getData)
       return
     const writer = new TextWriter()
@@ -38,7 +38,7 @@ class FileZipBackend implements TraceLoaderBackend {
   }
 
   async readBlob(name: string): Promise<Blob | undefined> {
-    const entry = this.entries.get(name) as FileEntry | undefined
+    const entry = this.entries.get(name)
     if (!entry?.getData)
       return
     const writer = new BlobWriter()

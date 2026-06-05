@@ -150,8 +150,8 @@ importers:
   packages/trace-viewer:
     dependencies:
       '@zip.js/zip.js':
-        specifier: ^2.7.29
-        version: 2.8.26
+        specifier: 2.7.29
+        version: 2.7.29
     devDependencies:
       '@types/node':
         specifier: ^24.12.3
@@ -159,6 +159,9 @@ importers:
       typescript:
         specifier: ~6.0.2
         version: 6.0.3
+      vite:
+        specifier: ^8.0.12
+        version: 8.0.16(@types/node@24.13.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0)
       vitest:
         specifier: ^4.1.8
         version: 4.1.8(@types/node@24.13.0)(vite@8.0.16(@types/node@24.13.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
@@ -1171,9 +1174,9 @@ packages:
     peerDependencies:
       vue: ^3.5.0
 
-  '@zip.js/zip.js@2.8.26':
-    resolution: {integrity: sha512-RQ4h9F6DOiHxpdocUDrOl6xBM+yOtz+LkUol47AVWcfebGBDpZ7w7Xvz9PS24JgXvLGiXXzSAfdCdVy1tPlaFA==}
-    engines: {bun: '>=0.7.0', deno: '>=1.0.0', node: '>=18.0.0'}
+  '@zip.js/zip.js@2.7.29':
+    resolution: {integrity: sha512-KtOa3HY7Vi77ctZAVhx2nsKweDTCP4DVBghZkvg5qyIX6T/Z54QlU6f0q2hFhxu5j+LgUDeMMhiv2xj4ZF6snA==}
+    engines: {bun: '>=0.7.0', deno: '>=1.0.0', node: '>=16.5.0'}
 
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -3530,7 +3533,7 @@ snapshots:
     dependencies:
       vue: 3.5.35(typescript@6.0.3)
 
-  '@zip.js/zip.js@2.8.26': {}
+  '@zip.js/zip.js@2.7.29': {}
 
   acorn-jsx@5.3.2(acorn@8.16.0):
     dependencies:

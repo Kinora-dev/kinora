@@ -8,14 +8,19 @@
   "license": "MIT",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:sw": "vite build --config vite.sw.config.ts",
+    "dev": "pnpm build:sw && vite",
+    "build": "pnpm build:sw && vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@zip.js/zip.js": "^2.7.29"
+    "@zip.js/zip.js": "2.7.29"
   },
   "devDependencies": {
     "@types/node": "^24.12.3",
     "typescript": "~6.0.2",
+    "vite": "^8.0.12",
     "vitest": "^4.1.8"
   }
 }

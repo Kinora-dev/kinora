@@ -67,8 +67,7 @@ export class ZipTraceLoaderBackend implements TraceLoaderBackend {
     if (!entry)
       return;
     const writer = new zipjs.TextWriter();
-    // zip.js >=2.8 splits Entry into FileEntry|DirectoryEntry; getData is on FileEntry.
-    await (entry as zip.FileEntry).getData?.(writer);
+    await entry.getData?.(writer);
     return writer.getData();
   }
 
@@ -78,7 +77,7 @@ export class ZipTraceLoaderBackend implements TraceLoaderBackend {
     if (!entry)
       return;
     const writer = new zipjs.BlobWriter() as zip.BlobWriter;
-    await (entry as zip.FileEntry).getData!(writer);
+    await entry.getData!(writer);
     return writer.getData();
   }
 }

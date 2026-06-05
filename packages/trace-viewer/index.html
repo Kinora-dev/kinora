@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>playback trace viewer (harness)</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; }
+      header { padding: 8px 12px; background: #1e1e1e; color: #ddd; font-size: 13px; height: 36px; display: flex; align-items: center; }
+      iframe { border: 0; width: 100vw; height: calc(100vh - 36px); background: #fff; display: block; }
+    </style>
+  </head>
+  <body>
+    <header id="status">loading…</header>
+    <iframe id="snapshot" sandbox="allow-same-origin allow-scripts"></iframe>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
