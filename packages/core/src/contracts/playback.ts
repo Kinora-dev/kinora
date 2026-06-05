@@ -63,6 +63,7 @@ export const normAttachmentSchema = z.object({
   contentType: z.string(),
   path: z.string().optional(),
   hasBody: z.boolean(), // body stripped on ingest; flag that one existed
+  url: z.string().optional(), // relative path to the copied artifact (e.g. trace.zip), if hosted
 })
 
 export const normErrorSchema = z.object({

@@ -1,6 +1,8 @@
 #!/usr/bin/env node
-import type { Manifest, ProjectEntry, RunSummary } from '@playbackhq/core'
-import { existsSync } from 'node:fs'
+import type { CopyArtifact, Manifest, ProjectEntry, RunSummary } from '@playbackhq/core'
+import { Buffer } from 'node:buffer'
+import { createHash } from 'node:crypto'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
@@ -23,6 +25,7 @@ Options:
   --name <name>         Project display name (defaults to id; updated if given)
   --run <id>            Run id (defaults to the report date, YYYY-MM-DD)
   --out <dir>           Output root served statically (default: playback-data)
+  --results-dir <dir>   Playwright test-results dir, to resolve trace.zip paths (default: test-results)
   --git-sha <sha>
   --git-branch <branch>
   --ci-provider <name>
@@ -67,6 +70,34 @@ async function writeJson(file: string, data: unknown): Promise<void> {
   await writeFile(file, `${JSON.stringify(data, null, 2)}\n`)
 }
 
+// Copies trace.zip artifacts into <out>/artifacts/<project>/<run>/<sha1>.zip so
+// the dashboard can link the trace viewer at one. Traces only, for now.
+function makeCopyArtifact(outDir: string, resultsDir: string): CopyArtifact {
+  return (att, ctx) => {
+    const isTrace = att.name === 'trace' || att.contentType === 'application/zip'
+    if (!isTrace)
+      return undefined
+
+    let buf: Buffer | undefined
+    if (att.path) {
+      const file = path.isAbsolute(att.path) ? att.path : path.resolve(resultsDir, att.path)
+      if (existsSync(file))
+        buf = readFileSync(file)
+    }
+    if (!buf && att.body)
+      buf = Buffer.from(att.body, 'base64')
+    if (!buf)
+      return undefined
+
+    const sha = createHash('sha1').update(buf).digest('hex').slice(0, 16)
+    const rel = `artifacts/${ctx.projectId}/${ctx.runId}/${sha}.zip`
+    const dest = path.join(outDir, rel)
+    mkdirSync(path.dirname(dest), { recursive: true })
+    writeFileSync(dest, buf)
+    return rel
+  }
+}
+
 async function main(): Promise<void> {
   const { values, positionals } = parseArgs({
     allowPositionals: true,
@@ -75,6 +106,7 @@ async function main(): Promise<void> {
       'name': { type: 'string' },
       'run': { type: 'string' },
       'out': { type: 'string', default: 'playback-data' },
+      'results-dir': { type: 'string', default: 'test-results' },
       'git-sha': { type: 'string' },
       'git-branch': { type: 'string' },
       'ci-provider': { type: 'string' },
@@ -119,14 +151,17 @@ async function main(): Promise<void> {
         }
       : undefined
 
+  const outDir = path.resolve(values.out)
+  const resultsDir = path.resolve(values['results-dir'] ?? 'test-results')
+
   const { summary, report } = ingestPlaywrightReport(raw, {
     projectId: values.project,
     runId,
     git,
     ci,
+    copyArtifact: makeCopyArtifact(outDir, resultsDir),
   })
 
-  const outDir = path.resolve(values.out)
   const manifestFile = path.join(outDir, 'manifest.json')
 
   const manifest = await readManifest(manifestFile)

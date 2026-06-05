@@ -4,11 +4,20 @@ import { SCHEMA_VERSION } from '../contracts/playback'
 import { playwrightReportSchema } from '../contracts/playwright'
 import { makeTestKey } from './test-key'
 
+// Provided by the CLI (which has fs access): copies a Playwright attachment
+// (from disk path or inline base64 body) somewhere hostable and returns a
+// relative URL. Core stays fs-free; the side effect is injected.
+export type CopyArtifact = (
+  attachment: { name: string, contentType: string, path?: string, body?: string },
+  ctx: { projectId: string, runId: string, testKey: string },
+) => string | undefined
+
 export interface IngestMeta {
   projectId: string
   runId: string
   git?: RunSummary['git']
   ci?: RunSummary['ci']
+  copyArtifact?: CopyArtifact
 }
 
 interface WalkCtx {
@@ -20,25 +29,27 @@ function flattenSpecs(
   suites: PlaywrightReport['suites'],
   parent: WalkCtx,
   out: NormTest[],
+  meta: IngestMeta,
 ): void {
   for (const suite of suites) {
     const ctx: WalkCtx = {
       file: suite.file || parent.file,
       titlePath: suite.title ? [...parent.titlePath, suite.title] : parent.titlePath,
     }
-    for (const spec of suite.specs) normalizeSpec(spec, ctx, out)
+    for (const spec of suite.specs) normalizeSpec(spec, ctx, out, meta)
     if (suite.suites)
-      flattenSpecs(suite.suites, ctx, out)
+      flattenSpecs(suite.suites, ctx, out, meta)
   }
 }
 
-function normalizeSpec(spec: PwSpec, ctx: WalkCtx, out: NormTest[]): void {
+function normalizeSpec(spec: PwSpec, ctx: WalkCtx, out: NormTest[], meta: IngestMeta): void {
   const file = spec.file || ctx.file
   const titlePath = [...ctx.titlePath, spec.title]
   for (const test of spec.tests) {
     const last = test.results.at(-1)
+    const testKey = makeTestKey(file, titlePath, test.projectName)
     out.push({
-      testKey: makeTestKey(file, titlePath, test.projectName),
+      testKey,
       title: spec.title,
       titlePath,
       file,
@@ -59,6 +70,10 @@ function normalizeSpec(spec: PwSpec, ctx: WalkCtx, out: NormTest[]): void {
         contentType: a.contentType,
         path: a.path,
         hasBody: a.body != null,
+        url: meta.copyArtifact?.(
+          { name: a.name, contentType: a.contentType, path: a.path, body: a.body },
+          { projectId: meta.projectId, runId: meta.runId, testKey },
+        ),
       })),
     })
   }
@@ -99,7 +114,7 @@ export function ingestPlaywrightReport(
 ): { summary: RunSummary, report: RunReport } {
   const parsed: PlaywrightReport = playwrightReportSchema.parse(raw)
   const tests: NormTest[] = []
-  flattenSpecs(parsed.suites, { titlePath: [], file: '' }, tests)
+  flattenSpecs(parsed.suites, { titlePath: [], file: '' }, tests, meta)
 
   const counts = countsFrom(parsed, tests)
   const startedAt = parsed.stats.startTime
