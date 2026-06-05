@@ -7,13 +7,15 @@
   "author": "Joris Gallot",
   "license": "MIT",
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@zip.js/zip.js": "^2.7.29"
   },
   "devDependencies": {
     "@types/node": "^24.12.3",
-    "typescript": "~6.0.2"
+    "typescript": "~6.0.2",
+    "vitest": "^4.1.8"
   }
 }
