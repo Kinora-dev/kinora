@@ -26,6 +26,8 @@ const items = shallowRef<ActionItem[]>([])
 const selectedId = ref<string | null>(null)
 const snapshotTab = ref<SnapshotTab>('action')
 const snapshotInfo = ref<SnapshotInfo>({})
+const playing = ref(false)
+let playTimer: ReturnType<typeof setInterval> | undefined
 
 function flatten(m: TraceModel): ActionItem[] {
   const { rootItem } = buildActionTree(m.actions)
@@ -98,6 +100,32 @@ function setTab(tab: SnapshotTab): void {
   snapshotTab.value = tab
 }
 
+function stopPlay(): void {
+  playing.value = false
+  if (playTimer) {
+    clearInterval(playTimer)
+    playTimer = undefined
+  }
+}
+
+// Auto-advance selection through actions (slideshow). Stops at the last action.
+function togglePlay(): void {
+  if (playing.value) {
+    stopPlay()
+    return
+  }
+  if (selectedIndex.value >= items.value.length - 1)
+    selectedId.value = items.value[0]?.id ?? null
+  playing.value = true
+  playTimer = setInterval(() => {
+    if (selectedIndex.value >= items.value.length - 1) {
+      stopPlay()
+      return
+    }
+    step(1)
+  }, 700)
+}
+
 async function refreshSnapshotInfo(): Promise<void> {
   const infoUrl = snapshotInfoUrl(traceUri.value, currentSnapshot.value)
   if (!infoUrl) {
@@ -128,10 +156,12 @@ export function useTraceStore() {
     currentSnapshot,
     currentSnapshotUrl,
     snapshotInfo,
+    playing,
     load,
     select,
     step,
     setTab,
+    togglePlay,
     refreshSnapshotInfo,
   }
 }

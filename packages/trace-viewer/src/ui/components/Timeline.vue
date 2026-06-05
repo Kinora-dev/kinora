@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { cn } from '@playbackhq/ui'
-import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { actionStatus, actionTitle } from '../lib/action'
 import { useTraceStore } from '../store'
@@ -27,6 +27,23 @@ const segments = computed(() =>
   }),
 )
 
+const frames = computed(() => {
+  const m = store.model.value
+  if (!m)
+    return []
+  const out: { url: string, left: number, timestamp: number }[] = []
+  for (const page of m.pages) {
+    for (const f of page.screencastFrames) {
+      out.push({
+        url: m.createRelativeUrl(`sha1/${f.sha1}`),
+        left: ((f.timestamp - bounds.value.min) / bounds.value.span) * 100,
+        timestamp: f.timestamp,
+      })
+    }
+  }
+  return out.sort((a, b) => a.timestamp - b.timestamp)
+})
+
 const statusColor: Record<string, string> = {
   ok: 'bg-pass/70 hover:bg-pass',
   error: 'bg-fail hover:bg-fail',
@@ -37,11 +54,36 @@ const currentTitle = computed(() =>
   store.selectedAction.value ? actionTitle(store.selectedAction.value) : 'No action selected',
 )
 const position = computed(() => `${store.selectedIndex.value + 1} / ${store.items.value.length}`)
+
+// Select the action whose time window is closest to a screencast frame.
+function seekToTime(t: number): void {
+  let best: string | undefined
+  let bestDist = Infinity
+  for (const item of store.items.value) {
+    const start = item.action.startTime ?? 0
+    const dist = Math.abs(start - t)
+    if (dist < bestDist) {
+      bestDist = dist
+      best = item.id
+    }
+  }
+  if (best)
+    store.select(best)
+}
 </script>
 
 <template>
   <div class="flex h-full flex-col">
-    <div class="flex h-11 shrink-0 items-center gap-3 px-3">
+    <div class="flex h-11 shrink-0 items-center gap-2 px-3">
+      <button
+        type="button"
+        class="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        :title="store.playing.value ? 'Pause' : 'Play'"
+        @click="store.togglePlay"
+      >
+        <Pause v-if="store.playing.value" class="size-4" />
+        <Play v-else class="size-4" />
+      </button>
       <div class="flex items-center gap-0.5">
         <button
           type="button"
@@ -70,6 +112,21 @@ const position = computed(() => `${store.selectedIndex.value + 1} / ${store.item
       </div>
     </div>
 
+    <!-- filmstrip -->
+    <div v-if="frames.length" class="relative h-12 shrink-0 border-t border-border bg-muted/10">
+      <div class="absolute inset-x-2 inset-y-1.5">
+        <img
+          v-for="(f, i) in frames"
+          :key="i"
+          :src="f.url"
+          class="absolute top-0 h-full w-16 cursor-pointer rounded-sm border border-border object-cover object-top transition-transform hover:z-10 hover:scale-110"
+          :style="{ left: `${f.left}%` }"
+          @click="seekToTime(f.timestamp)"
+        >
+      </div>
+    </div>
+
+    <!-- action track -->
     <div class="relative h-7 shrink-0 border-t border-border bg-muted/20">
       <div class="absolute inset-x-2 inset-y-1.5">
         <button
