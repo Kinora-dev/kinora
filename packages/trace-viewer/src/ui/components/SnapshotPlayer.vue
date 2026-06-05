@@ -4,6 +4,7 @@ import { cn } from '@playbackhq/ui'
 import { Monitor } from 'lucide-vue-next'
 import { computed, watch } from 'vue'
 import { useTraceStore } from '../store'
+import TextTooltip from './TextTooltip.vue'
 
 const store = useTraceStore()
 
@@ -58,7 +59,7 @@ watch(frameSrc, () => {
             <span class="size-2.5 rounded-full bg-pass/70" />
           </div>
           <div class="ml-1 flex h-5 min-w-0 flex-1 items-center rounded-md border border-border/70 bg-background/60 px-2.5">
-            <span class="truncate font-mono text-[11px] text-muted-foreground">{{ pageUrl || 'about:blank' }}</span>
+            <TextTooltip :text="pageUrl || 'about:blank'" class="font-mono text-[11px] text-muted-foreground" />
           </div>
         </div>
         <div class="relative min-h-0 flex-1 bg-white">

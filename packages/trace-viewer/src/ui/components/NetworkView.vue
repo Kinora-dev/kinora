@@ -2,12 +2,14 @@
 import type { ColumnDef, SortingState } from '@tanstack/vue-table'
 import type { NetworkRow, ResourceCategory } from '../lib/network'
 import { cn } from '@playbackhq/ui'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@playbackhq/ui/dropdown-menu'
 import { valueUpdater } from '@playbackhq/ui/table/utils'
 import { getCoreRowModel, getSortedRowModel, useVueTable } from '@tanstack/vue-table'
-import { ChevronDown, ChevronUp } from 'lucide-vue-next'
-import { computed, ref } from 'vue'
-import { formatSize, RESOURCE_CATEGORIES, resourcesForAction, statusClass } from '../lib/network'
+import { ChevronDown, ChevronUp, Copy } from 'lucide-vue-next'
+import { computed, ref, watch } from 'vue'
+import { bodyUrl, formatSize, RESOURCE_CATEGORIES, resourcesForAction, statusClass, toCurl, toFetch } from '../lib/network'
 import { useTraceStore } from '../store'
+import TextTooltip from './TextTooltip.vue'
 
 const store = useTraceStore()
 
@@ -46,6 +48,39 @@ const table = useVueTable({
 })
 
 const selected = computed(() => rows.value.find(r => r.id === selectedId.value) ?? null)
+
+interface Body { kind: 'image' | 'text' | 'none', url?: string, text?: string }
+const body = ref<Body>({ kind: 'none' })
+
+watch(selected, async (sel) => {
+  body.value = { kind: 'none' }
+  if (!sel)
+    return
+  const content = sel.resource.response?.content
+  const url = bodyUrl(store.model.value, content?._sha1)
+  if (!url)
+    return
+  const mime = content?.mimeType ?? ''
+  if (mime.startsWith('image/')) {
+    body.value = { kind: 'image', url }
+    return
+  }
+  if (mime.startsWith('text/') || mime.includes('json') || mime.includes('xml') || mime.includes('javascript')) {
+    try {
+      const text = await (await fetch(url)).text()
+      body.value = { kind: 'text', url, text: text.slice(0, 50_000) }
+    }
+    catch {
+      body.value = { kind: 'none', url }
+    }
+    return
+  }
+  body.value = { kind: 'none', url }
+})
+
+function copy(text: string): void {
+  void navigator.clipboard.writeText(text)
+}
 
 function toggleCat(cat: ResourceCategory): void {
   const next = new Set(activeCats.value)
@@ -121,8 +156,8 @@ const alignEnd = new Set(['size', 'duration', 'status'])
               )"
               @click="selectedId = row.original.id"
             >
-              <td class="max-w-0 truncate px-3 py-1 font-mono text-foreground/90" :title="row.original.url">
-                {{ row.original.name }}
+              <td class="max-w-0 px-3 py-1 font-mono text-foreground/90">
+                <TextTooltip :text="row.original.name" :tip="row.original.url" class="block" />
               </td>
               <td class="px-3 py-1 text-muted-foreground">
                 {{ row.original.method }}
@@ -146,14 +181,47 @@ const alignEnd = new Set(['size', 'duration', 'status'])
 
       <!-- detail -->
       <div v-if="selected" class="w-80 shrink-0 overflow-auto border-l border-border p-3 text-xs">
-        <div class="mb-2 font-mono break-all text-foreground/90">
-          {{ selected.url }}
+        <div class="mb-2 flex items-start gap-2">
+          <div class="min-w-0 flex-1 font-mono break-all text-foreground/90">
+            {{ selected.url }}
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              class="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              title="Copy"
+            >
+              <Copy class="size-3.5" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem @click="copy(selected.url)">
+                Copy URL
+              </DropdownMenuItem>
+              <DropdownMenuItem @click="copy(toCurl(selected.resource))">
+                Copy as cURL
+              </DropdownMenuItem>
+              <DropdownMenuItem @click="copy(toFetch(selected.resource))">
+                Copy as fetch
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <div class="mb-3 flex gap-3 text-muted-foreground">
           <span>{{ selected.method }}</span>
           <span :class="statusClass(selected.status)">{{ selected.status || '-' }}</span>
           <span>{{ formatSize(selected.size) }}</span>
         </div>
+
+        <template v-if="body.kind !== 'none' || body.url">
+          <div class="mb-1 font-semibold tracking-wide text-muted-foreground uppercase">
+            Response body
+          </div>
+          <div class="mb-3">
+            <img v-if="body.kind === 'image'" :src="body.url" class="max-h-48 rounded border border-border">
+            <pre v-else-if="body.kind === 'text'" class="max-h-48 overflow-auto rounded bg-muted/40 p-2 font-mono whitespace-pre-wrap">{{ body.text }}</pre>
+            <a v-else-if="body.url" :href="body.url" download class="text-muted-foreground hover:text-foreground">download body</a>
+          </div>
+        </template>
+
         <div class="mb-1 font-semibold tracking-wide text-muted-foreground uppercase">
           Response headers
         </div>

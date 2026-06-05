@@ -5,6 +5,7 @@ import { computed, ref } from 'vue'
 import { actionDuration, actionStatus, actionTitle } from '../lib/action'
 import { formatMs } from '../lib/format'
 import { useTraceStore } from '../store'
+import TextTooltip from './TextTooltip.vue'
 
 const store = useTraceStore()
 const filter = ref('')
@@ -63,7 +64,7 @@ const rows = computed(() => {
           <X v-else-if="row.status === 'error'" class="size-3.5 text-fail" />
           <ChevronRight v-else class="size-3.5 text-muted-foreground" />
         </span>
-        <span class="min-w-0 flex-1 truncate">{{ row.title }}</span>
+        <TextTooltip :text="row.title" class="min-w-0 flex-1" />
         <span class="shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground/70">{{ formatMs(row.duration) }}</span>
       </button>
     </div>

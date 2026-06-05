@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@playbackhq/ui/resizable'
+import { TooltipProvider } from '@playbackhq/ui/tooltip'
 import { useStorage } from '@vueuse/core'
 import { Loader2 } from 'lucide-vue-next'
 import { onMounted } from 'vue'
@@ -26,60 +27,62 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="grid h-full grid-rows-[auto_minmax(0,1fr)] bg-background text-foreground">
-    <!-- global top bar -->
-    <header class="flex h-11 items-center gap-2.5 border-b border-border px-4">
-      <span class="size-2 rounded-full bg-signal" style="animation: rec-pulse 2s ease-in-out infinite" />
-      <span class="text-sm font-semibold tracking-tight">playback</span>
-      <span class="font-mono text-[11px] text-muted-foreground">trace</span>
-      <span v-if="store.model.value?.title" class="ml-2 truncate text-xs text-muted-foreground">
-        · {{ store.model.value.title }}
-      </span>
-    </header>
+  <TooltipProvider :delay-duration="300">
+    <div class="grid h-full grid-rows-[auto_minmax(0,1fr)] bg-background text-foreground">
+      <!-- global top bar -->
+      <header class="flex h-11 items-center gap-2.5 border-b border-border px-4">
+        <span class="size-2 rounded-full bg-signal" style="animation: rec-pulse 2s ease-in-out infinite" />
+        <span class="text-sm font-semibold tracking-tight">playback</span>
+        <span class="font-mono text-[11px] text-muted-foreground">trace</span>
+        <span v-if="store.model.value?.title" class="ml-2 truncate text-xs text-muted-foreground">
+          · {{ store.model.value.title }}
+        </span>
+      </header>
 
-    <!-- loading / error -->
-    <div v-if="store.status.value === 'loading' || store.status.value === 'idle'" class="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-      <Loader2 class="size-4 animate-spin" />
-      Loading trace…
-    </div>
-    <div v-else-if="store.status.value === 'error'" class="flex items-center justify-center p-8">
-      <div class="max-w-md rounded-lg border border-fail/30 bg-fail/5 p-4 text-sm text-fail">
-        <div class="mb-1 font-semibold">
-          Failed to load trace
-        </div>
-        <div class="font-mono text-xs text-fail/80">
-          {{ store.errorMessage.value }}
+      <!-- loading / error -->
+      <div v-if="store.status.value === 'loading' || store.status.value === 'idle'" class="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+        <Loader2 class="size-4 animate-spin" />
+        Loading trace…
+      </div>
+      <div v-else-if="store.status.value === 'error'" class="flex items-center justify-center p-8">
+        <div class="max-w-md rounded-lg border border-fail/30 bg-fail/5 p-4 text-sm text-fail">
+          <div class="mb-1 font-semibold">
+            Failed to load trace
+          </div>
+          <div class="font-mono text-xs text-fail/80">
+            {{ store.errorMessage.value }}
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- workbench -->
-    <ResizablePanelGroup
-      v-else
-      direction="horizontal"
-      @layout="(s: number[]) => (cols = s)"
-    >
-      <ResizablePanel :default-size="cols[0]" :min-size="14" :max-size="40">
-        <ActionsList />
-      </ResizablePanel>
-      <ResizableHandle with-handle />
-      <ResizablePanel :default-size="cols[1]">
-        <div class="grid h-full grid-rows-[auto_minmax(0,1fr)]">
-          <Timeline />
-          <ResizablePanelGroup
-            direction="vertical"
-            @layout="(s: number[]) => (rows = s)"
-          >
-            <ResizablePanel :default-size="rows[0]" :min-size="20">
-              <SnapshotPlayer />
-            </ResizablePanel>
-            <ResizableHandle with-handle />
-            <ResizablePanel :default-size="rows[1]" :min-size="15">
-              <DetailTabs />
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        </div>
-      </ResizablePanel>
-    </ResizablePanelGroup>
-  </div>
+      <!-- workbench -->
+      <ResizablePanelGroup
+        v-else
+        direction="horizontal"
+        @layout="(s: number[]) => (cols = s)"
+      >
+        <ResizablePanel :default-size="cols[0]" :min-size="14" :max-size="40">
+          <ActionsList />
+        </ResizablePanel>
+        <ResizableHandle with-handle />
+        <ResizablePanel :default-size="cols[1]">
+          <div class="grid h-full grid-rows-[auto_minmax(0,1fr)]">
+            <Timeline />
+            <ResizablePanelGroup
+              direction="vertical"
+              @layout="(s: number[]) => (rows = s)"
+            >
+              <ResizablePanel :default-size="rows[0]" :min-size="20">
+                <SnapshotPlayer />
+              </ResizablePanel>
+              <ResizableHandle with-handle />
+              <ResizablePanel :default-size="rows[1]" :min-size="15">
+                <DetailTabs />
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
+    </div>
+  </TooltipProvider>
 </template>

@@ -45,19 +45,20 @@ function resourceName(url: string): string {
   }
 }
 
-// Resources whose request happened during the selected action.
+// Network requests up to (and including) the selected action. Cumulative rather
+// than windowed: async sub-resources often resolve between actions, so a strict
+// per-action window would usually be empty.
 export function resourcesForAction(
   resources: ResourceEntry[],
   action: ActionTraceEventInContext | undefined,
 ): NetworkRow[] {
   if (!action)
     return []
-  const start = action.startTime
-  const end = action.endTime || start
+  const end = action.endTime || action.startTime
   const rows: NetworkRow[] = []
   for (const r of resources) {
     const t = r._monotonicTime
-    if (t === undefined || t < start || t > end)
+    if (t === undefined || t > end)
       continue
     rows.push({
       id: r.id,
@@ -92,4 +93,36 @@ export function statusClass(status: number): string {
   if (status >= 300)
     return 'text-flaky'
   return 'text-pass'
+}
+
+function shellQuote(value: string): string {
+  return `'${value.replace(/'/g, `'\\''`)}'`
+}
+
+export function toCurl(r: ResourceEntry): string {
+  const parts = [`curl ${shellQuote(r.request.url)}`]
+  if (r.request.method && r.request.method !== 'GET')
+    parts.push(`-X ${r.request.method}`)
+  for (const h of r.request.headers ?? [])
+    parts.push(`-H ${shellQuote(`${h.name}: ${h.value}`)}`)
+  if (r.request.postData?.text)
+    parts.push(`--data-raw ${shellQuote(r.request.postData.text)}`)
+  return parts.join(' \\\n  ')
+}
+
+export function toFetch(r: ResourceEntry): string {
+  const headers: Record<string, string> = {}
+  for (const h of r.request.headers ?? [])
+    headers[h.name] = h.value
+  const init: Record<string, unknown> = { method: r.request.method, headers }
+  if (r.request.postData?.text)
+    init.body = r.request.postData.text
+  return `fetch(${JSON.stringify(r.request.url)}, ${JSON.stringify(init, null, 2)})`
+}
+
+// URL to fetch a response/post body blob stored in the trace.
+export function bodyUrl(model: { createRelativeUrl: (p: string) => string } | null, sha1: string | undefined): string | undefined {
+  if (!sha1 || !model)
+    return undefined
+  return model.createRelativeUrl(`sha1/${sha1}`)
 }
