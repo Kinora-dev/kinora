@@ -6,6 +6,37 @@
 /* Scan this package's own UI source for Tailwind classes. */
 @source './ui';
 
+/* CodeMirror syntax palette (viewer-only). CSS vars so one theme adapts light/dark. */
+:root {
+  --code-keyword: oklch(0.52 0.19 295);
+  --code-string: oklch(0.52 0.13 150);
+  --code-comment: var(--muted-foreground);
+  --code-number: oklch(0.55 0.15 65);
+  --code-constant: oklch(0.55 0.16 40);
+  --code-function: oklch(0.52 0.16 255);
+  --code-type: oklch(0.5 0.1 200);
+  --code-property: oklch(0.5 0.13 255);
+  --code-variable: var(--foreground);
+  --code-operator: color-mix(in oklch, var(--foreground) 70%, transparent);
+  --code-punctuation: color-mix(in oklch, var(--foreground) 55%, transparent);
+  --code-regexp: oklch(0.55 0.18 22);
+  --code-tag: oklch(0.52 0.18 22);
+  --code-attribute: oklch(0.55 0.15 65);
+}
+
+.dark {
+  --code-keyword: oklch(0.78 0.13 300);
+  --code-string: oklch(0.8 0.13 150);
+  --code-number: oklch(0.83 0.12 75);
+  --code-constant: oklch(0.82 0.13 50);
+  --code-function: oklch(0.78 0.11 245);
+  --code-type: oklch(0.82 0.1 195);
+  --code-property: oklch(0.82 0.07 250);
+  --code-regexp: oklch(0.78 0.15 25);
+  --code-tag: oklch(0.8 0.14 25);
+  --code-attribute: oklch(0.83 0.12 75);
+}
+
 /* Trace viewer: dense dev-tool chrome. */
 html,
 body,
