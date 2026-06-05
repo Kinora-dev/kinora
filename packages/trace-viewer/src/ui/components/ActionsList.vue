@@ -25,7 +25,7 @@ const rows = computed(() => {
 
 <template>
   <div class="flex h-full flex-col">
-    <div class="flex h-9 shrink-0 items-center gap-2 border-b border-border px-3">
+    <div class="flex h-11 shrink-0 items-center gap-2 border-b border-border px-3">
       <span class="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Actions</span>
       <span class="font-mono text-[11px] text-muted-foreground/70">{{ store.items.value.length }}</span>
     </div>
