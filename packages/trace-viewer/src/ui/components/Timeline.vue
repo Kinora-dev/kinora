@@ -74,7 +74,7 @@ function seekToTime(t: number): void {
 
 <template>
   <div class="flex h-full flex-col">
-    <div class="flex h-11 shrink-0 items-center gap-2 px-3">
+    <div class="flex h-11 shrink-0 items-center gap-2 border-b border-border px-3">
       <button
         type="button"
         data-testid="play"
@@ -114,7 +114,7 @@ function seekToTime(t: number): void {
     </div>
 
     <!-- filmstrip -->
-    <div v-if="frames.length" class="relative h-12 shrink-0 border-t border-border bg-muted/10">
+    <div v-if="frames.length" class="relative h-12 shrink-0 border-b border-border bg-muted/10">
       <div class="absolute inset-x-2 inset-y-1.5">
         <img
           v-for="(f, i) in frames"
@@ -128,7 +128,7 @@ function seekToTime(t: number): void {
     </div>
 
     <!-- action track -->
-    <div class="relative h-7 shrink-0 border-t border-border bg-muted/20">
+    <div class="relative h-7 shrink-0 bg-muted/20">
       <div class="absolute inset-x-2 inset-y-1.5">
         <button
           v-for="seg in segments"

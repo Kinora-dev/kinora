@@ -31,8 +31,8 @@ const rows = computed(() => {
       <span class="font-mono text-[11px] text-muted-foreground/70">{{ store.items.value.length }}</span>
     </div>
 
-    <div class="border-b border-border px-2 py-1.5">
-      <FilterInput v-model="filter" placeholder="Filter actions" />
+    <div class="flex h-12 shrink-0 items-center border-b border-border px-2">
+      <FilterInput v-model="filter" placeholder="Filter actions" class="w-full" />
     </div>
 
     <div class="min-h-0 flex-1 overflow-y-auto py-1">
