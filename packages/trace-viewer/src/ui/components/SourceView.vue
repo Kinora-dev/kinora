@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import type { StackFrame } from '@protocol/channels'
 import { cn } from '@playbackhq/ui'
-import { computed, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, ref, watch } from 'vue'
 import { calculateSha1 } from '../lib/sha1'
 import { useTraceStore } from '../store'
+
+// Lazy-load CodeMirror: it only matters once an action with a stack is selected.
+const CodeView = defineAsyncComponent(() => import('./CodeView.vue'))
 
 const store = useTraceStore()
 
@@ -13,7 +16,7 @@ const content = ref('')
 const loading = ref(false)
 
 const targetLine = computed(() => frames.value[selectedFrame.value]?.line ?? 0)
-const lines = computed(() => content.value.split('\n'))
+const lang = computed(() => fileName(frames.value[selectedFrame.value]?.file ?? '').split('.').pop()?.toLowerCase() ?? '')
 
 function fileName(file: string): string {
   return file.split(/[/\\]/).pop() ?? file
@@ -66,34 +69,14 @@ watch(() => store.selectedId.value, () => {
     </div>
 
     <!-- code -->
-    <div class="min-w-0 flex-1 overflow-auto">
+    <div class="min-w-0 flex-1 overflow-hidden">
       <div v-if="loading" class="p-3 text-sm text-muted-foreground">
         Loading source…
       </div>
       <div v-else-if="!frames.length" class="flex h-full items-center justify-center text-sm text-muted-foreground">
         No source for this action
       </div>
-      <table v-else class="w-full border-collapse font-mono text-xs leading-[1.6]">
-        <tbody>
-          <tr
-            v-for="(line, i) in lines"
-            :key="i"
-            :class="cn(i + 1 === targetLine && 'bg-signal/15')"
-          >
-            <td class="w-12 shrink-0 select-none border-r border-border/50 px-2 text-right align-top text-muted-foreground/50 tabular-nums">
-              {{ i + 1 }}
-            </td>
-            <td
-              :class="cn(
-                'whitespace-pre px-3 align-top',
-                i + 1 === targetLine ? 'text-foreground' : 'text-foreground/80',
-              )"
-            >
-              {{ line || ' ' }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <CodeView v-else :code="content" :lang="lang" :highlight-line="targetLine" />
     </div>
   </div>
 </template>
