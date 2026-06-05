@@ -13,6 +13,9 @@ const alias = {
 
 export default defineConfig({
   base: '',
+  // Dedicated port so the service worker always lives on its own origin,
+  // separate from the dashboard app (5173).
+  server: { port: 5174 },
   plugins: [vue(), tailwindcss()],
   resolve: { alias },
   build: { outDir: 'dist' },

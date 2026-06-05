@@ -20,7 +20,7 @@ useKeyboardNav()
 
 onMounted(() => {
   const param = new URLSearchParams(location.search).get('trace')
-  const uri = param ?? new URL('fixtures/test-trace1.zip', location.href).href
+  const uri = param ?? new URL('fixtures/demo.zip', location.href).href
   void store.load(uri)
 })
 </script>

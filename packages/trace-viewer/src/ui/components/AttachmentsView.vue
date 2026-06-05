@@ -1,0 +1,88 @@
+<script setup lang="ts">
+import type { Attachment } from '@isomorphic/trace/traceModel'
+import { Download, Paperclip } from 'lucide-vue-next'
+import { computed, reactive, watchEffect } from 'vue'
+import { useTraceStore } from '../store'
+
+const store = useTraceStore()
+
+interface AttachmentView {
+  key: string
+  name: string
+  contentType: string
+  url?: string
+  isImage: boolean
+  isText: boolean
+}
+
+function attachmentUrl(att: Attachment): string | undefined {
+  const model = store.model.value
+  if (att.sha1 && model)
+    return model.createRelativeUrl(`sha1/${att.sha1}`)
+  if (att.base64)
+    return `data:${att.contentType};base64,${att.base64}`
+  return undefined
+}
+
+const attachments = computed<AttachmentView[]>(() =>
+  (store.model.value?.visibleAttachments ?? []).map((att, i) => ({
+    key: `${i}-${att.name}`,
+    name: att.name,
+    contentType: att.contentType,
+    url: attachmentUrl(att),
+    isImage: att.contentType.startsWith('image/'),
+    isText: att.contentType.startsWith('text/') || att.contentType.includes('json') || att.contentType.includes('xml'),
+  })),
+)
+
+// Lazily fetch textual attachment contents.
+const texts = reactive<Record<string, string>>({})
+
+async function loadText(key: string, url: string): Promise<void> {
+  try {
+    texts[key] = await (await fetch(url)).text()
+  }
+  catch {
+    texts[key] = '<unavailable>'
+  }
+}
+
+watchEffect(() => {
+  for (const a of attachments.value) {
+    if (a.isText && a.url && texts[a.key] === undefined) {
+      texts[a.key] = ''
+      void loadText(a.key, a.url)
+    }
+  }
+})
+</script>
+
+<template>
+  <div class="h-full overflow-auto p-3">
+    <div v-if="!attachments.length" class="flex h-full items-center justify-center text-sm text-muted-foreground">
+      No attachments
+    </div>
+    <div v-else class="flex flex-col gap-3">
+      <div v-for="a in attachments" :key="a.key" class="overflow-hidden rounded-md border border-border">
+        <div class="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-1.5">
+          <Paperclip class="size-3.5 text-muted-foreground" />
+          <span class="text-xs font-medium">{{ a.name }}</span>
+          <span class="font-mono text-[10px] text-muted-foreground">{{ a.contentType }}</span>
+          <a
+            v-if="a.url"
+            :href="a.url"
+            :download="a.name"
+            class="ml-auto flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+          >
+            <Download class="size-3" /> download
+          </a>
+        </div>
+        <div class="p-3">
+          <img v-if="a.isImage && a.url" :src="a.url" :alt="a.name" class="max-h-80 rounded border border-border">
+          <pre v-else-if="a.isText" class="overflow-auto font-mono text-xs whitespace-pre-wrap text-foreground/90">{{ texts[a.key] }}</pre>
+          <span v-else class="text-xs text-muted-foreground">No preview</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>

@@ -4,6 +4,7 @@ import { cn } from '@playbackhq/ui'
 import { computed, ref } from 'vue'
 import { resourcesForAction } from '../lib/network'
 import { useTraceStore } from '../store'
+import AttachmentsView from './AttachmentsView.vue'
 import CallView from './CallView.vue'
 import ConsoleView from './ConsoleView.vue'
 import ErrorsView from './ErrorsView.vue'
@@ -12,7 +13,7 @@ import NetworkView from './NetworkView.vue'
 import SourceView from './SourceView.vue'
 
 const store = useTraceStore()
-type Tab = 'source' | 'call' | 'log' | 'network' | 'errors' | 'console'
+type Tab = 'source' | 'call' | 'log' | 'network' | 'attachments' | 'errors' | 'console'
 const active = ref<Tab>('source')
 
 const errorCount = computed(() => store.model.value?.errorDescriptors.length ?? 0)
@@ -25,12 +26,14 @@ const consoleCount = computed(() => {
 const networkCount = computed(() =>
   resourcesForAction(store.model.value?.resources ?? [], store.selectedAction.value).length,
 )
+const attachmentCount = computed(() => store.model.value?.visibleAttachments.length ?? 0)
 
 const tabs = computed<{ id: Tab, label: string, count?: number }[]>(() => [
   { id: 'source', label: 'Source' },
   { id: 'call', label: 'Call' },
   { id: 'log', label: 'Log' },
   { id: 'network', label: 'Network', count: networkCount.value },
+  { id: 'attachments', label: 'Attachments', count: attachmentCount.value },
   { id: 'errors', label: 'Errors', count: errorCount.value },
   { id: 'console', label: 'Console', count: consoleCount.value },
 ])
@@ -68,6 +71,7 @@ const tabs = computed<{ id: Tab, label: string, count?: number }[]>(() => [
       <CallView v-else-if="active === 'call'" />
       <LogView v-else-if="active === 'log'" />
       <NetworkView v-else-if="active === 'network'" />
+      <AttachmentsView v-else-if="active === 'attachments'" />
       <ErrorsView v-else-if="active === 'errors'" />
       <ConsoleView v-else />
     </div>
