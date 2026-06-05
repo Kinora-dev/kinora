@@ -73,3 +73,12 @@ test('tooltip shows the full url on a truncated network name', async ({ page }) 
   await name.hover()
   await expect(page.locator('[data-slot="tooltip-content"]').first()).toContainText('demo.test')
 })
+
+// The connector seam: the dashboard's "View trace" button opens the viewer with
+// ?trace=<hosted zip url>. This proves the viewer loads a trace from that param.
+test('loads a trace passed via ?trace=', async ({ page, baseURL }) => {
+  const traceUrl = `${baseURL}/fixtures/demo.zip`
+  await page.goto(`/?trace=${encodeURIComponent(traceUrl)}`)
+  await expect(page.getByTestId('action').first()).toBeVisible()
+  expect(await page.getByTestId('action').count()).toBeGreaterThan(5)
+})

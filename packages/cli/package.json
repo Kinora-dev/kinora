@@ -36,6 +36,7 @@
     "build": "tsdown",
     "ingest": "tsx src/playback.ts",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "prepublishOnly": "tsdown"
   },
   "dependencies": {
@@ -46,6 +47,7 @@
     "@types/node": "^24.12.3",
     "tsdown": "^0.22.2",
     "tsx": "^4.22.4",
-    "typescript": "~6.0.2"
+    "typescript": "~6.0.2",
+    "vitest": "^4.1.8"
   }
 }

@@ -1,8 +1,7 @@
 #!/usr/bin/env node
-import type { CopyArtifact, Manifest, ProjectEntry, RunSummary } from '@playbackhq/core'
-import { Buffer } from 'node:buffer'
-import { createHash } from 'node:crypto'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import type { Manifest, ProjectEntry, RunSummary } from '@playbackhq/core'
+import type { KeepPolicy } from './artifacts'
+import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
@@ -12,6 +11,7 @@ import {
   manifestSchema,
   SCHEMA_VERSION,
 } from '@playbackhq/core'
+import { makeCopyArtifact } from './artifacts'
 
 const USAGE = `playback ingest - turn a Playwright json report into playback data files
 
@@ -69,41 +69,6 @@ function upsertRun(manifest: Manifest, projectId: string, name: string, run: Run
 async function writeJson(file: string, data: unknown): Promise<void> {
   await mkdir(path.dirname(file), { recursive: true })
   await writeFile(file, `${JSON.stringify(data, null, 2)}\n`)
-}
-
-type KeepPolicy = 'failed' | 'all' | 'none'
-
-// Copies trace.zip artifacts into <out>/artifacts/<project>/<run>/<sha1>.zip so
-// the dashboard can link the trace viewer at one. Traces only, for now.
-function makeCopyArtifact(outDir: string, resultsDir: string, keep: KeepPolicy): CopyArtifact {
-  return (att, ctx) => {
-    if (keep === 'none')
-      return undefined
-    if (keep === 'failed' && ctx.status !== 'unexpected' && ctx.status !== 'flaky')
-      return undefined
-
-    const isTrace = att.name === 'trace' || att.contentType === 'application/zip'
-    if (!isTrace)
-      return undefined
-
-    let buf: Buffer | undefined
-    if (att.path) {
-      const file = path.isAbsolute(att.path) ? att.path : path.resolve(resultsDir, att.path)
-      if (existsSync(file))
-        buf = readFileSync(file)
-    }
-    if (!buf && att.body)
-      buf = Buffer.from(att.body, 'base64')
-    if (!buf)
-      return undefined
-
-    const sha = createHash('sha1').update(buf).digest('hex').slice(0, 16)
-    const rel = `artifacts/${ctx.projectId}/${ctx.runId}/${sha}.zip`
-    const dest = path.join(outDir, rel)
-    mkdirSync(path.dirname(dest), { recursive: true })
-    writeFileSync(dest, buf)
-    return rel
-  }
 }
 
 async function main(): Promise<void> {
