@@ -9,7 +9,7 @@ import { makeTestKey } from './test-key'
 // relative URL. Core stays fs-free; the side effect is injected.
 export type CopyArtifact = (
   attachment: { name: string, contentType: string, path?: string, body?: string },
-  ctx: { projectId: string, runId: string, testKey: string },
+  ctx: { projectId: string, runId: string, testKey: string, status: NormTest['status'] },
 ) => string | undefined
 
 export interface IngestMeta {
@@ -72,7 +72,7 @@ function normalizeSpec(spec: PwSpec, ctx: WalkCtx, out: NormTest[], meta: Ingest
         hasBody: a.body != null,
         url: meta.copyArtifact?.(
           { name: a.name, contentType: a.contentType, path: a.path, body: a.body },
-          { projectId: meta.projectId, runId: meta.runId, testKey },
+          { projectId: meta.projectId, runId: meta.runId, testKey, status: test.status },
         ),
       })),
     })

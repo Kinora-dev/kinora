@@ -26,6 +26,7 @@ Options:
   --run <id>            Run id (defaults to the report date, YYYY-MM-DD)
   --out <dir>           Output root served statically (default: playback-data)
   --results-dir <dir>   Playwright test-results dir, to resolve trace.zip paths (default: test-results)
+  --keep <policy>       which tests' traces to copy: failed | all | none (default: failed)
   --git-sha <sha>
   --git-branch <branch>
   --ci-provider <name>
@@ -70,10 +71,17 @@ async function writeJson(file: string, data: unknown): Promise<void> {
   await writeFile(file, `${JSON.stringify(data, null, 2)}\n`)
 }
 
+type KeepPolicy = 'failed' | 'all' | 'none'
+
 // Copies trace.zip artifacts into <out>/artifacts/<project>/<run>/<sha1>.zip so
 // the dashboard can link the trace viewer at one. Traces only, for now.
-function makeCopyArtifact(outDir: string, resultsDir: string): CopyArtifact {
+function makeCopyArtifact(outDir: string, resultsDir: string, keep: KeepPolicy): CopyArtifact {
   return (att, ctx) => {
+    if (keep === 'none')
+      return undefined
+    if (keep === 'failed' && ctx.status !== 'unexpected' && ctx.status !== 'flaky')
+      return undefined
+
     const isTrace = att.name === 'trace' || att.contentType === 'application/zip'
     if (!isTrace)
       return undefined
@@ -107,6 +115,7 @@ async function main(): Promise<void> {
       'run': { type: 'string' },
       'out': { type: 'string', default: 'playback-data' },
       'results-dir': { type: 'string', default: 'test-results' },
+      'keep': { type: 'string', default: 'failed' },
       'git-sha': { type: 'string' },
       'git-branch': { type: 'string' },
       'ci-provider': { type: 'string' },
@@ -153,13 +162,16 @@ async function main(): Promise<void> {
 
   const outDir = path.resolve(values.out)
   const resultsDir = path.resolve(values['results-dir'] ?? 'test-results')
+  const keep = (values.keep ?? 'failed') as KeepPolicy
+  if (!['failed', 'all', 'none'].includes(keep))
+    fail(`--keep must be one of: failed, all, none (got "${keep}")`)
 
   const { summary, report } = ingestPlaywrightReport(raw, {
     projectId: values.project,
     runId,
     git,
     ci,
-    copyArtifact: makeCopyArtifact(outDir, resultsDir),
+    copyArtifact: makeCopyArtifact(outDir, resultsDir, keep),
   })
 
   const manifestFile = path.join(outDir, 'manifest.json')

@@ -52,7 +52,7 @@ export default defineConfig({
 
 ### 2. Ingest it with the CLI
 
-`results.json` is heavy (inline attachment bodies). The CLI strips those into a lightweight run report, upserts a manifest, and copies each test's `trace.zip` into `artifacts/` so the dashboard can open it in the trace viewer:
+`results.json` is heavy (inline attachment bodies). The CLI strips those into a lightweight run report, upserts a manifest, and copies failing tests' `trace.zip` into `artifacts/` so the dashboard can open them in the trace viewer (`--keep all` for every test, `none` to skip):
 
 ```bash
 npx @playbackhq/cli results.json --project web-app --name "Web App E2E"
@@ -95,6 +95,7 @@ npx @playbackhq/cli <results.json> --project <id> [options]
 --run <id>            run id (defaults to report date, YYYY-MM-DD)
 --out <dir>           output root (default: playback-data)
 --results-dir <dir>   Playwright test-results dir, to resolve trace.zip (default: test-results)
+--keep <policy>       whose traces to copy: failed | all | none (default: failed)
 --git-sha / --git-branch
 --ci-provider / --ci-run-url / --ci-run-number
 ```
