@@ -5,9 +5,16 @@ import ActionsList from './components/ActionsList.vue'
 import DetailTabs from './components/DetailTabs.vue'
 import SnapshotPlayer from './components/SnapshotPlayer.vue'
 import Timeline from './components/Timeline.vue'
+import { useKeyboardNav } from './lib/useKeyboardNav'
+import { useResizable } from './lib/useResizable'
 import { useTraceStore } from './store'
 
 const store = useTraceStore()
+
+const left = useResizable('left-width', 300, { axis: 'x', min: 220, max: 520 })
+const bottom = useResizable('bottom-height', 320, { axis: 'y', min: 140, max: 640, invert: true })
+
+useKeyboardNav()
 
 onMounted(() => {
   const param = new URLSearchParams(location.search).get('trace')
@@ -20,7 +27,10 @@ onMounted(() => {
   <div class="flex h-full flex-col bg-background text-foreground">
     <!-- top bar: brand + timeline -->
     <header class="flex shrink-0 items-stretch border-b border-border">
-      <div class="flex w-[300px] shrink-0 items-center gap-2.5 border-r border-border px-4">
+      <div
+        class="flex shrink-0 items-center gap-2.5 border-r border-border px-4"
+        :style="{ width: `${left.size.value}px` }"
+      >
         <span class="size-2 rounded-full bg-signal" style="animation: rec-pulse 2s ease-in-out infinite" />
         <span class="text-sm font-semibold tracking-tight">playback</span>
         <span class="font-mono text-[11px] text-muted-foreground">trace</span>
@@ -48,14 +58,24 @@ onMounted(() => {
 
     <!-- workbench -->
     <div v-else class="flex min-h-0 flex-1">
-      <aside class="w-[300px] shrink-0 border-r border-border">
+      <aside class="shrink-0 overflow-hidden" :style="{ width: `${left.size.value}px` }">
         <ActionsList />
       </aside>
+      <div
+        class="w-px shrink-0 cursor-col-resize bg-border transition-colors hover:bg-signal/60"
+        :class="left.dragging.value && 'bg-signal'"
+        @pointerdown="left.start"
+      />
       <main class="flex min-w-0 flex-1 flex-col">
         <div class="min-h-0 flex-1">
           <SnapshotPlayer />
         </div>
-        <div class="h-[38%] min-h-0 shrink-0 border-t border-border">
+        <div
+          class="h-px shrink-0 cursor-row-resize bg-border transition-colors hover:bg-signal/60"
+          :class="bottom.dragging.value && 'bg-signal'"
+          @pointerdown="bottom.start"
+        />
+        <div class="min-h-0 shrink-0" :style="{ height: `${bottom.size.value}px` }">
           <DetailTabs />
         </div>
       </main>

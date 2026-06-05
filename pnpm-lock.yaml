@@ -149,6 +149,9 @@ importers:
 
   packages/trace-viewer:
     dependencies:
+      '@vueuse/core':
+        specifier: ^14.3.0
+        version: 14.3.0(vue@3.5.35(typescript@6.0.3))
       '@zip.js/zip.js':
         specifier: 2.7.29
         version: 2.7.29

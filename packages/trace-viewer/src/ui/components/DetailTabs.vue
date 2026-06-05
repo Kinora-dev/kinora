@@ -3,12 +3,14 @@ import { eventsForAction } from '@isomorphic/trace/traceModel'
 import { computed, ref } from 'vue'
 import { cn } from '../lib/cn'
 import { useTraceStore } from '../store'
+import CallView from './CallView.vue'
 import ConsoleView from './ConsoleView.vue'
 import ErrorsView from './ErrorsView.vue'
+import LogView from './LogView.vue'
 import SourceView from './SourceView.vue'
 
 const store = useTraceStore()
-type Tab = 'source' | 'errors' | 'console'
+type Tab = 'source' | 'call' | 'log' | 'errors' | 'console'
 const active = ref<Tab>('source')
 
 const errorCount = computed(() => store.model.value?.errorDescriptors.length ?? 0)
@@ -21,6 +23,8 @@ const consoleCount = computed(() => {
 
 const tabs = computed<{ id: Tab, label: string, count?: number }[]>(() => [
   { id: 'source', label: 'Source' },
+  { id: 'call', label: 'Call' },
+  { id: 'log', label: 'Log' },
   { id: 'errors', label: 'Errors', count: errorCount.value },
   { id: 'console', label: 'Console', count: consoleCount.value },
 ])
@@ -55,6 +59,8 @@ const tabs = computed<{ id: Tab, label: string, count?: number }[]>(() => [
     </div>
     <div class="min-h-0 flex-1">
       <SourceView v-if="active === 'source'" />
+      <CallView v-else-if="active === 'call'" />
+      <LogView v-else-if="active === 'log'" />
       <ErrorsView v-else-if="active === 'errors'" />
       <ConsoleView v-else />
     </div>
