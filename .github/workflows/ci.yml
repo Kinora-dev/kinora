@@ -45,6 +45,9 @@ jobs:
       - name: Build app
         run: pnpm build:app
 
+      - name: Build viewer
+        run: pnpm build:viewer
+
       - name: Build CLI
         run: pnpm build:cli
 
@@ -66,8 +69,13 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # Browsers install to a shared global cache; app and viewer share the same
+      # Playwright version, so one install covers both e2e suites.
       - name: Install Playwright browser
         run: pnpm --filter @playbackhq/app exec playwright install --with-deps chromium
 
-      - name: E2E
-        run: pnpm test:e2e
+      - name: E2E app
+        run: pnpm test:e2e:app
+
+      - name: E2E viewer
+        run: pnpm test:e2e:viewer

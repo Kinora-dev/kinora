@@ -77,6 +77,7 @@ function seekToTime(t: number): void {
     <div class="flex h-11 shrink-0 items-center gap-2 px-3">
       <button
         type="button"
+        data-testid="play"
         class="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         :title="store.playing.value ? 'Pause' : 'Play'"
         @click="store.togglePlay"
@@ -104,7 +105,7 @@ function seekToTime(t: number): void {
           <ChevronRight class="size-4" />
         </button>
       </div>
-      <div class="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+      <div data-testid="current-action" class="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
         {{ currentTitle }}
       </div>
       <div class="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">

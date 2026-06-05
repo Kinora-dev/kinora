@@ -46,6 +46,7 @@ const rows = computed(() => {
         v-for="row in rows"
         :key="row.item.id"
         type="button"
+        data-testid="action"
         :class="cn(
           'group relative flex w-full items-center gap-2 py-1.5 pr-2.5 text-left text-[13px] transition-colors',
           store.selectedId.value === row.item.id

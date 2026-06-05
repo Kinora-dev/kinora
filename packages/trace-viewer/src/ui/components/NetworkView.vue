@@ -150,6 +150,7 @@ const alignEnd = new Set(['size', 'duration', 'status'])
             <tr
               v-for="row in table.getRowModel().rows"
               :key="row.original.id"
+              data-testid="net-row"
               :class="cn(
                 'cursor-pointer border-b border-border/40 transition-colors',
                 selectedId === row.original.id ? 'bg-signal/10' : 'hover:bg-muted/40',
