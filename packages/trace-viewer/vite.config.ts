@@ -1,4 +1,6 @@
 import path from 'node:path'
+import tailwindcss from '@tailwindcss/vite'
+import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vite'
 
 // Aliases mirror upstream Playwright so vendored engine files resolve unedited.
@@ -6,10 +8,12 @@ const alias = {
   '@trace': path.resolve(import.meta.dirname, 'src/core/trace'),
   '@isomorphic': path.resolve(import.meta.dirname, 'src/core/isomorphic'),
   '@protocol': path.resolve(import.meta.dirname, 'src/core/protocol'),
+  '@': path.resolve(import.meta.dirname, 'src'),
 }
 
 export default defineConfig({
   base: '',
+  plugins: [vue(), tailwindcss()],
   resolve: { alias },
   build: { outDir: 'dist' },
 })

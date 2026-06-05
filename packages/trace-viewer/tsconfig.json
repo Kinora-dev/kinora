@@ -7,9 +7,10 @@
     "paths": {
       "@trace/*": ["./src/core/trace/*"],
       "@isomorphic/*": ["./src/core/isomorphic/*"],
-      "@protocol/*": ["./src/core/protocol/*"]
+      "@protocol/*": ["./src/core/protocol/*"],
+      "@/*": ["./src/*"]
     },
-    "types": ["node"],
+    "types": ["node", "vite/client"],
     // Vendored upstream code: don't fight its style with our lint-level tsc flags.
     "noUnusedLocals": false,
     "noUnusedParameters": false,
@@ -18,5 +19,5 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "src/**/*.vue"]
 }
