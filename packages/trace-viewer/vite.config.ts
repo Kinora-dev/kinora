@@ -11,12 +11,13 @@ const alias = {
   '@': path.resolve(import.meta.dirname, 'src'),
 }
 
-export default defineConfig({
-  base: '',
+export default defineConfig(({ command }) => ({
+  // Prod build is served by the dashboard under /trace/; dev runs at root.
+  base: command === 'build' ? '/trace/' : '/',
   // Dedicated port so the service worker always lives on its own origin,
   // separate from the dashboard app (5173).
   server: { port: 5174 },
   plugins: [vue(), tailwindcss()],
   resolve: { alias },
   build: { outDir: 'dist' },
-})
+}))

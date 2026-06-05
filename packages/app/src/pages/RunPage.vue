@@ -7,13 +7,14 @@ import { Separator } from '@playbackhq/ui/separator'
 import { Skeleton } from '@playbackhq/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '@playbackhq/ui/tabs'
 import { useRouteQuery } from '@vueuse/router'
-import { ArrowLeft, ExternalLink, GitBranch, Paperclip } from 'lucide-vue-next'
+import { ArrowLeft, ExternalLink, Film, GitBranch, Paperclip } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import CopyLinkButton from '@/components/app/CopyLinkButton.vue'
 import StatBlock from '@/components/viz/StatBlock.vue'
 import TestStatusBadge from '@/components/viz/TestStatusBadge.vue'
 import { useManifest, useRun } from '@/composables/queries'
+import { traceViewerHref } from '@/lib/trace'
 
 const props = defineProps<{ projectId: string, runId: string }>()
 
@@ -196,7 +197,16 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
           <div v-if="t.errors.length" class="mt-3 overflow-x-auto rounded-md bg-fail/5 p-3">
             <pre class="font-mono text-[11px] leading-relaxed text-fail">{{ t.errors[0].message }}</pre>
           </div>
-          <div v-if="t.attachments.length" class="mt-2 flex flex-wrap gap-1.5">
+          <div v-if="t.attachments.length" class="mt-2 flex flex-wrap items-center gap-1.5">
+            <a
+              v-if="traceViewerHref(t.attachments)"
+              :href="traceViewerHref(t.attachments)"
+              target="_blank"
+              rel="noopener"
+              class="inline-flex items-center gap-1 rounded border border-signal/40 bg-signal/10 px-2 py-0.5 text-[11px] font-medium text-signal transition-colors hover:bg-signal/20"
+            >
+              <Film class="size-3" />View trace
+            </a>
             <span
               v-for="a in t.attachments"
               :key="a.name"

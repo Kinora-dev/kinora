@@ -6,12 +6,14 @@ set -e
 : "${PLAYBACK_BASE_URL:=}"
 : "${PLAYBACK_MODE:=static}"
 : "${PLAYBACK_TITLE:=Playback}"
+: "${PLAYBACK_VIEWER_URL:=/trace/}"
 
 cat > /usr/share/nginx/html/config.js <<EOF
 window.__PLAYBACK__ = {
   baseUrl: '${PLAYBACK_BASE_URL}',
   mode: '${PLAYBACK_MODE}',
   title: '${PLAYBACK_TITLE}',
+  viewerBaseUrl: '${PLAYBACK_VIEWER_URL}',
 };
 EOF
 

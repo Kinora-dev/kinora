@@ -126,7 +126,8 @@ function buildTests(p: MockProject, seed: number): NormTest[] {
             status === 'unexpected'
               ? [
                   { name: 'screenshot', contentType: 'image/png', path: 'screenshot.png', hasBody: false },
-                  { name: 'trace', contentType: 'application/zip', path: 'trace.zip', hasBody: false },
+                  // Dev demo: point at the viewer's bundled sample trace so "View trace" works locally.
+                  { name: 'trace', contentType: 'application/zip', path: 'trace.zip', hasBody: false, url: 'http://localhost:5174/fixtures/demo.zip' },
                 ]
               : [],
         })

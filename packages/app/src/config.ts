@@ -9,6 +9,10 @@ export const runtimeConfigSchema = z.object({
   // 'static': fetch manifest.json + reports/ files. 'rest': fetch /api/* endpoints.
   mode: z.enum(['static', 'rest']).default('static'),
   title: z.string().default('Playback'),
+  // Where the trace viewer is served. Prod: same origin under /trace/. Dev: the
+  // viewer dev server (set via VITE_PLAYBACK_VIEWER_URL or window.__PLAYBACK__).
+  // Empty here so env/default resolution in resolveConfig applies.
+  viewerBaseUrl: z.string().default(''),
 })
 export type RuntimeConfig = z.infer<typeof runtimeConfigSchema>
 
@@ -22,9 +26,13 @@ function resolveConfig(): RuntimeConfig {
   const injected = runtimeConfigSchema.safeParse(window.__PLAYBACK__ ?? {})
   const base = injected.success ? injected.data : runtimeConfigSchema.parse({})
   const envBase = import.meta.env.VITE_PLAYBACK_BASE_URL as string | undefined
+  const envViewer = import.meta.env.VITE_PLAYBACK_VIEWER_URL as string | undefined
+  // Dev: the viewer runs on its own dev server (pnpm dev:viewer). Prod: /trace/.
+  const defaultViewer = import.meta.env.DEV ? 'http://localhost:5174/' : '/trace/'
   return {
     ...base,
     baseUrl: base.baseUrl || envBase || '',
+    viewerBaseUrl: base.viewerBaseUrl || envViewer || defaultViewer,
   }
 }
 
