@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { cn } from '@playbackhq/ui'
-import { Check, ChevronRight, Search, X } from 'lucide-vue-next'
+import { Check, ChevronRight, X } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { actionDuration, actionStatus, actionTitle } from '../lib/action'
 import { formatMs } from '../lib/format'
 import { useTraceStore } from '../store'
+import FilterInput from './FilterInput.vue'
 import TextTooltip from './TextTooltip.vue'
 
 const store = useTraceStore()
@@ -31,14 +32,7 @@ const rows = computed(() => {
     </div>
 
     <div class="border-b border-border px-2 py-1.5">
-      <div class="flex items-center gap-1.5 rounded-md bg-muted/50 px-2 py-1">
-        <Search class="size-3.5 text-muted-foreground" />
-        <input
-          v-model="filter"
-          placeholder="Filter actions"
-          class="w-full bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground"
-        >
-      </div>
+      <FilterInput v-model="filter" placeholder="Filter actions" />
     </div>
 
     <div class="min-h-0 flex-1 overflow-y-auto py-1">

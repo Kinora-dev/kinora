@@ -9,6 +9,7 @@ import { ChevronDown, ChevronUp, Copy } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 import { bodyUrl, formatSize, RESOURCE_CATEGORIES, resourcesForAction, statusClass, toCurl, toFetch } from '../lib/network'
 import { useTraceStore } from '../store'
+import FilterInput from './FilterInput.vue'
 import TextTooltip from './TextTooltip.vue'
 
 const store = useTraceStore()
@@ -97,11 +98,7 @@ const alignEnd = new Set(['size', 'duration', 'status'])
   <div class="flex h-full flex-col">
     <!-- filters -->
     <div class="flex shrink-0 items-center gap-2 border-b border-border px-2 py-1.5">
-      <input
-        v-model="search"
-        placeholder="Filter network"
-        class="w-48 rounded-md bg-muted/50 px-2 py-1 text-xs outline-none placeholder:text-muted-foreground"
-      >
+      <FilterInput v-model="search" placeholder="Filter network" class="w-48" />
       <div class="flex items-center gap-1">
         <button
           v-for="cat in RESOURCE_CATEGORIES"
