@@ -1,0 +1,19 @@
+{
+  "name": "@playbackhq/trace-viewer",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Playwright trace replay engine (vendored from microsoft/playwright, Apache-2.0) plus playback's own UI",
+  "author": "Joris Gallot",
+  "license": "MIT",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zip.js/zip.js": "^2.7.29"
+  },
+  "devDependencies": {
+    "@types/node": "^24.12.3",
+    "typescript": "~6.0.2"
+  }
+}

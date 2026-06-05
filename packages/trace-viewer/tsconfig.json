@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM", "DOM.Iterable", "WebWorker"],
+    // Aliases kept identical to upstream so vendored files compile unedited
+    // and re-syncing from microsoft/playwright stays a plain re-copy.
+    "paths": {
+      "@trace/*": ["./src/core/trace/*"],
+      "@isomorphic/*": ["./src/core/isomorphic/*"],
+      "@protocol/*": ["./src/core/protocol/*"]
+    },
+    "types": ["node"],
+    // Vendored upstream code: don't fight its style with our lint-level tsc flags.
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    // Match upstream tsconfig so vendored files compile unedited.
+    "useUnknownInCatchVariables": false,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
+  },
+  "include": ["src/**/*.ts"]
+}
