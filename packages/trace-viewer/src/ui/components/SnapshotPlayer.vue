@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { SnapshotTab } from '../lib/snapshots'
+import { cn } from '@playbackhq/ui'
 import { Monitor } from 'lucide-vue-next'
 import { computed, watch } from 'vue'
-import { cn } from '../lib/cn'
 import { useTraceStore } from '../store'
 
 const store = useTraceStore()

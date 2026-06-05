@@ -10,7 +10,7 @@
     ".": "./src/index.ts",
     "./utils": "./src/lib/utils.ts",
     "./table/utils": "./src/components/ui/table/utils.ts",
-    "./style.css": "./src/style.css",
+    "./theme.css": "./src/theme.css",
     "./*": "./src/components/ui/*/index.ts"
   },
   "scripts": {

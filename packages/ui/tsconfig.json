@@ -3,6 +3,11 @@
   "compilerOptions": {
     "jsx": "preserve",
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    // For the shadcn-vue CLI / editor only. Vendored components import via
+    // relative paths (not @/) so they resolve when consumed as source.
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "types": ["node"]
   },
   "include": ["src/**/*.ts", "src/**/*.vue"]

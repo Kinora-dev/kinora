@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { ConsoleMessageTraceEvent } from '@trace/trace'
 import { eventsForAction } from '@isomorphic/trace/traceModel'
+import { cn } from '@playbackhq/ui'
 import { computed } from 'vue'
-import { cn } from '../lib/cn'
 import { useTraceStore } from '../store'
 
 const store = useTraceStore()

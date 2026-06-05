@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { eventsForAction } from '@isomorphic/trace/traceModel'
+import { cn } from '@playbackhq/ui'
 import { computed, ref } from 'vue'
-import { cn } from '../lib/cn'
 import { useTraceStore } from '../store'
 import CallView from './CallView.vue'
 import ConsoleView from './ConsoleView.vue'

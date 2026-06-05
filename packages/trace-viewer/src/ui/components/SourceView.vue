@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { StackFrame } from '@protocol/channels'
+import { cn } from '@playbackhq/ui'
 import { computed, ref, watch } from 'vue'
-import { cn } from '../lib/cn'
 import { calculateSha1 } from '../lib/sha1'
 import { useTraceStore } from '../store'
 

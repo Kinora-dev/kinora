@@ -1,8 +1,8 @@
 <script setup lang="ts">
+import { cn } from '@playbackhq/ui'
 import { Check, ChevronRight, Search, X } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { actionDuration, actionStatus, actionTitle } from '../lib/action'
-import { cn } from '../lib/cn'
 import { formatMs } from '../lib/format'
 import { useTraceStore } from '../store'
 
