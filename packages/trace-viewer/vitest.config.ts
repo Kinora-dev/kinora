@@ -12,5 +12,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    // Unit tests only; e2e/*.spec.ts is run by Playwright, not vitest.
+    include: ['test/**/*.test.ts'],
   },
 })
