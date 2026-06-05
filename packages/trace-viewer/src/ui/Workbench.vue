@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@playbackhq/ui/resizable'
+import { ThemeToggle } from '@playbackhq/ui/theme-toggle'
 import { TooltipProvider } from '@playbackhq/ui/tooltip'
 import { useStorage } from '@vueuse/core'
 import { Loader2 } from 'lucide-vue-next'
@@ -34,9 +35,12 @@ onMounted(() => {
         <span class="size-2 rounded-full bg-signal" style="animation: rec-pulse 2s ease-in-out infinite" />
         <span class="text-sm font-semibold tracking-tight">playback</span>
         <span class="font-mono text-[11px] text-muted-foreground">trace</span>
-        <span v-if="store.model.value?.title" class="ml-2 truncate text-xs text-muted-foreground">
+        <span v-if="store.model.value?.title" class="min-w-0 truncate text-xs text-muted-foreground">
           · {{ store.model.value.title }}
         </span>
+        <div class="ml-auto">
+          <ThemeToggle />
+        </div>
       </header>
 
       <!-- loading / error -->

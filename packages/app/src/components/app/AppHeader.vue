@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { ThemeToggle } from '@playbackhq/ui/theme-toggle'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import ThemeToggle from '@/components/app/ThemeToggle.vue'
 import { config, useMock } from '@/config'
 
 const source = computed(() => {

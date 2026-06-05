@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import type { ColorMode } from '@/composables/useTheme'
-import { Button } from '@playbackhq/ui/button'
+import type { ColorMode } from '../../../lib/theme'
+import { Monitor, Moon, Sun } from '@lucide/vue'
+import { computed } from 'vue'
+import { colorMode } from '../../../lib/theme'
+import { Button } from '../button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,10 +12,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@playbackhq/ui/dropdown-menu'
-import { Monitor, Moon, Sun } from 'lucide-vue-next'
-import { computed } from 'vue'
-import { colorMode } from '@/composables/useTheme'
+} from '../dropdown-menu'
 
 const options = [
   { value: 'auto', label: 'System', icon: Monitor },
@@ -24,7 +24,7 @@ const activeIcon = computed(
   () => options.find(o => o.value === colorMode.value)?.icon ?? Monitor,
 )
 
-function setMode(value: ColorMode) {
+function setMode(value: ColorMode): void {
   colorMode.value = value
 }
 </script>
@@ -37,7 +37,7 @@ function setMode(value: ColorMode) {
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end" class="w-40 font-mono">
-      <DropdownMenuLabel class="text-[10px] uppercase tracking-wider text-muted-foreground">
+      <DropdownMenuLabel class="text-[10px] tracking-wider text-muted-foreground uppercase">
         Theme
       </DropdownMenuLabel>
       <DropdownMenuSeparator />
@@ -49,7 +49,7 @@ function setMode(value: ColorMode) {
           v-for="opt in options"
           :key="opt.value"
           :value="opt.value"
-          class="gap-2 text-[11px] uppercase tracking-wider"
+          class="gap-2 text-[11px] tracking-wider uppercase"
           :class="colorMode === opt.value ? 'text-foreground' : 'text-muted-foreground'"
         >
           <template #indicator-icon>
