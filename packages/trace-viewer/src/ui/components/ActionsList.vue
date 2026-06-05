@@ -11,9 +11,13 @@ import TextTooltip from './TextTooltip.vue'
 const store = useTraceStore()
 const filter = ref('')
 
+const filtering = computed(() => filter.value.trim().length > 0)
+
 const rows = computed(() => {
   const f = filter.value.trim().toLowerCase()
-  return store.items.value
+  // While filtering, search the full flat list; otherwise follow collapse state.
+  const source = f ? store.items.value : store.visibleItems.value
+  return source
     .map(item => ({
       item,
       title: actionTitle(item.action),
@@ -55,9 +59,15 @@ const rows = computed(() => {
           class="absolute inset-y-0 left-0 w-0.5 bg-signal"
         />
         <span class="flex size-4 shrink-0 items-center justify-center">
-          <Check v-if="row.status === 'ok'" class="size-3.5 text-pass" />
-          <X v-else-if="row.status === 'error'" class="size-3.5 text-fail" />
-          <ChevronRight v-else class="size-3.5 text-muted-foreground" />
+          <X v-if="row.status === 'error'" class="size-3.5 text-fail" />
+          <span
+            v-else-if="!filtering && row.item.hasChildren"
+            class="flex cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+            @click.stop="store.toggleCollapse(row.item.id)"
+          >
+            <ChevronRight :class="cn('size-3.5 transition-transform', !store.collapsed.value.has(row.item.id) && 'rotate-90')" />
+          </span>
+          <Check v-else-if="row.status === 'ok'" class="size-3.5 text-pass" />
         </span>
         <TextTooltip :text="row.title" class="min-w-0 flex-1" />
         <span class="shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground/70">{{ formatMs(row.duration) }}</span>

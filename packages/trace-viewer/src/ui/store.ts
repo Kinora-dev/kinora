@@ -8,6 +8,7 @@ import { collectSnapshots, snapshotInfoUrl, snapshotUrl } from './lib/snapshots'
 export interface ActionItem {
   id: string
   depth: number
+  hasChildren: boolean
   action: ActionTraceEventInContext
 }
 
@@ -23,6 +24,7 @@ const errorMessage = ref('')
 const traceUri = ref('')
 const model = shallowRef<TraceModel | null>(null)
 const items = shallowRef<ActionItem[]>([])
+const collapsed = ref<Set<string>>(new Set())
 const selectedId = ref<string | null>(null)
 const snapshotTab = ref<SnapshotTab>('action')
 const snapshotInfo = ref<SnapshotInfo>({})
@@ -34,7 +36,7 @@ function flatten(m: TraceModel): ActionItem[] {
   const out: ActionItem[] = []
   const visit = (node: typeof rootItem, depth: number): void => {
     for (const child of node.children) {
-      out.push({ id: child.id, depth, action: child.action })
+      out.push({ id: child.id, depth, hasChildren: child.children.length > 0, action: child.action })
       visit(child, depth + 1)
     }
   }
@@ -65,6 +67,7 @@ async function load(uri: string): Promise<void> {
     const m = new TraceModel(uri, contexts)
     model.value = m
     items.value = flatten(m)
+    collapsed.value = new Set()
     // Default selection: failed action, else the last page action with a
     // snapshot (most representative page state), else the first action.
     const failed = m.failedAction()
@@ -78,6 +81,30 @@ async function load(uri: string): Promise<void> {
     errorMessage.value = err?.message ?? String(err)
     status.value = 'error'
   }
+}
+
+// Hide descendants of collapsed nodes: skip rows deeper than the last collapsed one.
+const visibleItems = computed<ActionItem[]>(() => {
+  const out: ActionItem[] = []
+  let hiddenDepth = Infinity
+  for (const it of items.value) {
+    if (it.depth > hiddenDepth)
+      continue
+    hiddenDepth = Infinity
+    out.push(it)
+    if (it.hasChildren && collapsed.value.has(it.id))
+      hiddenDepth = it.depth
+  }
+  return out
+})
+
+function toggleCollapse(id: string): void {
+  const next = new Set(collapsed.value)
+  if (next.has(id))
+    next.delete(id)
+  else
+    next.add(id)
+  collapsed.value = next
 }
 
 const selectedIndex = computed(() => items.value.findIndex(i => i.id === selectedId.value))
@@ -148,6 +175,9 @@ export function useTraceStore() {
     traceUri,
     model,
     items,
+    visibleItems,
+    collapsed,
+    toggleCollapse,
     selectedId,
     selectedIndex,
     selectedAction,
