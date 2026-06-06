@@ -12,21 +12,25 @@ const ready = session.ready
 <template>
   <Transition name="boot" mode="out-in">
     <LoadingScreen v-if="!ready" />
-    <RouterView v-else v-slot="{ Component, route }">
-      <!-- Public pages (login / signup) render standalone, no app chrome. -->
-      <Transition v-if="route.meta.public" name="page" mode="out-in">
-        <component :is="Component" :key="route.path" />
-      </Transition>
-      <!-- App pages get the header + control-room grid shell. -->
-      <div v-else class="min-h-svh bg-background app-grid">
-        <AppHeader />
-        <main class="mx-auto max-w-7xl px-5 py-8">
-          <Transition name="page" mode="out-in">
-            <component :is="Component" :key="route.path" />
-          </Transition>
-        </main>
-      </div>
-    </RouterView>
+    <!-- Single element root so the boot transition can animate it; RouterView
+         must not sit directly inside <Transition>. -->
+    <div v-else>
+      <RouterView v-slot="{ Component, route }">
+        <!-- Public pages (login / signup) render standalone, no app chrome. -->
+        <Transition v-if="route.meta.public" name="page" mode="out-in">
+          <component :is="Component" :key="route.path" />
+        </Transition>
+        <!-- App pages get the header + control-room grid shell. -->
+        <div v-else class="min-h-svh bg-background app-grid">
+          <AppHeader />
+          <main class="mx-auto max-w-7xl px-5 py-8">
+            <Transition name="page" mode="out-in">
+              <component :is="Component" :key="route.path" />
+            </Transition>
+          </main>
+        </div>
+      </RouterView>
+    </div>
   </Transition>
   <Toaster position="bottom-right" />
 </template>
