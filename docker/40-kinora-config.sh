@@ -1,6 +1,6 @@
 #!/bin/sh
 # Rewrite the dashboard's runtime config from env on container start.
-# Same shape as packages/app/public/config.js; no rebuild needed.
+# Same shape as packages/web/public/config.js; no rebuild needed.
 set -e
 
 : "${KINORA_BASE_URL:=}"

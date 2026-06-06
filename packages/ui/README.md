@@ -1,6 +1,6 @@
 # @kinora/ui
 
-Shared shadcn-vue design system (components + tokens) consumed by `@kinora/app`
+Shared shadcn-vue design system (components + tokens) consumed by `@kinora/web`
 and `@kinora/trace-viewer`.
 
 Consumed **as source** (no build step): the consuming app's Vite/Tailwind processes
