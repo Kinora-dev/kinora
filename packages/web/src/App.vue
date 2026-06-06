@@ -4,6 +4,8 @@ import { RouterView } from 'vue-router'
 import AppHeader from '@/components/app/AppHeader.vue'
 import LoadingScreen from '@/components/app/LoadingScreen.vue'
 import { session } from '@/lib/session'
+// Boot useColorMode at startup so system/dark applies before any page mounts
+import '@kinora/ui/theme'
 import 'vue-sonner/style.css'
 
 const ready = session.ready
