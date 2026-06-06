@@ -34,7 +34,7 @@ const runSnippet = `KINORA_URL=${env.serverUrl} KINORA_TOKEN=<token> \\
           style="animation: rec-pulse 2s ease-in-out infinite"
           aria-hidden="true"
         />
-        <span class="font-mono text-[11px] font-medium tracking-[0.25em] text-muted-foreground uppercase">
+        <span class="font-mono text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
           Awaiting first signal
         </span>
       </div>

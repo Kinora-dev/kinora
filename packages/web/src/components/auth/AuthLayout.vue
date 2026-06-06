@@ -22,7 +22,7 @@ defineProps<{ tag: string }>()
           />
           <span class="font-mono text-xl font-semibold tracking-tight lowercase">kinora</span>
         </div>
-        <p class="font-mono text-[10px] font-medium tracking-[0.25em] text-muted-foreground uppercase">
+        <p class="font-mono text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
           {{ tag }}
         </p>
       </div>
