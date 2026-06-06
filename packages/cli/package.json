@@ -34,7 +34,6 @@
   },
   "scripts": {
     "build": "tsdown",
-    "ingest": "tsx src/kinora.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "prepublishOnly": "tsdown"

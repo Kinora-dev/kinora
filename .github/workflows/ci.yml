@@ -46,14 +46,8 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Build app
-        run: pnpm build:web
-
-      - name: Build viewer
-        run: pnpm build:viewer
-
-      - name: Build CLI
-        run: pnpm build:cli
+      - name: Build
+        run: pnpm build
 
       - name: Test
         run: pnpm test
@@ -77,4 +71,4 @@ jobs:
         run: pnpm --filter @kinora/trace-viewer exec playwright install --with-deps chromium
 
       - name: E2E viewer
-        run: pnpm test:e2e:viewer
+        run: pnpm test:e2e

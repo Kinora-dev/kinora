@@ -12,27 +12,19 @@
   "scripts": {
     "dev:web": "pnpm --filter @kinora/web dev",
     "dev:viewer": "pnpm --filter @kinora/trace-viewer dev",
-    "build:web": "pnpm --filter @kinora/web build",
-    "build:viewer": "pnpm --filter @kinora/trace-viewer build",
-    "build:cli": "pnpm --filter @kinora/cli build",
-    "build:core": "pnpm --filter @kinora/core build",
+    "dev:server": "pnpm --filter @kinora/server dev",
+    "build": "pnpm -r build",
     "preview:web": "pnpm --filter @kinora/web preview",
     "preview:viewer": "pnpm --filter @kinora/trace-viewer preview",
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "pnpm -r test",
-    "test:e2e:viewer": "pnpm --filter @kinora/trace-viewer test:e2e",
-    "ingest": "tsx packages/cli/src/kinora.ts",
-    "serve:rest": "tsx examples/rest-server.ts"
+    "test:e2e": "pnpm --filter @kinora/trace-viewer test:e2e"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.0.0",
-    "@hono/node-server": "^2.0.4",
-    "@kinora/core": "workspace:*",
     "eslint": "^10.3.0",
-    "hono": "^4.12.23",
-    "tsx": "^4.22.4",
     "typescript": "~6.0.2"
   }
 }
