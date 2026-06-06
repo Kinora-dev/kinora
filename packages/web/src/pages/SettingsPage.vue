@@ -30,32 +30,32 @@ function setTheme(value: ColorMode): void {
   colorMode.value = value
 }
 
-// --- Email ---
-const { handleSubmit: submitEmail, isSubmitting: emailSubmitting, setFieldError: setEmailError } = useForm({
-  validationSchema: toTypedSchema(
-    z.object({
-      email: z.string().min(1, 'Email is required').email('Enter a valid email'),
-    }),
-  ),
-  initialValues: { email: session.user.value?.email ?? '' },
-})
+// --- Email (plain ref: a single field, sidesteps the vee-validate/Input prefill binding quirk) ---
+const emailInput = ref(session.user.value?.email ?? '')
+const emailError = ref('')
+const emailSaving = ref(false)
+const emailValid = computed(() => /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/.test(emailInput.value.trim()))
 
-const onEmail = submitEmail(async (values) => {
-  if (values.email === session.user.value?.email) {
-    setEmailError('email', 'That is already your email')
+async function updateEmail(): Promise<void> {
+  emailError.value = ''
+  const next = emailInput.value.trim()
+  if (next === session.user.value?.email) {
+    emailError.value = 'That is already your email'
     return
   }
-  const { error } = await authClient.changeEmail({ newEmail: values.email })
+  emailSaving.value = true
+  const { error } = await authClient.changeEmail({ newEmail: next })
+  emailSaving.value = false
   if (error) {
-    setEmailError('email', error.message ?? 'Could not update email')
+    emailError.value = error.message ?? 'Could not update email'
     return
   }
   await session.refresh()
   toast.success('Email updated')
-})
+}
 
 // --- Password ---
-const { handleSubmit: submitPassword, isSubmitting: pwSubmitting, resetForm: resetPw, setFieldError: setPwError } = useForm({
+const { handleSubmit: submitPassword, isSubmitting: pwSubmitting, resetForm: resetPw, setFieldError: setPwError, meta: pwMeta } = useForm({
   validationSchema: toTypedSchema(
     z.object({
       currentPassword: z.string().min(1, 'Current password is required'),
@@ -152,20 +152,16 @@ function fmtDate(d: Date | string | null | undefined): string {
         <CardDescription>The address you sign in with.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form class="flex flex-col gap-4" @submit="onEmail">
-          <FormField v-slot="{ componentField }" name="email">
-            <FormItem>
-              <FormLabel :class="labelClass">
-                Email
-              </FormLabel>
-              <FormControl>
-                <Input type="email" autocomplete="email" v-bind="componentField" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          </FormField>
-          <Button type="submit" :disabled="emailSubmitting" size="sm" class="self-start font-mono text-xs">
-            {{ emailSubmitting ? 'Saving…' : 'Update email' }}
+        <form class="flex flex-col gap-4" @submit.prevent="updateEmail">
+          <div class="grid gap-2">
+            <label :class="labelClass" for="settings-email">Email</label>
+            <Input id="settings-email" v-model="emailInput" type="email" autocomplete="email" />
+            <p v-if="emailError" class="text-sm text-destructive">
+              {{ emailError }}
+            </p>
+          </div>
+          <Button type="submit" :disabled="emailSaving || !emailValid" size="sm" class="self-start font-mono text-xs">
+            {{ emailSaving ? 'Saving…' : 'Update email' }}
           </Button>
         </form>
       </CardContent>
@@ -212,7 +208,7 @@ function fmtDate(d: Date | string | null | undefined): string {
               <FormMessage />
             </FormItem>
           </FormField>
-          <Button type="submit" :disabled="pwSubmitting" size="sm" class="self-start font-mono text-xs">
+          <Button type="submit" :disabled="pwSubmitting || !pwMeta.valid" size="sm" class="self-start font-mono text-xs">
             {{ pwSubmitting ? 'Saving…' : 'Change password' }}
           </Button>
         </form>
