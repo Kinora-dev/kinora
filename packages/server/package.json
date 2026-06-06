@@ -5,7 +5,7 @@
   "private": true,
   "description": "Kinora backend: Hono + tRPC API (single-tenant, self-hostable)",
   "author": "Joris Gallot",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "engines": {
     "node": ">=24"
   },
