@@ -9,7 +9,7 @@ import { useApiTokens } from '@/composables/useApiTokens'
 import { env } from '@/lib/env'
 
 const { creating, createdKey, copied, create, copyCreatedKey } = useApiTokens({ autoLoad: false })
-const tokenName = ref('')
+const tokenName = ref('ci-github-actions')
 
 async function generate(): Promise<void> {
   if (await create(tokenName.value))
