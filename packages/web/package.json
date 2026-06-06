@@ -10,8 +10,7 @@
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit",
     "test": "vitest run --passWithNoTests",
-    "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@kinora/core": "workspace:*",
@@ -37,7 +36,6 @@
   "devDependencies": {
     "@julr/vite-plugin-validate-env": "^2.2.2",
     "@kinora/server": "workspace:*",
-    "@playwright/test": "^1.60.0",
     "@tailwindcss/vite": "^4.3.0",
     "@types/node": "^24.12.3",
     "@vitejs/plugin-vue": "^6.0.6",

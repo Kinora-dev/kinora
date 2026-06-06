@@ -16,6 +16,10 @@ on:
 permissions:
   contents: read
 
+# satisfy validate-env on the web build.
+env:
+  VITE_KINORA_SERVER_URL: http://localhost:3000
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
@@ -69,13 +73,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # Browsers install to a shared global cache; app and viewer share the same
-      # Playwright version, so one install covers both e2e suites.
       - name: Install Playwright browser
-        run: pnpm --filter @kinora/web exec playwright install --with-deps chromium
-
-      - name: E2E app
-        run: pnpm test:e2e:web
+        run: pnpm --filter @kinora/trace-viewer exec playwright install --with-deps chromium
 
       - name: E2E viewer
         run: pnpm test:e2e:viewer

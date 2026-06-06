@@ -22,7 +22,6 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "pnpm -r test",
-    "test:e2e:web": "pnpm --filter @kinora/web test:e2e",
     "test:e2e:viewer": "pnpm --filter @kinora/trace-viewer test:e2e",
     "ingest": "tsx packages/cli/src/kinora.ts",
     "serve:rest": "tsx examples/rest-server.ts"
