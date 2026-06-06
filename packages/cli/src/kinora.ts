@@ -1,74 +1,35 @@
 #!/usr/bin/env node
-import type { Manifest, ProjectEntry, RunSummary } from '@kinora/core'
-import type { KeepPolicy } from './artifacts'
 import { existsSync } from 'node:fs'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
-import path from 'node:path'
+import { readFile } from 'node:fs/promises'
 import process from 'node:process'
 import { parseArgs } from 'node:util'
-import {
-  ingestPlaywrightReport,
-  manifestSchema,
-  SCHEMA_VERSION,
-} from '@kinora/core'
-import { makeCopyArtifact } from './artifacts'
+import { uploadReport } from './upload'
 
-const USAGE = `kinora ingest - turn a Playwright json report into kinora data files
+const USAGE = `kinora - upload a Playwright json report to a kinora server
 
 Usage:
-  kinora <results.json> --project <id> [options]
+  kinora upload <results.json> --project <slug> [options]
 
 Required:
-  --project <id>        Project id (stable slug, e.g. "web-app")
+  --project <slug>      Target project slug
+
+Auth (or via env KINORA_TOKEN / KINORA_URL):
+  --token <token>       Project API token
+  --url <url>           kinora server base URL
 
 Options:
-  --name <name>         Project display name (defaults to id; updated if given)
-  --run <id>            Run id (defaults to the report date, YYYY-MM-DD)
-  --out <dir>           Output root served statically (default: kinora-data)
-  --results-dir <dir>   Playwright test-results dir, to resolve trace.zip paths (default: test-results)
-  --keep <policy>       which tests' traces to copy: failed | all | none (default: failed)
+  --name <name>         Project display name (default: slug)
   --git-sha <sha>
   --git-branch <branch>
   --ci-provider <name>
   --ci-run-url <url>
   --ci-run-number <n>
-  -h, --help
-
-Writes <out>/reports/<project>/<run>.json and upserts <out>/manifest.json.`
+  -h, --help`
 
 function fail(msg: string): never {
   console.error(`error: ${msg}\n`)
   console.error(USAGE)
   process.exit(1)
-}
-
-async function readManifest(file: string): Promise<Manifest> {
-  if (!existsSync(file)) {
-    return { schemaVersion: SCHEMA_VERSION, generatedAt: new Date().toISOString(), projects: [] }
-  }
-  const parsed = manifestSchema.safeParse(JSON.parse(await readFile(file, 'utf8')))
-  if (!parsed.success) {
-    fail(`existing manifest at ${file} is invalid, refusing to overwrite:\n${parsed.error.message}`)
-  }
-  return parsed.data
-}
-
-function upsertRun(manifest: Manifest, projectId: string, name: string, run: RunSummary): void {
-  let project: ProjectEntry | undefined = manifest.projects.find(p => p.id === projectId)
-  if (!project) {
-    project = { id: projectId, name, runs: [] }
-    manifest.projects.push(project)
-  }
-  else if (name) {
-    project.name = name
-  }
-  project.runs = project.runs.filter(r => r.runId !== run.runId)
-  project.runs.push(run)
-}
-
-async function writeJson(file: string, data: unknown): Promise<void> {
-  await mkdir(path.dirname(file), { recursive: true })
-  await writeFile(file, `${JSON.stringify(data, null, 2)}\n`)
 }
 
 async function main(): Promise<void> {
@@ -77,10 +38,8 @@ async function main(): Promise<void> {
     options: {
       'project': { type: 'string' },
       'name': { type: 'string' },
-      'run': { type: 'string' },
-      'out': { type: 'string', default: 'kinora-data' },
-      'results-dir': { type: 'string', default: 'test-results' },
-      'keep': { type: 'string', default: 'failed' },
+      'token': { type: 'string' },
+      'url': { type: 'string' },
       'git-sha': { type: 'string' },
       'git-branch': { type: 'string' },
       'ci-provider': { type: 'string' },
@@ -94,65 +53,42 @@ async function main(): Promise<void> {
     console.log(USAGE)
     return
   }
-  if (positionals.length !== 1)
+
+  // Accept both `kinora upload <file>` and `kinora <file>`.
+  const args = positionals[0] === 'upload' ? positionals.slice(1) : positionals
+  if (args.length !== 1)
     fail('pass exactly one Playwright results.json path')
   if (!values.project)
-    fail('--project <id> is required')
+    fail('--project <slug> is required')
 
-  const reportFile = positionals[0]
+  const reportFile = args[0]
   if (!existsSync(reportFile))
     fail(`report not found: ${reportFile}`)
 
+  const url = values.url ?? process.env.KINORA_URL
+  const token = values.token ?? process.env.KINORA_TOKEN
+  if (!url)
+    fail('--url or KINORA_URL is required')
+  if (!token)
+    fail('--token or KINORA_TOKEN is required')
+
+  const git = values['git-sha'] || values['git-branch']
+    ? { sha: values['git-sha'], branch: values['git-branch'] }
+    : undefined
+  const ci = values['ci-provider'] || values['ci-run-url'] || values['ci-run-number']
+    ? { provider: values['ci-provider'], runUrl: values['ci-run-url'], runNumber: values['ci-run-number'] }
+    : undefined
+
   const raw: unknown = JSON.parse(await readFile(reportFile, 'utf8'))
-
-  // Default run id = the report's date.
-  const startTime
-    = raw && typeof raw === 'object' && 'stats' in raw
-      ? (raw as { stats?: { startTime?: string } }).stats?.startTime
-      : undefined
-  const runId = values.run ?? (startTime ? startTime.slice(0, 10) : new Date().toISOString().slice(0, 10))
-
-  const git
-    = values['git-sha'] || values['git-branch']
-      ? { sha: values['git-sha'], branch: values['git-branch'] }
-      : undefined
-  const ci
-    = values['ci-provider'] || values['ci-run-url'] || values['ci-run-number']
-      ? {
-          provider: values['ci-provider'],
-          runUrl: values['ci-run-url'],
-          runNumber: values['ci-run-number'],
-        }
-      : undefined
-
-  const outDir = path.resolve(values.out)
-  const resultsDir = path.resolve(values['results-dir'] ?? 'test-results')
-  const keep = (values.keep ?? 'failed') as KeepPolicy
-  if (!['failed', 'all', 'none'].includes(keep))
-    fail(`--keep must be one of: failed, all, none (got "${keep}")`)
-
-  const { summary, report } = ingestPlaywrightReport(raw, {
-    projectId: values.project,
-    runId,
+  const res = await uploadReport(raw, {
+    project: { slug: values.project, name: values.name },
+    url,
+    token,
     git,
     ci,
-    copyArtifact: makeCopyArtifact(outDir, resultsDir, keep),
   })
 
-  const manifestFile = path.join(outDir, 'manifest.json')
-
-  const manifest = await readManifest(manifestFile)
-  upsertRun(manifest, values.project, values.name ?? values.project, summary)
-  manifest.generatedAt = new Date().toISOString()
-
-  await writeJson(path.join(outDir, summary.reportPath), report)
-  await writeJson(manifestFile, manifest)
-
-  const c = summary.counts
-  console.log(
-    `ingested ${values.project}/${runId}: ${c.total} tests `
-    + `(${c.unexpected} fail, ${c.flaky} flaky, ${c.skipped} skip) -> ${path.relative(process.cwd(), outDir)}`,
-  )
+  console.log(`uploaded ${res.tests} tests to ${values.project} (run ${res.runId})`)
 }
 
 main().catch((err) => {

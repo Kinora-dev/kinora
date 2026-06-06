@@ -1,0 +1,133 @@
+import type { CiMeta, Counts, GitMeta, IngestRun, NormTest } from '@kinora/core'
+import type { FullConfig, FullResult, Reporter, Suite, TestCase } from '@playwright/test/reporter'
+import process from 'node:process'
+import { createIngestClient, makeTestKey } from '@kinora/core'
+
+export interface KinoraReporterOptions {
+  /** kinora server base URL. Defaults to env KINORA_URL. */
+  url?: string
+  /** Project API token. Defaults to env KINORA_TOKEN (keep it out of the config file). */
+  token?: string
+  /** Target project. `name` defaults to `slug`. */
+  project: { slug: string, name?: string }
+  git?: GitMeta
+  ci?: CiMeta
+}
+
+// Rebuild the json-report identity (file path + title path + project) from the
+// reporter suite tree so testKey matches the CLI path. Suite titles: file path
+// for `file` suites, describe title for `describe`, project name for `project`.
+function identity(test: TestCase): { file: string, titlePath: string[], projectName: string } {
+  let file = ''
+  let projectName = ''
+  const describes: string[] = []
+  let suite: Suite | undefined = test.parent
+  while (suite) {
+    if (suite.type === 'file')
+      file = suite.title
+    else if (suite.type === 'project')
+      projectName = suite.title
+    else if (suite.type === 'describe' && suite.title)
+      describes.unshift(suite.title)
+    suite = suite.parent
+  }
+  return { file, titlePath: [file, ...describes, test.title], projectName }
+}
+
+function toNormTest(test: TestCase): NormTest {
+  const { file, titlePath, projectName } = identity(test)
+  const last = test.results.at(-1)
+  return {
+    testKey: makeTestKey(file, titlePath, projectName),
+    title: test.title,
+    titlePath,
+    file,
+    line: test.location.line,
+    column: test.location.column,
+    projectName,
+    status: test.outcome(),
+    ok: test.ok(),
+    duration: test.results.reduce((sum, r) => sum + r.duration, 0),
+    retries: Math.max(0, test.results.length - 1),
+    tags: test.tags,
+    annotations: test.annotations.map(a => ({ type: a.type, description: a.description })),
+    errors: (last?.errors ?? []).flatMap(e =>
+      e.message ? [{ message: e.message, stack: e.stack, location: e.location }] : [],
+    ),
+    attachments: (last?.attachments ?? []).map(a => ({
+      name: a.name,
+      contentType: a.contentType,
+      path: a.path,
+      hasBody: a.body != null,
+    })),
+  }
+}
+
+function countsOf(tests: NormTest[]): Counts {
+  const counts: Counts = { total: tests.length, expected: 0, unexpected: 0, flaky: 0, skipped: 0 }
+  for (const t of tests)
+    counts[t.status]++
+  return counts
+}
+
+function detectGit(): GitMeta | undefined {
+  const sha = process.env.GITHUB_SHA
+  const branch = process.env.GITHUB_REF_NAME
+  if (!sha && !branch)
+    return undefined
+  return { sha, branch }
+}
+
+function detectCi(): CiMeta | undefined {
+  if (!process.env.GITHUB_ACTIONS)
+    return undefined
+  const { GITHUB_SERVER_URL, GITHUB_REPOSITORY, GITHUB_RUN_ID, GITHUB_RUN_NUMBER } = process.env
+  const runUrl = GITHUB_SERVER_URL && GITHUB_REPOSITORY && GITHUB_RUN_ID
+    ? `${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}`
+    : undefined
+  return { provider: 'github', runUrl, runNumber: GITHUB_RUN_NUMBER }
+}
+
+export default class KinoraReporter implements Reporter {
+  private suite: Suite | undefined
+  private config: FullConfig | undefined
+
+  constructor(private readonly options: KinoraReporterOptions) {}
+
+  onBegin(config: FullConfig, suite: Suite): void {
+    this.config = config
+    this.suite = suite
+  }
+
+  async onEnd(result: FullResult): Promise<void> {
+    const url = this.options.url ?? process.env.KINORA_URL
+    const token = this.options.token ?? process.env.KINORA_TOKEN
+    if (!url || !token) {
+      console.warn('[kinora] skipping upload: missing url/token (set KINORA_URL + KINORA_TOKEN)')
+      return
+    }
+
+    const tests = (this.suite?.allTests() ?? []).map(toNormTest)
+    const payload: IngestRun = {
+      project: { slug: this.options.project.slug, name: this.options.project.name ?? this.options.project.slug },
+      run: {
+        startedAt: result.startTime.toISOString(),
+        duration: result.duration,
+        counts: countsOf(tests),
+        playwrightVersion: this.config?.version,
+        git: this.options.git ?? detectGit(),
+        ci: this.options.ci ?? detectCi(),
+      },
+      tests,
+    }
+
+    try {
+      const res = await createIngestClient({ baseUrl: url, token }).uploadRun(payload)
+      // eslint-disable-next-line no-console -- a reporter's job is to report
+      console.log(`[kinora] uploaded ${res.tests} tests (run ${res.runId})`)
+    }
+    catch (err) {
+      console.error(`[kinora] upload failed:`, err instanceof Error ? err.message : err)
+    }
+  }
+}
