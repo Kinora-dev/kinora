@@ -35,6 +35,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@julr/vite-plugin-validate-env": "^2.2.2",
     "@kinora/server": "workspace:*",
     "@playwright/test": "^1.60.0",
     "@tailwindcss/vite": "^4.3.0",

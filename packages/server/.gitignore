@@ -2,5 +2,3 @@ dist
 .data
 drizzle
 *.log
-.env*
-!.env.example
