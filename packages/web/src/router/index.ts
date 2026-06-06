@@ -7,6 +7,7 @@ export const router = createRouter({
     { path: '/login', name: 'login', component: () => import('@/pages/LoginPage.vue'), meta: { public: true } },
     { path: '/signup', name: 'signup', component: () => import('@/pages/SignupPage.vue'), meta: { public: true } },
     { path: '/', name: 'overview', component: () => import('@/pages/OverviewPage.vue') },
+    { path: '/settings', name: 'settings', component: () => import('@/pages/SettingsPage.vue') },
     {
       path: '/projects/:projectId',
       name: 'project',

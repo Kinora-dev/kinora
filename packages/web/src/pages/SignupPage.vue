@@ -17,7 +17,6 @@ const serverError = ref('')
 const { handleSubmit, isSubmitting } = useForm({
   validationSchema: toTypedSchema(
     z.object({
-      name: z.string().min(1, 'Name is required'),
       email: z.string().min(1, 'Email is required').email('Enter a valid email'),
       password: z.string().min(8, 'At least 8 characters'),
       confirmPassword: z.string().min(1, 'Confirm your password'),
@@ -30,7 +29,7 @@ const { handleSubmit, isSubmitting } = useForm({
 
 const onSubmit = handleSubmit(async (values) => {
   serverError.value = ''
-  const { error } = await authClient.signUp.email({ name: values.name, email: values.email, password: values.password })
+  const { error } = await authClient.signUp.email({ name: values.email, email: values.email, password: values.password })
   if (error) {
     serverError.value = error.message ?? 'Sign up failed'
     return
@@ -45,18 +44,6 @@ const labelClass = 'font-mono text-[11px] tracking-wider text-muted-foreground u
 <template>
   <AuthLayout tag="Create your workspace">
     <form class="space-y-4" @submit="onSubmit">
-      <FormField v-slot="{ componentField }" name="name">
-        <FormItem>
-          <FormLabel :class="labelClass">
-            Name
-          </FormLabel>
-          <FormControl>
-            <Input autocomplete="name" placeholder="Ada Lovelace" v-bind="componentField" />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      </FormField>
-
       <FormField v-slot="{ componentField }" name="email">
         <FormItem>
           <FormLabel :class="labelClass">

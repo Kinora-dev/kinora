@@ -10,6 +10,8 @@ export const auth = betterAuth({
   baseURL: env.BASE_URL,
   trustedOrigins: getTrustedOrigins(),
   emailAndPassword: { enabled: true },
+  // No SMTP yet: emails stay unverified, so apply the new address directly instead of mailing a verification link.
+  user: { changeEmail: { enabled: true, updateEmailWithoutVerification: true } },
   secret: env.AUTH_SECRET,
   plugins: [apiKey()],
 })

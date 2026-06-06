@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@kinora/ui/dropdown-menu'
-import { ThemeToggle } from '@kinora/ui/theme-toggle'
-import { LogOut } from 'lucide-vue-next'
+import { LogOut, Settings } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { authClient } from '@/lib/auth'
@@ -36,8 +35,6 @@ async function signOut(): Promise<void> {
       </RouterLink>
 
       <div class="ml-auto flex items-center gap-1.5">
-        <ThemeToggle />
-
         <DropdownMenu v-if="user">
           <DropdownMenuTrigger as-child>
             <button
@@ -51,11 +48,17 @@ async function signOut(): Promise<void> {
           <DropdownMenuContent align="end" class="w-56">
             <DropdownMenuLabel>
               <div class="flex min-w-0 flex-col">
-                <span class="truncate text-sm font-medium">{{ user.name }}</span>
+                <span v-if="user.name && user.name !== user.email" class="truncate text-sm font-medium">{{ user.name }}</span>
                 <span class="truncate text-xs font-normal text-muted-foreground">{{ user.email }}</span>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem as-child>
+              <RouterLink :to="{ name: 'settings' }">
+                <Settings class="size-4" />
+                Settings
+              </RouterLink>
+            </DropdownMenuItem>
             <DropdownMenuItem @click="signOut">
               <LogOut class="size-4" />
               Sign out
