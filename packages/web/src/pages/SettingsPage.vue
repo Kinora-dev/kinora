@@ -8,9 +8,10 @@ import { colorMode } from '@kinora/ui/theme'
 import { toTypedSchema } from '@vee-validate/zod'
 import { Check, Copy, KeyRound, Monitor, Moon, Plus, Sun, Trash2 } from 'lucide-vue-next'
 import { useForm } from 'vee-validate'
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import { z } from 'zod'
+import { useApiTokens } from '@/composables/useApiTokens'
 import { authClient } from '@/lib/auth'
 import { session } from '@/lib/session'
 
@@ -82,65 +83,22 @@ const onPassword = submitPassword(async (values) => {
 })
 
 // --- API tokens ---
-type ApiKey = NonNullable<Awaited<ReturnType<typeof authClient.apiKey.list>>['data']>['apiKeys'][number]
+const {
+  tokens,
+  loading: loadingTokens,
+  creating,
+  createdKey,
+  copied,
+  create: createApiToken,
+  copyCreatedKey: copyKey,
+  remove: deleteToken,
+} = useApiTokens()
 
-const tokens = ref<ApiKey[]>([])
-const loadingTokens = ref(true)
 const newTokenName = ref('')
-const creating = ref(false)
-const createdKey = ref('') // full token, shown once right after creation
-const copied = ref(false)
-
-async function loadTokens(): Promise<void> {
-  loadingTokens.value = true
-  const { data, error } = await authClient.apiKey.list()
-  if (error)
-    toast.error('Could not load tokens')
-  else
-    tokens.value = data?.apiKeys ?? []
-  loadingTokens.value = false
-}
-
-onMounted(loadTokens)
 
 async function createToken(): Promise<void> {
-  const name = newTokenName.value.trim()
-  if (!name) {
-    toast.error('Name the token first')
-    return
-  }
-  creating.value = true
-  const { data, error } = await authClient.apiKey.create({ name })
-  creating.value = false
-  if (error || !data) {
-    toast.error(error?.message ?? 'Could not create token')
-    return
-  }
-  createdKey.value = data.key
-  newTokenName.value = ''
-  await loadTokens()
-}
-
-async function copyKey(): Promise<void> {
-  try {
-    await navigator.clipboard.writeText(createdKey.value)
-    copied.value = true
-    toast.success('Token copied')
-    setTimeout(() => (copied.value = false), 1500)
-  }
-  catch {
-    toast.error('Could not copy token')
-  }
-}
-
-async function deleteToken(id: string): Promise<void> {
-  const { error } = await authClient.apiKey.delete({ keyId: id })
-  if (error) {
-    toast.error('Could not delete token')
-    return
-  }
-  toast.success('Token deleted')
-  await loadTokens()
+  if (await createApiToken(newTokenName.value))
+    newTokenName.value = ''
 }
 
 function fmtDate(d: Date | string | null | undefined): string {
