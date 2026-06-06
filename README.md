@@ -15,15 +15,15 @@ Playwright ships a great HTML report for a single run. kinora sits one level up:
 
 Monorepo (pnpm workspaces). Open-core: the deployable surface is AGPL, the client libraries you embed are MIT.
 
-| Package | Role | License |
-|---|---|---|
-| [`@kinora/server`](packages/server) | Hono + tRPC API, better-auth, Drizzle/Postgres - ingest + dashboard data | AGPL-3.0 |
-| [`@kinora/web`](packages/web) | Vue 3 dashboard (auth, runs, history, flakiness) | AGPL-3.0 |
-| [`@kinora/trace-viewer`](packages/trace-viewer) | Vendored Playwright trace engine (Apache-2.0) + our Vue UI | MIT |
-| [`@kinora/reporter`](packages/reporter) | Playwright reporter - auto-uploads on `onEnd` | MIT |
-| [`@kinora/cli`](packages/cli) | Manual upload of a `results.json` | MIT |
-| [`@kinora/core`](packages/core) | zod contracts + normalize + ingest client (shared) | MIT |
-| [`@kinora/ui`](packages/ui) | Shared shadcn-vue design system | MIT |
+| Package                                         | Role                                                                     | License  |
+| ----------------------------------------------- | ------------------------------------------------------------------------ | -------- |
+| [`@kinora/server`](packages/server)             | Hono + tRPC API, better-auth, Drizzle/Postgres - ingest + dashboard data | AGPL-3.0 |
+| [`@kinora/web`](packages/web)                   | Vue 3 dashboard (auth, runs, history, flakiness)                         | AGPL-3.0 |
+| [`@kinora/trace-viewer`](packages/trace-viewer) | Vendored Playwright trace engine (Apache-2.0) + our Vue UI               | MIT      |
+| [`@kinora/reporter`](packages/reporter)         | Playwright reporter - auto-uploads on `onEnd`                            | MIT      |
+| [`@kinora/cli`](packages/cli)                   | Manual upload of a `results.json`                                        | MIT      |
+| [`@kinora/core`](packages/core)                 | zod contracts + normalize + ingest client (shared)                       | MIT      |
+| [`@kinora/ui`](packages/ui)                     | Shared shadcn-vue design system                                          | MIT      |
 
 ## Send your tests
 
@@ -74,9 +74,12 @@ pnpm db:push                    # create tables
 pnpm db:seed                    # seed a demo account + data, prints login + an API token
 pnpm dev                        # server on :3000
 
-# 2. frontends
+# 2. web
+cd packages/web
 cp .env.example .env
-pnpm dev:web                    # dashboard on :5173
+pnpm dev                        # dashboard on :5173
+
+# 3. trace viewer
 pnpm dev:viewer                 # trace viewer on :5174
 ```
 
