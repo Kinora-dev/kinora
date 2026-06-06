@@ -8,13 +8,16 @@ import { colorMode } from '@kinora/ui/theme'
 import { toTypedSchema } from '@vee-validate/zod'
 import { Check, Copy, KeyRound, Monitor, Moon, Plus, Sun, Trash2 } from 'lucide-vue-next'
 import { useForm } from 'vee-validate'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import { z } from 'zod'
 import { authClient } from '@/lib/auth'
 import { session } from '@/lib/session'
 
 const labelClass = 'font-mono text-[11px] tracking-wider text-muted-foreground uppercase'
+
+// Social-only users have no password credential: email/password editing is hidden for them.
+const hasPassword = computed(() => session.user.value?.hasPassword ?? false)
 
 const themeOptions = [
   { value: 'auto', label: 'System', icon: Monitor },
@@ -184,7 +187,7 @@ function fmtDate(d: Date | string | null | undefined): string {
     </Card>
 
     <!-- Email -->
-    <Card>
+    <Card v-if="hasPassword">
       <CardHeader>
         <CardTitle>Email</CardTitle>
         <CardDescription>The address you sign in with.</CardDescription>
@@ -210,7 +213,7 @@ function fmtDate(d: Date | string | null | undefined): string {
     </Card>
 
     <!-- Password -->
-    <Card>
+    <Card v-if="hasPassword">
       <CardHeader>
         <CardTitle>Password</CardTitle>
         <CardDescription>Changing it signs out your other sessions.</CardDescription>

@@ -8,6 +8,7 @@ import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { z } from 'zod'
 import AuthLayout from '@/components/auth/AuthLayout.vue'
+import SocialButtons from '@/components/auth/SocialButtons.vue'
 import { authClient } from '@/lib/auth'
 import { session } from '@/lib/session'
 
@@ -43,6 +44,8 @@ const labelClass = 'font-mono text-[11px] tracking-wider text-muted-foreground u
 
 <template>
   <AuthLayout tag="Create your workspace">
+    <SocialButtons />
+
     <form class="space-y-4" @submit="onSubmit">
       <FormField v-slot="{ componentField }" name="email">
         <FormItem>

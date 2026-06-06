@@ -13,6 +13,10 @@ const envSchema = z.object({
   POSTGRES_PORT: z.coerce.number(),
   POSTGRES_DB: z.string(),
   STORAGE_DIR: z.string(),
+  GOOGLE_CLIENT_ID: z.string(),
+  GOOGLE_CLIENT_SECRET: z.string(),
+  GITHUB_CLIENT_ID: z.string(),
+  GITHUB_CLIENT_SECRET: z.string(),
 })
 
 export const env = envSchema.parse(process.env)
