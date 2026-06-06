@@ -18,7 +18,7 @@ export const publicApi = new Hono<{ Variables: { userId: string } }>()
 publicApi.use('*', async (c, next) => {
   const header = c.req.header('Authorization')
   if (!header?.startsWith(BEARER_PREFIX))
-    return c.json({ error: 'Missing or invalid Authorization header' }, 401)
+    return c.json({ error: 'Invalid API key' }, 401)
 
   const key = header.slice(BEARER_PREFIX.length).trim()
   const verification = await auth.api.verifyApiKey({ body: { key } })
