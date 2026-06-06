@@ -23,13 +23,7 @@ app.use('/artifacts/*', serveStatic({
   rewriteRequestPath: path => path.replace(/^\/artifacts/, ''),
 }))
 
-// API consumed cross-origin (web + viewer). CORP same-origin / HSTS https-upgrade
-// would block or break the dev fetches; CORS governs access instead.
-app.use(secureHeaders({
-  crossOriginResourcePolicy: false,
-  crossOriginOpenerPolicy: false,
-  strictTransportSecurity: env.NODE_ENV === 'production' ? 'max-age=15552000; includeSubDomains' : false,
-}))
+app.use(secureHeaders())
 app.use('*', cors({ origin: getTrustedOrigins(), credentials: true }))
 
 app.get('/healthcheck', async (c) => {
@@ -44,10 +38,8 @@ app.get('/healthcheck', async (c) => {
 
 app.on(['POST', 'GET'], '/api/auth/*', c => auth.handler(c.req.raw))
 
-// Dashboard API (session-authed, tRPC for shared types with web).
 app.use('/trpc/*', trpcServer({ router: appRouter, createContext }))
 
-// Public ingest API (api-key authed, plain REST) - the reporter / cli upload here.
 app.route('/api/v1', publicApi)
 
 export { app }

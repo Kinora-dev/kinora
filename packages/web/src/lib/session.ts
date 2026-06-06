@@ -7,7 +7,6 @@ const user = shallowRef<SessionUser>(null)
 const ready = ref(false)
 let booting: Promise<void> | undefined
 
-// Resolve the session once on boot; the router guard awaits this before routing.
 async function ensure(): Promise<void> {
   if (!booting) {
     booting = (async () => {
@@ -29,7 +28,6 @@ function setUser(next: SessionUser): void {
   user.value = next
 }
 
-// Re-read the session (after sign-in / sign-up / sign-out).
 async function refresh(): Promise<void> {
   try {
     user.value = await trpc.user.me.query()
