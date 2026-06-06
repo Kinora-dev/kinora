@@ -4,6 +4,7 @@ import { Input } from '@kinora/ui/input'
 import { Check, Copy, Plus } from 'lucide-vue-next'
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
+import CopyButton from '@/components/app/CopyButton.vue'
 import { useApiTokens } from '@/composables/useApiTokens'
 import { env } from '@/lib/env'
 
@@ -96,7 +97,10 @@ const runSnippet = `KINORA_URL=${env.serverUrl} KINORA_TOKEN=<token> \\
             <p class="text-sm">
               Add the kinora reporter to your Playwright config.
             </p>
-            <pre class="mt-2 overflow-x-auto rounded-md border border-border bg-background/60 px-3 py-2.5 font-mono text-xs leading-relaxed text-muted-foreground">{{ configSnippet }}</pre>
+            <div class="relative mt-2">
+              <pre class="overflow-x-auto rounded-md border border-border bg-background/60 py-2.5 pr-10 pl-3 font-mono text-xs leading-relaxed text-muted-foreground">{{ configSnippet }}</pre>
+              <CopyButton :text="configSnippet" class="absolute top-1.5 right-1.5" />
+            </div>
           </div>
         </li>
 
@@ -108,7 +112,10 @@ const runSnippet = `KINORA_URL=${env.serverUrl} KINORA_TOKEN=<token> \\
             <p class="text-sm">
               Run your suite pointed at this server (paste the token above into <code class="rounded bg-background/60 px-1 py-0.5 font-mono text-xs">KINORA_TOKEN</code>).
             </p>
-            <pre class="mt-2 overflow-x-auto rounded-md border border-border bg-background/60 px-3 py-2.5 font-mono text-xs leading-relaxed text-muted-foreground">{{ runSnippet }}</pre>
+            <div class="relative mt-2">
+              <pre class="overflow-x-auto rounded-md border border-border bg-background/60 py-2.5 pr-10 pl-3 font-mono text-xs leading-relaxed text-muted-foreground">{{ runSnippet }}</pre>
+              <CopyButton :text="runSnippet" class="absolute top-1.5 right-1.5" />
+            </div>
           </div>
         </li>
       </ol>
