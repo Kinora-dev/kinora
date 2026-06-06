@@ -27,7 +27,8 @@ export async function uploadReport(raw: unknown, opts: UploadOptions): Promise<I
       if (!a.path || !isTraceAttachment(a))
         continue
       try {
-        await client.uploadArtifact({ runId: res.runId, testKey: t.testKey, name: a.name, contentType: a.contentType, body: await readFile(a.path) })
+        const art = await client.uploadArtifact({ runId: res.runId, testKey: t.testKey, name: a.name, contentType: a.contentType, body: await readFile(a.path) })
+        console.log(`  trace ${t.testKey} -> ${art.url}`)
       }
       catch (err) {
         console.warn(`warning: trace upload failed for ${t.testKey}: ${err instanceof Error ? err.message : err}`)

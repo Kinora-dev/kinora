@@ -1,3 +1,4 @@
+import { serveStatic } from '@hono/node-server/serve-static'
 import { trpcServer } from '@hono/trpc-server'
 import { sql } from 'drizzle-orm'
 import { Hono } from 'hono'
@@ -5,12 +6,22 @@ import { cors } from 'hono/cors'
 import { secureHeaders } from 'hono/secure-headers'
 import { db } from './db'
 import { auth } from './lib/auth'
+import { env } from './lib/env'
 import { getTrustedOrigins } from './lib/utils'
 import { publicApi } from './public-api/index'
 import { appRouter } from './router/index'
 import { createContext } from './trpc/context'
 
 const app = new Hono()
+
+// Public artifacts (trace.zip etc): permissive CORS + range. Registered before
+// secureHeaders/global-cors so its CORP doesn't block the viewer's cross-origin
+// service-worker fetch. serveStatic ends the chain when the file exists.
+app.use('/artifacts/*', cors({ origin: '*' }))
+app.use('/artifacts/*', serveStatic({
+  root: env.STORAGE_DIR,
+  rewriteRequestPath: path => path.replace(/^\/artifacts/, ''),
+}))
 
 app.use(secureHeaders())
 app.use('*', cors({ origin: getTrustedOrigins(), credentials: true }))
