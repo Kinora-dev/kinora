@@ -4,7 +4,6 @@ import { ThemeToggle } from '@kinora/ui/theme-toggle'
 import { LogOut } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { config, useMock } from '@/config'
 import { authClient } from '@/lib/auth'
 import { session } from '@/lib/session'
 
@@ -12,17 +11,6 @@ const router = useRouter()
 const user = session.user
 
 const initial = computed(() => (user.value?.name || user.value?.email || '?').charAt(0).toUpperCase())
-
-const source = computed(() => {
-  if (useMock)
-    return { label: 'DEMO', detail: 'mock data' }
-  try {
-    return { label: 'LIVE', detail: new URL(config.baseUrl).host }
-  }
-  catch {
-    return { label: 'LIVE', detail: config.baseUrl || 'unset' }
-  }
-})
 
 async function signOut(): Promise<void> {
   await authClient.signOut()
@@ -46,17 +34,6 @@ async function signOut(): Promise<void> {
           kinora
         </span>
       </RouterLink>
-
-      <span
-        class="flex items-center gap-1.5 rounded-full border border-border px-2.5 py-0.5 font-mono text-[10px] font-medium tracking-wider text-muted-foreground"
-      >
-        <span
-          class="size-1.5 rounded-full"
-          :class="source.label === 'LIVE' ? 'bg-pass' : 'bg-flaky'"
-        />
-        {{ source.label }}
-        <span class="text-muted-foreground/60">/ {{ source.detail }}</span>
-      </span>
 
       <div class="ml-auto flex items-center gap-1.5">
         <ThemeToggle />

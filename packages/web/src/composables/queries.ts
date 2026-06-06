@@ -1,17 +1,17 @@
 import { useAsyncState } from '@vueuse/core'
-import { getManifest, getProjectHistory, getRun } from '@/data/source'
+import { trpc } from '@/lib/trpc'
 
 export function useManifest() {
-  return useAsyncState(() => getManifest(), null, { immediate: true })
+  return useAsyncState(() => trpc.dashboard.manifest.query(), null, { immediate: true })
 }
 
 export function useRun(projectId: string, runId: string) {
-  return useAsyncState(() => getRun(projectId, runId), null, { immediate: true })
+  return useAsyncState(() => trpc.dashboard.run.query({ projectId, runId }), null, { immediate: true })
 }
 
 export function useProjectHistory(projectId: string) {
   return useAsyncState(
-    () => getProjectHistory(projectId),
+    () => trpc.dashboard.projectHistory.query({ projectId }),
     { project: null, histories: [] },
     { immediate: true },
   )

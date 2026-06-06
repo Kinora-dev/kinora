@@ -23,7 +23,13 @@ app.use('/artifacts/*', serveStatic({
   rewriteRequestPath: path => path.replace(/^\/artifacts/, ''),
 }))
 
-app.use(secureHeaders())
+// API consumed cross-origin (web + viewer). CORP same-origin / HSTS https-upgrade
+// would block or break the dev fetches; CORS governs access instead.
+app.use(secureHeaders({
+  crossOriginResourcePolicy: false,
+  crossOriginOpenerPolicy: false,
+  strictTransportSecurity: env.NODE_ENV === 'production' ? 'max-age=15552000; includeSubDomains' : false,
+}))
 app.use('*', cors({ origin: getTrustedOrigins(), credentials: true }))
 
 app.get('/healthcheck', async (c) => {
