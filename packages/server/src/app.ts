@@ -2,6 +2,7 @@ import { trpcServer } from '@hono/trpc-server'
 import { sql } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import { secureHeaders } from 'hono/secure-headers'
 import { db } from './db'
 import { auth } from './lib/auth'
 import { getTrustedOrigins } from './lib/utils'
@@ -11,6 +12,7 @@ import { createContext } from './trpc/context'
 
 const app = new Hono()
 
+app.use(secureHeaders())
 app.use('*', cors({ origin: getTrustedOrigins(), credentials: true }))
 
 app.get('/healthcheck', async (c) => {
