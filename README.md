@@ -1,158 +1,101 @@
 # kinora
 
-A dashboard for your Playwright reports, across projects and over time.
+A dashboard for your Playwright tests - across projects and over time - with an embedded trace viewer.
 
-Playwright ships a great HTML report for a single run. `kinora` sits one level up: it aggregates many runs into one place where you track pass rates, spot trends, and surface flaky tests over time. No backend - it's a static frontend that reads JSON you host anywhere.
+Playwright ships a great HTML report for a single run. kinora sits one level up: push every CI run to a kinora server and get one place to track pass rates, spot trends, and surface flaky tests over time. Failing tests get a **View trace** button that opens the full Playwright trace (DOM / timeline / network / console) right in the dashboard - no separate tooling.
 
-It also bundles its own Playwright **trace viewer**: ingest keeps each test's `trace.zip`, and failing tests get a "View trace" button that opens the full DOM/timeline/network debugger - no separate tooling.
+> Status: in active development, pre-release. Expect breaking changes.
 
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="docs/screenshots/overview-light.png">
   <img alt="Overview" src="docs/screenshots/overview-dark.png">
 </picture>
 
-## Quick start
+## Packages
 
-Try it with built-in demo data:
+Monorepo (pnpm workspaces). Open-core: the deployable surface is AGPL, the client libraries you embed are MIT.
 
-```bash
-pnpm install
-pnpm dev:app  # http://localhost:5173 - shows mock data
-```
+| Package | Role | License |
+|---|---|---|
+| [`@kinora/server`](packages/server) | Hono + tRPC API, better-auth, Drizzle/Postgres - ingest + dashboard data | AGPL-3.0 |
+| [`@kinora/web`](packages/web) | Vue 3 dashboard (auth, runs, history, flakiness) | AGPL-3.0 |
+| [`@kinora/trace-viewer`](packages/trace-viewer) | Vendored Playwright trace engine (Apache-2.0) + our Vue UI | MIT |
+| [`@kinora/reporter`](packages/reporter) | Playwright reporter - auto-uploads on `onEnd` | MIT |
+| [`@kinora/cli`](packages/cli) | Manual upload of a `results.json` | MIT |
+| [`@kinora/core`](packages/core) | zod contracts + normalize + ingest client (shared) | MIT |
+| [`@kinora/ui`](packages/ui) | Shared shadcn-vue design system | MIT |
 
-That's the full UI running on sample reports. To plug in your own, see [Set up your own reports](#set-up-your-own-reports).
+## Send your tests
 
-## Screenshots
+### Reporter (recommended)
 
-<table>
-<tr>
-<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/screenshots/project-light.png"><img alt="Project history" src="docs/screenshots/project-dark.png"></picture><br><sub><b>Project</b> - run history with pass / fail / flaky per run</sub></td>
-<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/screenshots/tests-light.png"><img alt="Per-test history" src="docs/screenshots/tests-dark.png"></picture><br><sub><b>Tests</b> - per-test flake and fail rates</sub></td>
-</tr>
-<tr>
-<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/screenshots/run-light.png"><img alt="Run detail" src="docs/screenshots/run-dark.png"></picture><br><sub><b>Run</b> - every test in one run, filterable</sub></td>
-<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/screenshots/test-history-light.png"><img alt="Test timeline" src="docs/screenshots/test-history-dark.png"></picture><br><sub><b>Test history</b> - one test across runs, with errors</sub></td>
-</tr>
-</table>
-
-## Set up your own reports
-
-Produce your data with the CLI, then point the dashboard at it
-
-### 1. Emit Playwright's JSON report
+Auto-uploads at the end of every `playwright test` run. One line in your config:
 
 ```ts
 // playwright.config.ts
 export default defineConfig({
-  reporter: [['json', { outputFile: 'results.json' }]],
-  // enable tracing so "View trace" works (on / retain-on-failure / on-first-retry)
-  use: { trace: 'retain-on-failure' },
+  reporter: [['@kinora/reporter', { project: { slug: 'web-app' } }]],
+  // enable tracing so View trace works
+  use: { trace: 'on-first-retry' },
 })
 ```
 
-### 2. Ingest it with the CLI
-
-`results.json` is heavy (inline attachment bodies). The CLI strips those into a lightweight run report, upserts a manifest, and copies failing tests' `trace.zip` into `artifacts/` so the dashboard can open them in the trace viewer (`--keep all` for every test, `none` to skip):
+Set the target + token via env (keep the token out of the config / in CI secrets):
 
 ```bash
-npx @kinora/cli results.json --project web-app --name "Web App E2E"
+KINORA_URL=https://your-kinora-server KINORA_TOKEN=<project-token> npx playwright test
 ```
 
-Output lands in `kinora-data/`:
+### CLI (manual)
 
-- `manifest.json` - index of projects and runs
-- `reports/web-app/<date>.json` - one file per run
-- `artifacts/web-app/<run>/<sha>.zip` - copied traces (if any)
-
-Because traces are copied from disk, **run the CLI where Playwright's `test-results/` still exists** (your CI job, before teardown). Point `--results-dir` at it if it isn't `./test-results`. Run once per project per run; re-running the same `--run` replaces that entry. Full flags in [CLI reference](#cli-reference).
-
-### 3. Host the data
-
-Upload `kinora-data/**` to any static host (S3, GitHub Pages, nginx, a CDN). The URL where `manifest.json` lives is your `baseUrl` for the next step.
-
-### 4. Run the dashboard
+For setups without the reporter, or to upload an existing `results.json` from a separate CI job:
 
 ```bash
-docker run -p 8080:80 \
-  -e KINORA_BASE_URL=https://reports.example.com \
-  -e KINORA_TITLE="My Reports" \
-  ghcr.io/joris-gallot/kinora:latest
+# playwright.config.ts: reporter: [['json', { outputFile: 'results.json' }]]
+npx @kinora/cli upload results.json --project web-app \
+  --url https://your-kinora-server --token <project-token>
+# (or KINORA_URL / KINORA_TOKEN env)
 ```
 
-Dashboard at http://localhost:8080
+Both paths share `@kinora/core` (same normalization + ingest client), so a test keeps a stable identity across runs and ingest methods.
 
-Defaults to `static` (reads the files you hosted). Outgrowing it? [Data source modes](#data-source-modes) covers the `rest` API.
+## Development
 
-## CLI reference
+Run the whole stack locally.
 
 ```bash
-npx @kinora/cli <results.json> --project <id> [options]
+pnpm install
+
+# 1. server + database
+cd packages/server
+cp .env.example .env
+docker compose up -d            # Postgres on :5436
+pnpm db:push                    # create tables
+pnpm db:seed                    # seed a demo account + data, prints login + an API token
+pnpm dev                        # server on :3000
+
+# 2. frontends
+cp .env.example .env
+pnpm dev:web                    # dashboard on :5173
+pnpm dev:viewer                 # trace viewer on :5174
 ```
 
-```
---project <id>        required, stable slug per Playwright project
---name <name>         display name (defaults to id)
---run <id>            run id (defaults to report date, YYYY-MM-DD)
---out <dir>           output root (default: kinora-data)
---results-dir <dir>   Playwright test-results dir, to resolve trace.zip (default: test-results)
---keep <policy>       whose traces to copy: failed | all | none (default: failed)
---git-sha / --git-branch
---ci-provider / --ci-run-url / --ci-run-number
-```
+Open http://localhost:5173 and sign in with the seeded credentials (`demo@kinora.dev` / `password123`). Use the printed API token to push real runs from a project via the reporter or CLI.
 
-Run via `npx @kinora/cli <args>`, or install it (`npm i -g @kinora/cli`) and call `kinora <args>`
-
-CI example:
+Workspace scripts (from the root):
 
 ```bash
-npx @kinora/cli results.json \
-  --project web-app --name "Web App E2E" \
-  --run "$GITHUB_RUN_ID" \
-  --git-sha "$GITHUB_SHA" --git-branch "$GITHUB_REF_NAME" \
-  --ci-provider github --ci-run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
-# then upload ./kinora-data/** to your static host
+pnpm build        # build every package
+pnpm typecheck    # vue-tsc / tsc across the workspace
+pnpm lint         # eslint
+pnpm test         # unit tests
+pnpm test:e2e     # trace-viewer e2e (Playwright)
 ```
 
-## Data source modes
+## Self-hosting
 
-The frontend reads data through one small interface, with two transports selected by `mode`: the `KINORA_MODE` env var on Docker. Same contract on both sides, so the UI is identical - only the transport differs.
+A single `docker compose` bundle (web + server + Postgres + S3-compatible storage) is planned. For now, the development setup above is the way to run it end to end.
 
-**`static`** (default) - fetches files, zero backend:
+## Licensing
 
-```
-GET {baseUrl}/manifest.json
-GET {baseUrl}/reports/<project>/<run>.json
-```
-
-Per-test history is folded client-side (one fetch per run).
-
-**`rest`** - fetches an API. Use when you outgrow static: huge manifests (paginate server-side), private reports (auth), or to skip downloading every run report just to build history.
-
-```
-GET {baseUrl}/api/manifest                           -> Manifest
-GET {baseUrl}/api/projects/:projectId/runs/:runId    -> RunReport
-GET {baseUrl}/api/projects/:projectId/tests          -> { project, histories }
-```
-
-[`examples/rest-server.ts`](examples/rest-server.ts) is a small [Hono](https://hono.dev) server implementing the three endpoints above - run it or use it as a template. Install [`@kinora/core`](https://www.npmjs.com/package/@kinora/core) for the zod schemas and helpers your responses must satisfy (`manifestSchema`, `runReportSchema`, `projectHistorySchema`, `buildTestHistories`). Then set `KINORA_MODE=rest` to point the dashboard at your API.
-
-## Docker
-
-The published image serves the dashboard and generates `config.js` from env on startup. Basic run is in [step 4](#4-run-the-dashboard); all env vars:
-
-| env | default | meaning |
-|-----|---------|---------|
-| `KINORA_BASE_URL` | (empty) | where `manifest.json` + `reports/` + `artifacts/` live - **required** for real data |
-| `KINORA_MODE` | `static` | `static` (files) or `rest` (`/api/*` endpoints) |
-| `KINORA_TITLE` | `Kinora` | header title |
-| `KINORA_VIEWER_URL` | `/trace/` | where the bundled trace viewer is served |
-
-Build the image yourself instead of pulling:
-
-```bash
-docker build -t kinora .
-docker run -p 8080:80 -e KINORA_BASE_URL=https://reports.example.com kinora
-```
-
-The bundled nginx serves on port 80, falls back SPA deep links to `index.html`, and marks `config.js` no-cache so a container restart with new env takes effect.
-
+kinora is open-core. The deployable product (`server`, `web`) is **AGPL-3.0-or-later**; the libraries you embed in your own test suite (`reporter`, `cli`, `core`, `ui`) and the trace viewer are **MIT**. The trace engine under `packages/trace-viewer/src/core` and `src/sw` is vendored from [microsoft/playwright](https://github.com/microsoft/playwright) (Apache-2.0).
