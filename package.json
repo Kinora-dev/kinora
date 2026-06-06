@@ -20,6 +20,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "pnpm -r test",
+    "test:integration": "pnpm -r test:integration",
     "test:e2e": "pnpm -r test:e2e"
   },
   "devDependencies": {

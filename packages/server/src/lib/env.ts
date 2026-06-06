@@ -19,4 +19,6 @@ const envSchema = z.object({
   GITHUB_CLIENT_SECRET: z.string(),
 })
 
+export type Env = z.infer<typeof envSchema>
+
 export const env = envSchema.parse(process.env)
