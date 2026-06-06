@@ -6,7 +6,7 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "types": ["vite/client", "node"]
+    "types": ["node"]
   },
   "include": ["src/**/*.ts", "src/**/*.vue", "e2e/**/*.ts", "*.config.ts"]
 }
