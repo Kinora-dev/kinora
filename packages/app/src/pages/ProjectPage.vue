@@ -6,9 +6,9 @@ import {
   runHealth,
   sortedRuns,
   trend,
-} from '@playbackhq/core'
-import { Separator } from '@playbackhq/ui/separator'
-import { Skeleton } from '@playbackhq/ui/skeleton'
+} from '@kinora/core'
+import { Separator } from '@kinora/ui/separator'
+import { Skeleton } from '@kinora/ui/skeleton'
 import { ArrowLeft, ArrowRight } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'

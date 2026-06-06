@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { ConsoleMessageTraceEvent } from '@trace/trace'
 import { eventsForAction } from '@isomorphic/trace/traceModel'
-import { cn } from '@playbackhq/ui'
+import { cn } from '@kinora/ui'
 import { computed } from 'vue'
 import { useTraceStore } from '../store'
 

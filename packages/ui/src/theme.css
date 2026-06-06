@@ -1,4 +1,4 @@
-/* Shared design tokens + theme for all playback frontends.
+/* Shared design tokens + theme for all kinora frontends.
    Import this AFTER `@import 'tailwindcss'` in each app's entry stylesheet. */
 
 /* Emit Tailwind classes used inside this package's components. */

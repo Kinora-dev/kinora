@@ -1,4 +1,4 @@
-export * from './contracts/playback'
+export * from './contracts/kinora'
 export * from './contracts/playwright'
 export * from './lib/aggregate'
 export * from './lib/history'

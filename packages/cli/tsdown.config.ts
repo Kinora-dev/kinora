@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsdown'
 
 export default defineConfig({
-  entry: { playback: 'src/playback.ts' },
+  entry: { kinora: 'src/kinora.ts' },
   format: ['esm'],
   platform: 'node',
   dts: false,

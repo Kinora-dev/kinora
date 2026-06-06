@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import type { ColumnDef, SortingState } from '@tanstack/vue-table'
 import type { NetworkRow, ResourceCategory } from '../lib/network'
-import { cn } from '@playbackhq/ui'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@playbackhq/ui/dropdown-menu'
-import { valueUpdater } from '@playbackhq/ui/table/utils'
+import { cn } from '@kinora/ui'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@kinora/ui/dropdown-menu'
+import { valueUpdater } from '@kinora/ui/table/utils'
 import { getCoreRowModel, getSortedRowModel, useVueTable } from '@tanstack/vue-table'
 import { ChevronDown, ChevronUp, Copy } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'

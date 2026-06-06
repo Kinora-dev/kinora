@@ -1,8 +1,8 @@
-# @playbackhq/trace-viewer
+# @kinora/trace-viewer
 
 Playwright trace replay engine, vendored from
 [microsoft/playwright](https://github.com/microsoft/playwright) (Apache-2.0),
-plus playback's own UI on top.
+plus kinora's own UI on top.
 
 ## Layout
 
@@ -41,5 +41,5 @@ trace from `public/fixtures/`, and render one DOM snapshot in an iframe. Run
 ## License
 
 Vendored files keep their original Apache-2.0 headers (Copyright Microsoft
-Corporation). New code under `src/ui/` is MIT, matching the rest of playback.
+Corporation). New code under `src/ui/` is MIT, matching the rest of kinora.
 

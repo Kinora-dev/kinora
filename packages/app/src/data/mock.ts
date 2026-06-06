@@ -6,8 +6,8 @@ import type {
   PwTestStatus,
   RunReport,
   RunSummary,
-} from '@playbackhq/core'
-import { makeTestKey, SCHEMA_VERSION } from '@playbackhq/core'
+} from '@kinora/core'
+import { makeTestKey, SCHEMA_VERSION } from '@kinora/core'
 
 function mulberry32(seed: number) {
   return () => {

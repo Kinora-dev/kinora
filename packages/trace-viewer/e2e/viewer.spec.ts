@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
 })
 
 test('loads the demo trace into the workbench', async ({ page }) => {
-  await expect(page.getByText('playback', { exact: true })).toBeVisible()
+  await expect(page.getByText('kinora', { exact: true })).toBeVisible()
   expect(await page.getByTestId('action').count()).toBeGreaterThan(5)
 })
 

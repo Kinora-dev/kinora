@@ -1,6 +1,6 @@
-import type { RunReport, TestHistory } from '../contracts/playback'
+import type { RunReport, TestHistory } from '../contracts/kinora'
 
-export type { TestHistory, TestPoint } from '../contracts/playback'
+export type { TestHistory, TestPoint } from '../contracts/kinora'
 
 // A test is interesting if it has ever failed or flaked.
 export function isUnstable(h: TestHistory): boolean {

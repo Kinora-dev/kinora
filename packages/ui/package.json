@@ -1,9 +1,9 @@
 {
-  "name": "@playbackhq/ui",
+  "name": "@kinora/ui",
   "type": "module",
   "version": "0.0.0",
   "private": true,
-  "description": "Shared shadcn-vue design system (components + tokens) for playback frontends",
+  "description": "Shared shadcn-vue design system (components + tokens) for kinora frontends",
   "author": "Joris Gallot",
   "license": "MIT",
   "exports": {

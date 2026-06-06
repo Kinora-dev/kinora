@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { ProjectEntry } from '@playbackhq/core'
-import { formatDuration, formatPct, latestRun, passRate, runHealth, sortedRuns, trend } from '@playbackhq/core'
-import { Card } from '@playbackhq/ui/card'
+import type { ProjectEntry } from '@kinora/core'
+import { formatDuration, formatPct, latestRun, passRate, runHealth, sortedRuns, trend } from '@kinora/core'
+import { Card } from '@kinora/ui/card'
 import { ArrowDownRight, ArrowRight, ArrowUpRight } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'

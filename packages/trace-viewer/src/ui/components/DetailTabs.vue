@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { eventsForAction } from '@isomorphic/trace/traceModel'
-import { cn } from '@playbackhq/ui'
+import { cn } from '@kinora/ui'
 import { computed, ref } from 'vue'
 import { resourcesForAction } from '../lib/network'
 import { useTraceStore } from '../store'

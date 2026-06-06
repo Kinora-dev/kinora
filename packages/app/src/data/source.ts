@@ -1,4 +1,4 @@
-import type { Manifest, ProjectHistory, RunReport } from '@playbackhq/core'
+import type { Manifest, ProjectHistory, RunReport } from '@kinora/core'
 import {
 
   buildTestHistories,
@@ -7,7 +7,7 @@ import {
 
   projectHistorySchema,
   runReportSchema,
-} from '@playbackhq/core'
+} from '@kinora/core'
 import { config, useMock } from '@/config'
 import { mockManifest, mockRun } from './mock'
 

@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { TestPoint } from '@playbackhq/core'
-import { pwStatusMeta } from '@playbackhq/core'
+import type { TestPoint } from '@kinora/core'
+import { pwStatusMeta } from '@kinora/core'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@playbackhq/ui/tooltip'
+} from '@kinora/ui/tooltip'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 

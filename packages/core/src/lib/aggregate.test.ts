@@ -1,4 +1,4 @@
-import type { Counts, ProjectEntry, RunSummary } from '../contracts/playback'
+import type { Counts, ProjectEntry, RunSummary } from '../contracts/kinora'
 import { describe, expect, it } from 'vitest'
 import { collectBranches, collectTags, denom, filterRuns, passRate, runHealth } from './aggregate'
 

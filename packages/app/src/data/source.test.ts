@@ -1,4 +1,4 @@
-import type { Manifest, NormTest, ProjectEntry, RunReport, RunSummary } from '@playbackhq/core'
+import type { Manifest, NormTest, ProjectEntry, RunReport, RunSummary } from '@kinora/core'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 function makeRunSummary(runId: string): RunSummary {

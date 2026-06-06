@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { manifestSchema, runSummarySchema } from './playback'
+import { manifestSchema, runSummarySchema } from './kinora'
 
 describe('runSummarySchema', () => {
   it('defaults countsByTag to an empty object', () => {

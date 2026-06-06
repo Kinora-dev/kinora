@@ -15,8 +15,8 @@ COPY packages/trace-viewer/package.json packages/trace-viewer/
 RUN pnpm install --frozen-lockfile
 
 COPY . .
-RUN pnpm --filter @playbackhq/app build
-RUN pnpm --filter @playbackhq/trace-viewer build
+RUN pnpm --filter @kinora/app build
+RUN pnpm --filter @kinora/trace-viewer build
 
 # --- serve the static output ---
 FROM nginx:alpine AS runtime
@@ -25,6 +25,6 @@ COPY --from=build /app/packages/app/dist /usr/share/nginx/html
 # the trace viewer is served under /trace/ (built with base '/trace/')
 COPY --from=build /app/packages/trace-viewer/dist /usr/share/nginx/html/trace
 # nginx runs /docker-entrypoint.d/*.sh before starting; regenerate config.js from env there
-COPY docker/40-playback-config.sh /docker-entrypoint.d/40-playback-config.sh
-RUN chmod +x /docker-entrypoint.d/40-playback-config.sh
+COPY docker/40-kinora-config.sh /docker-entrypoint.d/40-kinora-config.sh
+RUN chmod +x /docker-entrypoint.d/40-kinora-config.sh
 EXPOSE 80

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { RunHealth, RunSummary } from '@playbackhq/core'
+import type { RunHealth, RunSummary } from '@kinora/core'
 import type { ColumnDef, SortingState } from '@tanstack/vue-table'
-import { formatDuration, formatPct, passRate, runHealth } from '@playbackhq/core'
+import { formatDuration, formatPct, passRate, runHealth } from '@kinora/core'
 import {
   Table,
   TableBody,
@@ -9,8 +9,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@playbackhq/ui/table'
-import { valueUpdater } from '@playbackhq/ui/table/utils'
+} from '@kinora/ui/table'
+import { valueUpdater } from '@kinora/ui/table/utils'
 import { getCoreRowModel, getSortedRowModel, useVueTable } from '@tanstack/vue-table'
 import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-vue-next'
 import { ref } from 'vue'

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { SnapshotTab } from '../lib/snapshots'
-import { cn } from '@playbackhq/ui'
+import { cn } from '@kinora/ui'
 import { Monitor } from 'lucide-vue-next'
 import { computed, watch } from 'vue'
 import { useTraceStore } from '../store'

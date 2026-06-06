@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@playbackhq/ui/resizable'
-import { ThemeToggle } from '@playbackhq/ui/theme-toggle'
-import { TooltipProvider } from '@playbackhq/ui/tooltip'
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@kinora/ui/resizable'
+import { ThemeToggle } from '@kinora/ui/theme-toggle'
+import { TooltipProvider } from '@kinora/ui/tooltip'
 import { useStorage } from '@vueuse/core'
 import { Loader2 } from 'lucide-vue-next'
 import { onMounted } from 'vue'
@@ -15,8 +15,8 @@ import { useTraceStore } from './store'
 const store = useTraceStore()
 
 // Persisted panel sizes (percentages).
-const cols = useStorage('pb-tv-cols', [22, 78])
-const rows = useStorage('pb-tv-rows', [62, 38])
+const cols = useStorage('kinora-tv-cols', [22, 78])
+const rows = useStorage('kinora-tv-rows', [62, 38])
 
 useKeyboardNav()
 
@@ -33,7 +33,7 @@ onMounted(() => {
       <!-- global top bar -->
       <header class="flex h-11 items-center gap-2.5 border-b border-border px-4">
         <span class="size-2 rounded-full bg-signal" style="animation: rec-pulse 2s ease-in-out infinite" />
-        <span class="text-sm font-semibold tracking-tight">playback</span>
+        <span class="text-sm font-semibold tracking-tight">kinora</span>
         <span class="font-mono text-[11px] text-muted-foreground">trace</span>
         <span v-if="store.model.value?.title" class="min-w-0 truncate text-xs text-muted-foreground">
           · {{ store.model.value.title }}

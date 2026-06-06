@@ -29,15 +29,15 @@ jobs:
       - name: Build core
         run: pnpm build:core
 
-      - name: Publish @playbackhq/core
-        run: pnpm --filter @playbackhq/core publish --no-git-checks --provenance
+      - name: Publish @kinora/core
+        run: pnpm --filter @kinora/core publish --no-git-checks --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Build CLI
         run: pnpm build:cli
 
-      - name: Publish @playbackhq/cli
-        run: pnpm --filter @playbackhq/cli publish --no-git-checks --provenance
+      - name: Publish @kinora/cli
+        run: pnpm --filter @kinora/cli publish --no-git-checks --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

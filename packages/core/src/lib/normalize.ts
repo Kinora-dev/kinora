@@ -1,6 +1,6 @@
-import type { Counts, NormTest, RunReport, RunSummary } from '../contracts/playback'
+import type { Counts, NormTest, RunReport, RunSummary } from '../contracts/kinora'
 import type { PlaywrightReport, PwSpec } from '../contracts/playwright'
-import { SCHEMA_VERSION } from '../contracts/playback'
+import { SCHEMA_VERSION } from '../contracts/kinora'
 import { playwrightReportSchema } from '../contracts/playwright'
 import { makeTestKey } from './test-key'
 
@@ -106,7 +106,7 @@ function countsByTagFrom(tests: NormTest[]): Record<string, Counts> {
   return out
 }
 
-// Parse + normalize a raw Playwright JSON report into the playback contract.
+// Parse + normalize a raw Playwright JSON report into the kinora contract.
 // Attachment bodies are dropped (only metadata kept) to keep payloads small.
 export function ingestPlaywrightReport(
   raw: unknown,

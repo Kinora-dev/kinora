@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { cn } from '@playbackhq/ui'
+import { cn } from '@kinora/ui'
 import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { actionStatus, actionTitle } from '../lib/action'

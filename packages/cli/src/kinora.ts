@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import type { Manifest, ProjectEntry, RunSummary } from '@playbackhq/core'
+import type { Manifest, ProjectEntry, RunSummary } from '@kinora/core'
 import type { KeepPolicy } from './artifacts'
 import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
@@ -10,13 +10,13 @@ import {
   ingestPlaywrightReport,
   manifestSchema,
   SCHEMA_VERSION,
-} from '@playbackhq/core'
+} from '@kinora/core'
 import { makeCopyArtifact } from './artifacts'
 
-const USAGE = `playback ingest - turn a Playwright json report into playback data files
+const USAGE = `kinora ingest - turn a Playwright json report into kinora data files
 
 Usage:
-  playback <results.json> --project <id> [options]
+  kinora <results.json> --project <id> [options]
 
 Required:
   --project <id>        Project id (stable slug, e.g. "web-app")
@@ -24,7 +24,7 @@ Required:
 Options:
   --name <name>         Project display name (defaults to id; updated if given)
   --run <id>            Run id (defaults to the report date, YYYY-MM-DD)
-  --out <dir>           Output root served statically (default: playback-data)
+  --out <dir>           Output root served statically (default: kinora-data)
   --results-dir <dir>   Playwright test-results dir, to resolve trace.zip paths (default: test-results)
   --keep <policy>       which tests' traces to copy: failed | all | none (default: failed)
   --git-sha <sha>
@@ -78,7 +78,7 @@ async function main(): Promise<void> {
       'project': { type: 'string' },
       'name': { type: 'string' },
       'run': { type: 'string' },
-      'out': { type: 'string', default: 'playback-data' },
+      'out': { type: 'string', default: 'kinora-data' },
       'results-dir': { type: 'string', default: 'test-results' },
       'keep': { type: 'string', default: 'failed' },
       'git-sha': { type: 'string' },

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ThemeToggle } from '@playbackhq/ui/theme-toggle'
+import { ThemeToggle } from '@kinora/ui/theme-toggle'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { config, useMock } from '@/config'
@@ -28,7 +28,7 @@ const source = computed(() => {
           aria-hidden="true"
         />
         <span class="font-mono text-[15px] font-semibold tracking-tight lowercase">
-          playback
+          kinora
         </span>
       </RouterLink>
 

@@ -1,8 +1,8 @@
-# playback
+# kinora
 
 A dashboard for your Playwright reports, across projects and over time.
 
-Playwright ships a great HTML report for a single run. `playback` sits one level up: it aggregates many runs into one place where you track pass rates, spot trends, and surface flaky tests over time. No backend - it's a static frontend that reads JSON you host anywhere.
+Playwright ships a great HTML report for a single run. `kinora` sits one level up: it aggregates many runs into one place where you track pass rates, spot trends, and surface flaky tests over time. No backend - it's a static frontend that reads JSON you host anywhere.
 
 It also bundles its own Playwright **trace viewer**: ingest keeps each test's `trace.zip`, and failing tests get a "View trace" button that opens the full DOM/timeline/network debugger - no separate tooling.
 
@@ -55,10 +55,10 @@ export default defineConfig({
 `results.json` is heavy (inline attachment bodies). The CLI strips those into a lightweight run report, upserts a manifest, and copies failing tests' `trace.zip` into `artifacts/` so the dashboard can open them in the trace viewer (`--keep all` for every test, `none` to skip):
 
 ```bash
-npx @playbackhq/cli results.json --project web-app --name "Web App E2E"
+npx @kinora/cli results.json --project web-app --name "Web App E2E"
 ```
 
-Output lands in `playback-data/`:
+Output lands in `kinora-data/`:
 
 - `manifest.json` - index of projects and runs
 - `reports/web-app/<date>.json` - one file per run
@@ -68,15 +68,15 @@ Because traces are copied from disk, **run the CLI where Playwright's `test-resu
 
 ### 3. Host the data
 
-Upload `playback-data/**` to any static host (S3, GitHub Pages, nginx, a CDN). The URL where `manifest.json` lives is your `baseUrl` for the next step.
+Upload `kinora-data/**` to any static host (S3, GitHub Pages, nginx, a CDN). The URL where `manifest.json` lives is your `baseUrl` for the next step.
 
 ### 4. Run the dashboard
 
 ```bash
 docker run -p 8080:80 \
-  -e PLAYBACK_BASE_URL=https://reports.example.com \
-  -e PLAYBACK_TITLE="My Reports" \
-  ghcr.io/joris-gallot/playback:latest
+  -e KINORA_BASE_URL=https://reports.example.com \
+  -e KINORA_TITLE="My Reports" \
+  ghcr.io/joris-gallot/kinora:latest
 ```
 
 Dashboard at http://localhost:8080
@@ -86,36 +86,36 @@ Defaults to `static` (reads the files you hosted). Outgrowing it? [Data source m
 ## CLI reference
 
 ```bash
-npx @playbackhq/cli <results.json> --project <id> [options]
+npx @kinora/cli <results.json> --project <id> [options]
 ```
 
 ```
 --project <id>        required, stable slug per Playwright project
 --name <name>         display name (defaults to id)
 --run <id>            run id (defaults to report date, YYYY-MM-DD)
---out <dir>           output root (default: playback-data)
+--out <dir>           output root (default: kinora-data)
 --results-dir <dir>   Playwright test-results dir, to resolve trace.zip (default: test-results)
 --keep <policy>       whose traces to copy: failed | all | none (default: failed)
 --git-sha / --git-branch
 --ci-provider / --ci-run-url / --ci-run-number
 ```
 
-Run via `npx @playbackhq/cli <args>`, or install it (`npm i -g @playbackhq/cli`) and call `playback <args>`
+Run via `npx @kinora/cli <args>`, or install it (`npm i -g @kinora/cli`) and call `kinora <args>`
 
 CI example:
 
 ```bash
-npx @playbackhq/cli results.json \
+npx @kinora/cli results.json \
   --project web-app --name "Web App E2E" \
   --run "$GITHUB_RUN_ID" \
   --git-sha "$GITHUB_SHA" --git-branch "$GITHUB_REF_NAME" \
   --ci-provider github --ci-run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
-# then upload ./playback-data/** to your static host
+# then upload ./kinora-data/** to your static host
 ```
 
 ## Data source modes
 
-The frontend reads data through one small interface, with two transports selected by `mode`: the `PLAYBACK_MODE` env var on Docker. Same contract on both sides, so the UI is identical - only the transport differs.
+The frontend reads data through one small interface, with two transports selected by `mode`: the `KINORA_MODE` env var on Docker. Same contract on both sides, so the UI is identical - only the transport differs.
 
 **`static`** (default) - fetches files, zero backend:
 
@@ -134,7 +134,7 @@ GET {baseUrl}/api/projects/:projectId/runs/:runId    -> RunReport
 GET {baseUrl}/api/projects/:projectId/tests          -> { project, histories }
 ```
 
-[`examples/rest-server.ts`](examples/rest-server.ts) is a small [Hono](https://hono.dev) server implementing the three endpoints above - run it or use it as a template. Install [`@playbackhq/core`](https://www.npmjs.com/package/@playbackhq/core) for the zod schemas and helpers your responses must satisfy (`manifestSchema`, `runReportSchema`, `projectHistorySchema`, `buildTestHistories`). Then set `PLAYBACK_MODE=rest` to point the dashboard at your API.
+[`examples/rest-server.ts`](examples/rest-server.ts) is a small [Hono](https://hono.dev) server implementing the three endpoints above - run it or use it as a template. Install [`@kinora/core`](https://www.npmjs.com/package/@kinora/core) for the zod schemas and helpers your responses must satisfy (`manifestSchema`, `runReportSchema`, `projectHistorySchema`, `buildTestHistories`). Then set `KINORA_MODE=rest` to point the dashboard at your API.
 
 ## Docker
 
@@ -142,16 +142,16 @@ The published image serves the dashboard and generates `config.js` from env on s
 
 | env | default | meaning |
 |-----|---------|---------|
-| `PLAYBACK_BASE_URL` | (empty) | where `manifest.json` + `reports/` + `artifacts/` live - **required** for real data |
-| `PLAYBACK_MODE` | `static` | `static` (files) or `rest` (`/api/*` endpoints) |
-| `PLAYBACK_TITLE` | `Playback` | header title |
-| `PLAYBACK_VIEWER_URL` | `/trace/` | where the bundled trace viewer is served |
+| `KINORA_BASE_URL` | (empty) | where `manifest.json` + `reports/` + `artifacts/` live - **required** for real data |
+| `KINORA_MODE` | `static` | `static` (files) or `rest` (`/api/*` endpoints) |
+| `KINORA_TITLE` | `Kinora` | header title |
+| `KINORA_VIEWER_URL` | `/trace/` | where the bundled trace viewer is served |
 
 Build the image yourself instead of pulling:
 
 ```bash
-docker build -t playback .
-docker run -p 8080:80 -e PLAYBACK_BASE_URL=https://reports.example.com playback
+docker build -t kinora .
+docker run -p 8080:80 -e KINORA_BASE_URL=https://reports.example.com kinora
 ```
 
 The bundled nginx serves on port 80, falls back SPA deep links to `index.html`, and marks `config.js` no-cache so a container restart with new env takes effect.

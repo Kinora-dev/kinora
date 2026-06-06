@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,400..800;1,400..600&family=JetBrains+Mono:ital,wght@0,400..700;1,400..600&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
-@import '@playbackhq/ui/theme.css';
+@import '@kinora/ui/theme.css';
 
 /* Scan this package's own UI source for Tailwind classes. */
 @source './ui';

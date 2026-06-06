@@ -1,13 +1,13 @@
-# @playbackhq/core
+# @kinora/core
 
-Contracts (zod schemas) and helpers for [playback](https://github.com/joris-gallot/playback), a dashboard for Playwright reports across projects and over time.
+Contracts (zod schemas) and helpers for [kinora](https://github.com/joris-gallot/kinora), a dashboard for Playwright reports across projects and over time.
 
-Install this to build a `rest` data source the dashboard can read, or to consume playback data with types. It also backs the [`@playbackhq/cli`](https://www.npmjs.com/package/@playbackhq/cli) ingest and the frontend.
+Install this to build a `rest` data source the dashboard can read, or to consume kinora data with types. It also backs the [`@kinora/cli`](https://www.npmjs.com/package/@kinora/cli) ingest and the frontend.
 
 ## Install
 
 ```bash
-npm i @playbackhq/core
+npm i @kinora/core
 ```
 
 ## What's inside
@@ -31,7 +31,7 @@ npm i @playbackhq/core
 Validate every response against the contract so the dashboard always gets what it expects:
 
 ```ts
-import { buildTestHistories, manifestSchema, runReportSchema } from '@playbackhq/core'
+import { buildTestHistories, manifestSchema, runReportSchema } from '@kinora/core'
 
 // GET /api/manifest
 app.get('/api/manifest', () => manifestSchema.parse(loadManifest()))
@@ -43,7 +43,7 @@ app.get('/api/projects/:id/tests', (id) => {
 })
 ```
 
-Full reference server: [`examples/rest-server.ts`](https://github.com/joris-gallot/playback/blob/main/examples/rest-server.ts). Data source modes: [README](https://github.com/joris-gallot/playback#data-source-modes).
+Full reference server: [`examples/rest-server.ts`](https://github.com/joris-gallot/kinora/blob/main/examples/rest-server.ts). Data source modes: [README](https://github.com/joris-gallot/kinora#data-source-modes).
 
 ## License
 

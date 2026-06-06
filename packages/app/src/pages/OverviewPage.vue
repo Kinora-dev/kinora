@@ -7,17 +7,17 @@ import {
   formatPct,
   latestRun,
   runHealth,
-} from '@playbackhq/core'
-import { Button } from '@playbackhq/ui/button'
+} from '@kinora/core'
+import { Button } from '@kinora/ui/button'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@playbackhq/ui/select'
-import { Separator } from '@playbackhq/ui/separator'
-import { Skeleton } from '@playbackhq/ui/skeleton'
+} from '@kinora/ui/select'
+import { Separator } from '@kinora/ui/separator'
+import { Skeleton } from '@kinora/ui/skeleton'
 import { useRouteQuery } from '@vueuse/router'
 import { computed } from 'vue'
 import ProjectCard from '@/components/project/ProjectCard.vue'

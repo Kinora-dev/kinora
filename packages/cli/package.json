@@ -1,17 +1,17 @@
 {
-  "name": "@playbackhq/cli",
+  "name": "@kinora/cli",
   "type": "module",
   "version": "0.0.1",
-  "description": "Turn Playwright JSON reports into playback data files",
+  "description": "Turn Playwright JSON reports into kinora data files",
   "author": "Joris Gallot",
   "license": "MIT",
-  "homepage": "https://github.com/joris-gallot/playback#readme",
+  "homepage": "https://github.com/joris-gallot/kinora#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/joris-gallot/playback.git",
+    "url": "git+https://github.com/joris-gallot/kinora.git",
     "directory": "packages/cli"
   },
-  "bugs": "https://github.com/joris-gallot/playback/issues",
+  "bugs": "https://github.com/joris-gallot/kinora/issues",
   "keywords": [
     "playwright",
     "test-report",
@@ -21,7 +21,7 @@
     "cli"
   ],
   "bin": {
-    "playback": "./dist/playback.mjs"
+    "kinora": "./dist/kinora.mjs"
   },
   "files": [
     "dist"
@@ -34,7 +34,7 @@
   },
   "scripts": {
     "build": "tsdown",
-    "ingest": "tsx src/playback.ts",
+    "ingest": "tsx src/kinora.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "prepublishOnly": "tsdown"
@@ -43,7 +43,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@playbackhq/core": "workspace:*",
+    "@kinora/core": "workspace:*",
     "@types/node": "^24.12.3",
     "tsdown": "^0.22.2",
     "tsx": "^4.22.4",

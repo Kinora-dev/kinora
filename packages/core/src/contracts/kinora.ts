@@ -82,7 +82,7 @@ export const normTestSchema = z.object({
   file: z.string(),
   line: z.number(),
   column: z.number(),
-  projectName: z.string(), // playwright project (e.g. browser), not playback project
+  projectName: z.string(), // playwright project (e.g. browser), not kinora project
   status: pwTestStatus,
   ok: z.boolean(),
   duration: z.number(),

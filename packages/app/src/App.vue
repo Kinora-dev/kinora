@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Toaster } from '@playbackhq/ui/sonner'
+import { Toaster } from '@kinora/ui/sonner'
 import { RouterView } from 'vue-router'
 import AppHeader from '@/components/app/AppHeader.vue'
 import 'vue-sonner/style.css'

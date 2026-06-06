@@ -1,4 +1,4 @@
-import type { CopyArtifact } from '@playbackhq/core'
+import type { CopyArtifact } from '@kinora/core'
 import { Buffer } from 'node:buffer'
 import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'

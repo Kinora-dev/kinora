@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { RunSummary } from '@playbackhq/core'
-import { formatPct, passRate, runHealth } from '@playbackhq/core'
+import type { RunSummary } from '@kinora/core'
+import { formatPct, passRate, runHealth } from '@kinora/core'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@playbackhq/ui/tooltip'
+} from '@kinora/ui/tooltip'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 

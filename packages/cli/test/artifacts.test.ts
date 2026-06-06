@@ -2,7 +2,7 @@ import type { KeepPolicy } from '../src/artifacts'
 import { existsSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { ingestPlaywrightReport } from '@playbackhq/core'
+import { ingestPlaywrightReport } from '@kinora/core'
 import { describe, expect, it } from 'vitest'
 import { makeCopyArtifact } from '../src/artifacts'
 

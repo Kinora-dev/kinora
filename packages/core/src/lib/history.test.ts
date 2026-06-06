@@ -1,4 +1,4 @@
-import type { NormTest, RunReport } from '../contracts/playback'
+import type { NormTest, RunReport } from '../contracts/kinora'
 import { describe, expect, it } from 'vitest'
 import { buildTestHistories, byInstability, isUnstable } from './history'
 

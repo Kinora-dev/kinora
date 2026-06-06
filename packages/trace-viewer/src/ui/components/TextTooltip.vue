@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { cn } from '@playbackhq/ui'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@playbackhq/ui/tooltip'
+import { cn } from '@kinora/ui'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@kinora/ui/tooltip'
 
 defineOptions({ inheritAttrs: false })
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { formatPct } from '@playbackhq/core'
-import { Separator } from '@playbackhq/ui/separator'
-import { Skeleton } from '@playbackhq/ui/skeleton'
+import { formatPct } from '@kinora/core'
+import { Separator } from '@kinora/ui/separator'
+import { Skeleton } from '@kinora/ui/skeleton'
 import { ArrowLeft } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'

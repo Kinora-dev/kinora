@@ -1,6 +1,6 @@
 #!/usr/bin/env -S npx tsx
 /* eslint-disable no-console */
-import type { RunReport } from '@playbackhq/core'
+import type { RunReport } from '@kinora/core'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
@@ -9,17 +9,17 @@ import {
   buildTestHistories,
   manifestSchema,
   runReportSchema,
-} from '@playbackhq/core'
+} from '@kinora/core'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 
-// Reference REST server for playback's `rest` mode. Reads a CLI output dir
+// Reference REST server for kinora's `rest` mode. Reads a CLI output dir
 // (manifest.json + reports/) and serves the same contract over /api/*, with
 // per-test history computed server-side. Reference only.
 //
-//   npx tsx examples/rest-server.ts [dataDir=playback-data] [port=8787]
+//   npx tsx examples/rest-server.ts [dataDir=kinora-data] [port=8787]
 
-const dataDir = path.resolve(process.argv[2] ?? 'playback-data')
+const dataDir = path.resolve(process.argv[2] ?? 'kinora-data')
 const port = Number(process.argv[3] ?? 8787)
 
 async function readJson(file: string): Promise<unknown> {
@@ -59,5 +59,5 @@ app.notFound(c => c.json({ error: `no route for ${c.req.path}` }, 404))
 app.onError((err, c) => c.json({ error: String(err) }, 500))
 
 serve({ fetch: app.fetch, port }, () => {
-  console.log(`playback reference REST server on http://localhost:${port} (data: ${dataDir})`)
+  console.log(`kinora reference REST server on http://localhost:${port} (data: ${dataDir})`)
 })

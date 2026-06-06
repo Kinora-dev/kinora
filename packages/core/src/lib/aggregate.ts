@@ -1,4 +1,4 @@
-import type { Counts, ProjectEntry, RunSummary } from '../contracts/playback'
+import type { Counts, ProjectEntry, RunSummary } from '../contracts/kinora'
 
 export type RunHealth = 'passing' | 'flaky' | 'failing' | 'empty'
 

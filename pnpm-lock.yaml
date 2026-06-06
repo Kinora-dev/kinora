@@ -14,7 +14,7 @@ importers:
       '@hono/node-server':
         specifier: ^2.0.4
         version: 2.0.4(hono@4.12.23)
-      '@playbackhq/core':
+      '@kinora/core':
         specifier: workspace:*
         version: link:packages/core
       eslint:
@@ -32,15 +32,15 @@ importers:
 
   packages/app:
     dependencies:
+      '@kinora/core':
+        specifier: workspace:*
+        version: link:../core
+      '@kinora/ui':
+        specifier: workspace:*
+        version: link:../ui
       '@lucide/vue':
         specifier: ^1.17.0
         version: 1.17.0(vue@3.5.35(typescript@6.0.3))
-      '@playbackhq/core':
-        specifier: workspace:*
-        version: link:../core
-      '@playbackhq/ui':
-        specifier: workspace:*
-        version: link:../ui
       '@tanstack/vue-table':
         specifier: ^8.21.3
         version: 8.21.3(vue@3.5.35(typescript@6.0.3))
@@ -115,7 +115,7 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
-      '@playbackhq/core':
+      '@kinora/core':
         specifier: workspace:*
         version: link:../core
       '@types/node':
@@ -167,12 +167,12 @@ importers:
       '@codemirror/view':
         specifier: ^6.34.1
         version: 6.43.0
+      '@kinora/ui':
+        specifier: workspace:*
+        version: link:../ui
       '@lezer/highlight':
         specifier: ^1.2.1
         version: 1.2.3
-      '@playbackhq/ui':
-        specifier: workspace:*
-        version: link:../ui
       '@tanstack/vue-table':
         specifier: ^8.21.3
         version: 8.21.3(vue@3.5.35(typescript@6.0.3))

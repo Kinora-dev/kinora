@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { StackFrame } from '@protocol/channels'
-import { cn } from '@playbackhq/ui'
+import { cn } from '@kinora/ui'
 import { computed, defineAsyncComponent, ref, watch } from 'vue'
 import { calculateSha1 } from '../lib/sha1'
 import { useTraceStore } from '../store'
