@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Avatar, AvatarFallback, AvatarImage } from '@kinora/ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@kinora/ui/dropdown-menu'
 import { LogOut, Settings } from 'lucide-vue-next'
 import { computed } from 'vue'
@@ -39,10 +40,15 @@ async function signOut(): Promise<void> {
           <DropdownMenuTrigger as-child>
             <button
               type="button"
-              class="flex size-8 items-center justify-center rounded-full bg-signal/15 text-xs font-semibold text-signal ring-1 ring-signal/30 transition-colors hover:ring-signal/60"
+              class="rounded-full ring-1 ring-signal/30 transition-shadow hover:ring-signal/60"
               :title="user.name ?? user.email"
             >
-              {{ initial }}
+              <Avatar class="size-8">
+                <AvatarImage v-if="user.image" :src="user.image" :alt="user.name ?? user.email" />
+                <AvatarFallback v-else class="bg-signal/15 text-xs font-semibold text-signal">
+                  {{ initial }}
+                </AvatarFallback>
+              </Avatar>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" class="w-56">
