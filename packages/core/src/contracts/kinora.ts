@@ -16,12 +16,14 @@ export const gitMetaSchema = z.object({
   sha: z.string().optional(),
   branch: z.string().optional(),
 })
+export type GitMeta = z.infer<typeof gitMetaSchema>
 
 export const ciMetaSchema = z.object({
   provider: z.string().optional(),
   runUrl: z.string().optional(),
   runNumber: z.string().optional(),
 })
+export type CiMeta = z.infer<typeof ciMetaSchema>
 
 // One row per run, stored in the manifest. Kept small: powers the overview
 // grid and history charts without fetching full reports.

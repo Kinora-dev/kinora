@@ -5,10 +5,9 @@ import { cors } from 'hono/cors'
 import { db } from './db'
 import { auth } from './lib/auth'
 import { getTrustedOrigins } from './lib/utils'
-import { publicApiRouter } from './public-router/index'
+import { publicApi } from './public-api/index'
 import { appRouter } from './router/index'
 import { createContext } from './trpc/context'
-import { createPublicContext } from './trpc/public-context'
 
 const app = new Hono()
 
@@ -26,10 +25,10 @@ app.get('/healthcheck', async (c) => {
 
 app.on(['POST', 'GET'], '/api/auth/*', c => auth.handler(c.req.raw))
 
-// Dashboard API (session-authed).
+// Dashboard API (session-authed, tRPC for shared types with web).
 app.use('/trpc/*', trpcServer({ router: appRouter, createContext }))
 
-// Public ingest API (api-key authed) - the reporter uploads here.
-app.use('/api/v1/*', trpcServer({ router: publicApiRouter, createContext: createPublicContext }))
+// Public ingest API (api-key authed, plain REST) - the reporter / cli upload here.
+app.route('/api/v1', publicApi)
 
 export { app }
