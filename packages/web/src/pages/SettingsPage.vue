@@ -66,6 +66,7 @@ const { handleSubmit: submitPassword, isSubmitting: pwSubmitting, resetForm: res
       path: ['confirmPassword'],
     }),
   ),
+  initialValues: { currentPassword: '', newPassword: '', confirmPassword: '' },
 })
 
 const onPassword = submitPassword(async (values) => {

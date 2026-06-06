@@ -26,6 +26,7 @@ const { handleSubmit, isSubmitting } = useForm({
       path: ['confirmPassword'],
     }),
   ),
+  initialValues: { email: '', password: '', confirmPassword: '' },
 })
 
 const onSubmit = handleSubmit(async (values) => {
