@@ -1,9 +1,0 @@
-**/node_modules
-**/dist
-.git
-.github
-docs
-test-results
-playwright-report
-**/*.tgz
-.playwright-mcp
