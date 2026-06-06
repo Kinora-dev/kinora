@@ -165,13 +165,21 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
         >
           <div class="flex items-start justify-between gap-4">
             <div class="min-w-0">
-              <div class="flex items-center gap-2">
+              <div class="flex flex-wrap items-center gap-2">
                 <TestStatusBadge :status="t.status" />
                 <span
                   v-for="tag in t.tags"
                   :key="tag"
                   class="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
                 >{{ tag }}</span>
+                <span
+                  v-for="(a, i) in t.annotations"
+                  :key="`${a.type}-${i}`"
+                  :title="a.description"
+                  class="inline-flex max-w-xs items-center gap-1 truncate rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
+                >
+                  {{ a.type }}<span v-if="a.description" class="text-muted-foreground/70">: {{ a.description }}</span>
+                </span>
               </div>
               <RouterLink
                 :to="{ name: 'test', params: { projectId }, query: { key: t.testKey } }"

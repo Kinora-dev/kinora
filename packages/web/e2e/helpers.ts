@@ -17,27 +17,35 @@ interface Manifest {
   projects: { id: string, runs: { runId: string }[] }[]
 }
 interface RunReport {
-  tests: { attachments: { url?: string }[] }[]
+  tests: { attachments: { url?: string }[], annotations: { type: string }[] }[]
 }
 
-// Hit the tRPC endpoints (with the logged-in session cookie) to locate a run that
-// has a trace artifact, since which seeded tests get traces is randomised.
-export async function findTracedRun(page: Page): Promise<{ slug: string, runId: string }> {
-  const query = async <T>(path: string, input: unknown): Promise<T | undefined> => {
-    const url = `${SERVER_URL}/trpc/${path}?batch=1&input=${encodeURIComponent(JSON.stringify({ 0: input }))}`
-    const res = await page.request.get(url)
-    const json = await res.json() as [{ result?: { data?: T } }]
-    return json[0]?.result?.data
-  }
+// Hit a tRPC query with the logged-in session cookie.
+async function query<T>(page: Page, path: string, input: unknown): Promise<T | undefined> {
+  const url = `${SERVER_URL}/trpc/${path}?batch=1&input=${encodeURIComponent(JSON.stringify({ 0: input }))}`
+  const res = await page.request.get(url)
+  const json = await res.json() as [{ result?: { data?: T } }]
+  return json[0]?.result?.data
+}
 
-  const manifest = await query<Manifest>('dashboard.manifest', {})
+// Find a run whose report has a test matching `pred` (which seeded tests get
+// traces / annotations is randomised, so we probe rather than hardcode).
+async function findRun(page: Page, pred: (test: RunReport['tests'][number]) => boolean): Promise<{ slug: string, runId: string }> {
+  const manifest = await query<Manifest>(page, 'dashboard.manifest', {})
   for (const project of manifest?.projects ?? []) {
     for (const run of project.runs) {
-      const report = await query<RunReport>('dashboard.run', { projectId: project.id, runId: run.runId })
-      const traced = report?.tests.some(t => t.attachments.some(a => a.url))
-      if (traced)
+      const report = await query<RunReport>(page, 'dashboard.run', { projectId: project.id, runId: run.runId })
+      if (report?.tests.some(pred))
         return { slug: project.id, runId: run.runId }
     }
   }
-  throw new Error('no traced run found - reseed with `pnpm --filter @kinora/server db:seed`')
+  throw new Error('no matching run found - reseed with `pnpm --filter @kinora/server db:seed`')
+}
+
+export function findTracedRun(page: Page): Promise<{ slug: string, runId: string }> {
+  return findRun(page, t => t.attachments.some(a => a.url))
+}
+
+export function findAnnotatedRun(page: Page): Promise<{ slug: string, runId: string }> {
+  return findRun(page, t => t.annotations.length > 0)
 }
