@@ -10,9 +10,9 @@ const ready = session.ready
 </script>
 
 <template>
-  <LoadingScreen v-if="!ready" />
-  <template v-else>
-    <RouterView v-slot="{ Component, route }">
+  <Transition name="boot" mode="out-in">
+    <LoadingScreen v-if="!ready" />
+    <RouterView v-else v-slot="{ Component, route }">
       <!-- Public pages (login / signup) render standalone, no app chrome. -->
       <Transition v-if="route.meta.public" name="page" mode="out-in">
         <component :is="Component" :key="route.path" />
@@ -27,11 +27,27 @@ const ready = session.ready
         </main>
       </div>
     </RouterView>
-    <Toaster position="bottom-right" />
-  </template>
+  </Transition>
+  <Toaster position="bottom-right" />
 </template>
 
 <style>
+/* Boot: crossfade from the loading screen to the app once the session resolves. */
+.boot-enter-active,
+.boot-leave-active {
+  transition: opacity 0.3s ease;
+}
+.boot-enter-from,
+.boot-leave-to {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .boot-enter-active,
+  .boot-leave-active {
+    transition: none;
+  }
+}
+
 /* Quick fade + nudge between routes; out-in so pages don't overlap. */
 .page-enter-active,
 .page-leave-active {
