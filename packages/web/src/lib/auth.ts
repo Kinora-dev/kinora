@@ -1,6 +1,6 @@
 import { createAuthClient } from 'better-auth/vue'
-import { config } from '@/config'
+import { env } from '@/lib/env'
 
 export const authClient = createAuthClient({
-  baseURL: config.serverUrl,
+  baseURL: env.serverUrl,
 })

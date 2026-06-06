@@ -1,4 +1,4 @@
-import { config } from '@/config'
+import { env } from '@/lib/env'
 
 interface AttachmentLike {
   name: string
@@ -12,6 +12,6 @@ export function traceViewerHref(attachments: AttachmentLike[]): string | undefin
   const trace = attachments.find(a => a.url && (a.name === 'trace' || a.contentType === 'application/zip'))
   if (!trace?.url)
     return undefined
-  const viewer = config.viewerBaseUrl.endsWith('/') ? config.viewerBaseUrl : `${config.viewerBaseUrl}/`
+  const viewer = env.viewerBaseUrl.endsWith('/') ? env.viewerBaseUrl : `${env.viewerBaseUrl}/`
   return `${viewer}?trace=${encodeURIComponent(trace.url)}`
 }
