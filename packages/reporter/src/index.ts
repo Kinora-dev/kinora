@@ -1,7 +1,8 @@
 import type { CiMeta, Counts, GitMeta, IngestRun, NormTest } from '@kinora/core'
 import type { FullConfig, FullResult, Reporter, Suite, TestCase } from '@playwright/test/reporter'
+import { readFile } from 'node:fs/promises'
 import process from 'node:process'
-import { createIngestClient, makeTestKey } from '@kinora/core'
+import { createIngestClient, isTraceAttachment, makeTestKey } from '@kinora/core'
 
 export interface KinoraReporterOptions {
   /** kinora server base URL. Defaults to env KINORA_URL. */
@@ -122,9 +123,25 @@ export default class KinoraReporter implements Reporter {
     }
 
     try {
-      const res = await createIngestClient({ baseUrl: url, token }).uploadRun(payload)
+      const client = createIngestClient({ baseUrl: url, token })
+      const res = await client.uploadRun(payload)
+
+      let traces = 0
+      for (const t of tests) {
+        for (const a of t.attachments) {
+          if (!a.path || !isTraceAttachment(a))
+            continue
+          try {
+            await client.uploadArtifact({ runId: res.runId, testKey: t.testKey, name: a.name, contentType: a.contentType, body: await readFile(a.path) })
+            traces++
+          }
+          catch (err) {
+            console.warn(`[kinora] trace upload failed for ${t.testKey}:`, err instanceof Error ? err.message : err)
+          }
+        }
+      }
       // eslint-disable-next-line no-console -- a reporter's job is to report
-      console.log(`[kinora] uploaded ${res.tests} tests (run ${res.runId})`)
+      console.log(`[kinora] uploaded ${res.tests} tests + ${traces} traces (run ${res.runId})`)
     }
     catch (err) {
       console.error(`[kinora] upload failed:`, err instanceof Error ? err.message : err)

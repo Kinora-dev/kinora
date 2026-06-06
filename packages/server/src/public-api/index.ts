@@ -1,11 +1,13 @@
+import { Buffer } from 'node:buffer'
 import { randomUUID } from 'node:crypto'
 import { zValidator } from '@hono/zod-validator'
 import { ingestRunSchema } from '@kinora/core'
 import { and, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { db } from '../db'
-import { project, run, test } from '../db/schemas/index'
+import { artifact, project, run, test } from '../db/schemas/index'
 import { auth } from '../lib/auth'
+import { storage } from '../lib/storage'
 
 const BEARER_PREFIX = 'Bearer '
 
@@ -88,4 +90,55 @@ publicApi.post('/runs', zValidator('json', ingestRunSchema), async (c) => {
   })
 
   return c.json(result, 201)
+})
+
+// Upload a trace.zip (or other binary artifact) for a run, linked to a test.
+publicApi.post('/runs/:runId/artifacts', async (c) => {
+  const userId = c.get('userId')
+  const runId = c.req.param('runId')
+
+  const r = await db.query.run.findFirst({
+    where: eq(run.id, runId),
+    columns: { id: true, projectId: true },
+  })
+  if (!r)
+    return c.json({ error: 'Run not found' }, 404)
+
+  const owner = await db.query.project.findFirst({
+    where: and(eq(project.id, r.projectId), eq(project.userId, userId)),
+    columns: { id: true },
+  })
+  if (!owner)
+    return c.json({ error: 'Run not found' }, 404)
+
+  const body = await c.req.parseBody()
+  const file = body.file
+  if (!(file instanceof File))
+    return c.json({ error: 'file is required' }, 400)
+  const testKey = typeof body.testKey === 'string' ? body.testKey : ''
+  const name = typeof body.name === 'string' ? body.name : 'trace'
+
+  const buf = Buffer.from(await file.arrayBuffer())
+  const key = `${r.projectId}/${runId}/${randomUUID()}-${name}.zip`
+  await storage.put(key, buf)
+
+  const t = testKey
+    ? await db.query.test.findFirst({
+        where: and(eq(test.runId, runId), eq(test.testKey, testKey)),
+        columns: { id: true },
+      })
+    : undefined
+
+  await db.insert(artifact).values({
+    id: randomUUID(),
+    projectId: r.projectId,
+    runId,
+    testId: t?.id,
+    name,
+    contentType: file.type || 'application/zip',
+    storageKey: key,
+    size: buf.length,
+  })
+
+  return c.json({ url: storage.url(key) }, 201)
 })

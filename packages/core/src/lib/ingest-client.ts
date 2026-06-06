@@ -1,6 +1,6 @@
-import type { IngestRun, IngestRunResult } from '../contracts/ingest'
+import type { IngestRun, IngestRunResult, UploadArtifactResult } from '../contracts/ingest'
 import type { CiMeta, GitMeta } from '../contracts/kinora'
-import { ingestRunResultSchema } from '../contracts/ingest'
+import { ingestRunResultSchema, uploadArtifactResultSchema } from '../contracts/ingest'
 import { ingestPlaywrightReport } from './normalize'
 
 export interface BuildIngestRunOptions {
@@ -40,23 +40,51 @@ export interface IngestClientOptions {
   fetch?: typeof globalThis.fetch
 }
 
+export interface UploadArtifactInput {
+  runId: string
+  testKey: string
+  name: string
+  contentType: string
+  body: Uint8Array | Blob
+}
+
 export function createIngestClient(opts: IngestClientOptions) {
   const base = opts.baseUrl.replace(/\/+$/, '')
   const doFetch = opts.fetch ?? globalThis.fetch
+  const auth = `Bearer ${opts.token}`
 
   return {
     async uploadRun(input: IngestRun): Promise<IngestRunResult> {
       const res = await doFetch(`${base}/api/v1/runs`, {
         method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          'authorization': `Bearer ${opts.token}`,
-        },
+        headers: { 'content-type': 'application/json', 'authorization': auth },
         body: JSON.stringify(input),
       })
       if (!res.ok)
         throw new Error(`kinora ingest failed: ${res.status} ${await res.text()}`)
       return ingestRunResultSchema.parse(await res.json())
     },
+
+    async uploadArtifact(input: UploadArtifactInput): Promise<UploadArtifactResult> {
+      const blob = input.body instanceof Blob ? input.body : new Blob([input.body], { type: input.contentType })
+      const form = new FormData()
+      form.set('file', blob, input.name)
+      form.set('testKey', input.testKey)
+      form.set('name', input.name)
+      // No content-type header: fetch sets the multipart boundary.
+      const res = await doFetch(`${base}/api/v1/runs/${encodeURIComponent(input.runId)}/artifacts`, {
+        method: 'POST',
+        headers: { authorization: auth },
+        body: form,
+      })
+      if (!res.ok)
+        throw new Error(`kinora artifact upload failed: ${res.status} ${await res.text()}`)
+      return uploadArtifactResultSchema.parse(await res.json())
+    },
   }
+}
+
+// Trace-like attachments worth uploading (the viewer's flagship input).
+export function isTraceAttachment(a: { name: string, contentType: string, path?: string }): boolean {
+  return !!a.path && (a.name === 'trace' || a.contentType === 'application/zip' || a.path.endsWith('.zip'))
 }

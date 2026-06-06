@@ -27,3 +27,8 @@ export const ingestRunResultSchema = z.object({
   tests: z.number(),
 })
 export type IngestRunResult = z.infer<typeof ingestRunResultSchema>
+
+export const uploadArtifactResultSchema = z.object({
+  url: z.string(),
+})
+export type UploadArtifactResult = z.infer<typeof uploadArtifactResultSchema>
