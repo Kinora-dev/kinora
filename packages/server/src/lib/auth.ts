@@ -1,6 +1,7 @@
 import { apiKey } from '@better-auth/api-key'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+import { lastLoginMethod } from 'better-auth/plugins'
 import { db } from '../db'
 import { env } from './env'
 import { getTrustedOrigins } from './utils'
@@ -23,7 +24,7 @@ export const auth = betterAuth({
   // No SMTP yet: emails stay unverified, so apply the new address directly instead of mailing a verification link.
   user: { changeEmail: { enabled: true, updateEmailWithoutVerification: true } },
   secret: env.AUTH_SECRET,
-  plugins: [apiKey()],
+  plugins: [apiKey(), lastLoginMethod()],
 })
 
 export interface AuthType {

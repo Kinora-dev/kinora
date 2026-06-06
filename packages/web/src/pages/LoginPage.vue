@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Badge } from '@kinora/ui/badge'
 import { Button } from '@kinora/ui/button'
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@kinora/ui/form'
 import { Input } from '@kinora/ui/input'
@@ -14,6 +15,7 @@ import { session } from '@/lib/session'
 
 const router = useRouter()
 const serverError = ref('')
+const lastMethod = authClient.getLastUsedLoginMethod()
 
 const { handleSubmit, isSubmitting } = useForm({
   validationSchema: toTypedSchema(z.object({
@@ -70,9 +72,14 @@ const labelClass = 'font-mono text-[11px] tracking-wider text-muted-foreground u
         {{ serverError }}
       </p>
 
-      <Button type="submit" :disabled="isSubmitting" class="w-full bg-signal text-white hover:bg-signal/90 focus-visible:ring-signal/40">
-        {{ isSubmitting ? 'Signing in…' : 'Sign in' }}
-      </Button>
+      <div class="relative">
+        <Button type="submit" :disabled="isSubmitting" class="w-full bg-signal text-white hover:bg-signal/90 focus-visible:ring-signal/40">
+          {{ isSubmitting ? 'Signing in…' : 'Sign in' }}
+        </Button>
+        <Badge v-if="lastMethod === 'email'" class="absolute -top-2 -right-2 border-signal/30 bg-background px-1.5 py-0.5 text-[9px] leading-none tracking-wider text-signal shadow-sm">
+          Last used
+        </Badge>
+      </div>
     </form>
 
     <template #footer>
