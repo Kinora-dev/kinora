@@ -1,7 +1,7 @@
 import { Buffer } from 'node:buffer'
 import { randomUUID } from 'node:crypto'
 import { zValidator } from '@hono/zod-validator'
-import { ingestRunSchema } from '@kinora/core'
+import { countsByTagFrom, ingestRunSchema } from '@kinora/core'
 import { and, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { db } from '../db'
@@ -57,6 +57,7 @@ publicApi.post('/runs', zValidator('json', ingestRunSchema), async (c) => {
       startedAt: new Date(input.run.startedAt),
       duration: input.run.duration,
       counts: input.run.counts,
+      countsByTag: countsByTagFrom(input.tests),
       playwrightVersion: input.run.playwrightVersion,
       git: input.run.git,
       ci: input.run.ci,

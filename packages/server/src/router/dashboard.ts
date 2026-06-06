@@ -32,7 +32,7 @@ function runSummary(slug: string, r: RunRow): RunSummary {
     ci: r.ci ?? undefined,
     shards: r.shards ?? undefined,
     reportPath: `reports/${slug}/${r.id}.json`,
-    countsByTag: {},
+    countsByTag: r.countsByTag,
   }
 }
 

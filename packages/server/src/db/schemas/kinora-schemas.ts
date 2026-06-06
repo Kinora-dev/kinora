@@ -24,6 +24,7 @@ export const run = pgTable('run', {
   startedAt: timestamp('started_at').notNull(),
   duration: integer('duration').notNull(),
   counts: jsonb('counts').$type<Counts>().notNull(),
+  countsByTag: jsonb('counts_by_tag').$type<Record<string, Counts>>().notNull().default({}),
   playwrightVersion: text('playwright_version'),
   git: jsonb('git').$type<GitMeta>(),
   ci: jsonb('ci').$type<CiMeta>(),

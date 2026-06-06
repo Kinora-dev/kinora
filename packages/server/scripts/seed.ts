@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
-import { makeTestKey } from '@kinora/core'
+import { countsByTagFrom, makeTestKey } from '@kinora/core'
 import { eq } from 'drizzle-orm'
 import { db } from '../src/db'
 import { artifact, project, run, test, user as userTable } from '../src/db/schemas/index'
@@ -131,6 +131,7 @@ async function main(): Promise<void> {
         startedAt,
         duration: tests.reduce((s, t) => s + t.duration, 0),
         counts: countsOf(tests),
+        countsByTag: countsByTagFrom(tests),
         playwrightVersion: '1.60.0',
         git: { sha: randomUUID().slice(0, 7), branch: i === 0 ? 'main' : 'develop' },
         ci: { provider: 'github', runNumber: String(100 + i) },

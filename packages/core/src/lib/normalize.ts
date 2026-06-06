@@ -94,7 +94,7 @@ function emptyCounts(): Counts {
   return { total: 0, expected: 0, unexpected: 0, flaky: 0, skipped: 0 }
 }
 
-function countsByTagFrom(tests: NormTest[]): Record<string, Counts> {
+export function countsByTagFrom(tests: NormTest[]): Record<string, Counts> {
   const out: Record<string, Counts> = {}
   for (const t of tests) {
     for (const tag of t.tags) {
