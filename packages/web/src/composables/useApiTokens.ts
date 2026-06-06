@@ -39,15 +39,9 @@ export function useApiTokens(options?: { autoLoad?: boolean }) {
   }
 
   async function copyCreatedKey(): Promise<void> {
-    try {
-      await navigator.clipboard.writeText(createdKey.value)
-      copied.value = true
-      toast.success('Token copied')
-      setTimeout(() => (copied.value = false), 1500)
-    }
-    catch {
-      toast.error('Could not copy token')
-    }
+    await navigator.clipboard.writeText(createdKey.value)
+    copied.value = true
+    setTimeout(() => (copied.value = false), 1500)
   }
 
   async function remove(id: string): Promise<void> {

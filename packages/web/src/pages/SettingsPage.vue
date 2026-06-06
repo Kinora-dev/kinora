@@ -31,7 +31,7 @@ function setTheme(value: ColorMode): void {
 }
 
 // --- Email ---
-const { handleSubmit: submitEmail, isSubmitting: emailSubmitting } = useForm({
+const { handleSubmit: submitEmail, isSubmitting: emailSubmitting, setFieldError: setEmailError } = useForm({
   validationSchema: toTypedSchema(
     z.object({
       email: z.string().min(1, 'Email is required').email('Enter a valid email'),
@@ -42,12 +42,12 @@ const { handleSubmit: submitEmail, isSubmitting: emailSubmitting } = useForm({
 
 const onEmail = submitEmail(async (values) => {
   if (values.email === session.user.value?.email) {
-    toast.info('That is already your email')
+    setEmailError('email', 'That is already your email')
     return
   }
   const { error } = await authClient.changeEmail({ newEmail: values.email })
   if (error) {
-    toast.error(error.message ?? 'Could not update email')
+    setEmailError('email', error.message ?? 'Could not update email')
     return
   }
   await session.refresh()
@@ -55,7 +55,7 @@ const onEmail = submitEmail(async (values) => {
 })
 
 // --- Password ---
-const { handleSubmit: submitPassword, isSubmitting: pwSubmitting, resetForm: resetPw } = useForm({
+const { handleSubmit: submitPassword, isSubmitting: pwSubmitting, resetForm: resetPw, setFieldError: setPwError } = useForm({
   validationSchema: toTypedSchema(
     z.object({
       currentPassword: z.string().min(1, 'Current password is required'),
@@ -76,7 +76,7 @@ const onPassword = submitPassword(async (values) => {
     revokeOtherSessions: true,
   })
   if (error) {
-    toast.error(error.message ?? 'Could not change password')
+    setPwError('currentPassword', error.message ?? 'Could not change password')
     return
   }
   resetPw()
