@@ -1,12 +1,15 @@
 import type { Counts, NormTest } from '@kinora/core'
 import { randomUUID } from 'node:crypto'
+import { readFile } from 'node:fs/promises'
 import process from 'node:process'
+import { fileURLToPath } from 'node:url'
 import { makeTestKey } from '@kinora/core'
 import { eq } from 'drizzle-orm'
 import { db } from '../src/db'
-import { project, run, test, user as userTable } from '../src/db/schemas/index'
+import { artifact, project, run, test, user as userTable } from '../src/db/schemas/index'
 import { auth } from '../src/lib/auth'
 import { logger } from '../src/lib/logger'
+import { storage } from '../src/lib/storage'
 
 const EMAIL = 'demo@kinora.dev'
 const PASSWORD = 'password123'
@@ -101,8 +104,12 @@ async function ensureUser(): Promise<string> {
   return res.user.id
 }
 
+// A complete Playwright trace (screenshots + sources), reused for every seeded trace so "View trace" works in dev.
+const TRACE_FIXTURE = fileURLToPath(new URL('../../trace-viewer/public/fixtures/demo.zip', import.meta.url))
+
 async function main(): Promise<void> {
   const userId = await ensureUser()
+  const traceBuf = await readFile(TRACE_FIXTURE)
 
   // Fresh data: cascade-deletes runs/tests/artifacts via FKs.
   await db.delete(project).where(eq(project.userId, userId))
@@ -129,26 +136,53 @@ async function main(): Promise<void> {
         ci: { provider: 'github', runNumber: String(100 + i) },
       })
 
-      await db.insert(test).values(tests.map(t => ({
-        id: randomUUID(),
-        runId,
-        projectId,
-        testKey: t.testKey,
-        title: t.title,
-        titlePath: t.titlePath,
-        file: t.file,
-        line: t.line,
-        column: t.column,
-        projectName: t.projectName,
-        status: t.status,
-        ok: t.ok,
-        duration: t.duration,
-        retries: t.retries,
-        tags: t.tags,
-        annotations: t.annotations,
-        errors: t.errors,
-        attachments: t.attachments,
-      })))
+      // Attach a trace to the tests a user would actually inspect (failed / flaky).
+      const traced: { id: string, storageKey: string }[] = []
+      const testRows = tests.map((t) => {
+        const id = randomUUID()
+        const hasTrace = t.status === 'unexpected' || t.status === 'flaky'
+        if (hasTrace)
+          traced.push({ id, storageKey: `${projectId}/${runId}/${randomUUID()}-trace.zip` })
+        return {
+          id,
+          runId,
+          projectId,
+          testKey: t.testKey,
+          title: t.title,
+          titlePath: t.titlePath,
+          file: t.file,
+          line: t.line,
+          column: t.column,
+          projectName: t.projectName,
+          status: t.status,
+          ok: t.ok,
+          duration: t.duration,
+          retries: t.retries,
+          tags: t.tags,
+          annotations: t.annotations,
+          errors: t.errors,
+          attachments: hasTrace
+            ? [{ name: 'trace', contentType: 'application/zip', hasBody: true }]
+            : t.attachments,
+        }
+      })
+      await db.insert(test).values(testRows)
+
+      for (const tr of traced)
+        await storage.put(tr.storageKey, traceBuf)
+
+      if (traced.length) {
+        await db.insert(artifact).values(traced.map(tr => ({
+          id: randomUUID(),
+          projectId,
+          runId,
+          testId: tr.id,
+          name: 'trace',
+          contentType: 'application/zip',
+          storageKey: tr.storageKey,
+          size: traceBuf.length,
+        })))
+      }
     }
     logger.info(`seeded project ${pdef.slug} (${RUNS_PER_PROJECT} runs)`)
   }
