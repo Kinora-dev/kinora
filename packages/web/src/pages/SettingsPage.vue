@@ -250,7 +250,7 @@ function fmtDate(d: Date | string | null | undefined): string {
             </label>
             <Input id="token-name" v-model="newTokenName" placeholder="ci-github-actions" @keydown.enter.prevent="createToken" />
           </div>
-          <Button type="button" :disabled="creating" size="sm" class="font-mono text-xs" @click="createToken">
+          <Button type="button" :disabled="creating || !newTokenName.trim()" size="sm" class="font-mono text-xs" @click="createToken">
             <Plus class="size-3.5" />
             {{ creating ? 'Creating…' : 'Create' }}
           </Button>

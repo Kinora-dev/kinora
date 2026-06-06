@@ -64,7 +64,7 @@ const runSnippet = `KINORA_URL=${env.serverUrl} KINORA_TOKEN=<token> \\
                 class="flex-1"
                 @keydown.enter.prevent="generate"
               />
-              <Button type="button" :disabled="creating" size="sm" class="shrink-0 font-mono text-xs" @click="generate">
+              <Button type="button" :disabled="creating || !tokenName.trim()" size="sm" class="shrink-0 font-mono text-xs" @click="generate">
                 <Plus class="size-3.5" />
                 {{ creating ? 'Creating…' : 'Generate' }}
               </Button>

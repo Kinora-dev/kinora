@@ -24,10 +24,8 @@ export function useApiTokens(options?: { autoLoad?: boolean }) {
 
   async function create(name: string): Promise<boolean> {
     const trimmed = name.trim()
-    if (!trimmed) {
-      toast.error('Name the token first')
+    if (!trimmed)
       return false
-    }
     creating.value = true
     const { data, error } = await authClient.apiKey.create({ name: trimmed })
     creating.value = false
