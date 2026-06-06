@@ -17,7 +17,9 @@ async function ensure(): Promise<void> {
         user.value = null
       }
       finally {
-        ready.value = true
+        setTimeout(() => {
+          ready.value = true
+        }, 50)
       }
     })()
   }
