@@ -13,7 +13,7 @@ async function signIn(provider: Provider): Promise<void> {
   pending.value = provider
   const { error } = await authClient.signIn.social({ provider, callbackURL: window.location.origin })
   if (error) {
-    toast.error(error.message ?? `Could not continue with ${provider}`)
+    toast.error(error.message ?? `Could not sign in with ${provider}`)
     pending.value = null
   }
 }
