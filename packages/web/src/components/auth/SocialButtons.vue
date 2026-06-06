@@ -11,8 +11,7 @@ const pending = ref<Provider | null>(null)
 
 async function signIn(provider: Provider): Promise<void> {
   pending.value = provider
-  // On success the browser redirects to the provider, so we only land here on a setup error.
-  const { error } = await authClient.signIn.social({ provider, callbackURL: '/' })
+  const { error } = await authClient.signIn.social({ provider, callbackURL: window.location.origin })
   if (error) {
     toast.error(error.message ?? `Could not continue with ${provider}`)
     pending.value = null
