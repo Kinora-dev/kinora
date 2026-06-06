@@ -6,6 +6,9 @@
   "description": "Kinora backend: Hono + tRPC API (single-tenant, self-hostable)",
   "author": "Joris Gallot",
   "license": "AGPL-3.0-or-later",
+  "exports": {
+    ".": "./src/router/index.ts"
+  },
   "engines": {
     "node": ">=24"
   },

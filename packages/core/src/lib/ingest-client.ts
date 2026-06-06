@@ -66,7 +66,8 @@ export function createIngestClient(opts: IngestClientOptions) {
     },
 
     async uploadArtifact(input: UploadArtifactInput): Promise<UploadArtifactResult> {
-      const blob = input.body instanceof Blob ? input.body : new Blob([input.body], { type: input.contentType })
+      // Cast the typed-array generic so this compiles under both node and DOM libs.
+      const blob = input.body instanceof Blob ? input.body : new Blob([input.body as Uint8Array<ArrayBuffer>], { type: input.contentType })
       const form = new FormData()
       form.set('file', blob, input.name)
       form.set('testKey', input.testKey)

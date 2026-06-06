@@ -2,21 +2,33 @@
 import { Toaster } from '@kinora/ui/sonner'
 import { RouterView } from 'vue-router'
 import AppHeader from '@/components/app/AppHeader.vue'
+import LoadingScreen from '@/components/app/LoadingScreen.vue'
+import { session } from '@/lib/session'
 import 'vue-sonner/style.css'
+
+const ready = session.ready
 </script>
 
 <template>
-  <div class="min-h-svh bg-background app-grid">
-    <AppHeader />
-    <main class="mx-auto max-w-7xl px-5 py-8">
-      <RouterView v-slot="{ Component, route }">
-        <Transition name="page" mode="out-in">
-          <component :is="Component" :key="route.path" />
-        </Transition>
-      </RouterView>
-    </main>
+  <LoadingScreen v-if="!ready" />
+  <template v-else>
+    <RouterView v-slot="{ Component, route }">
+      <!-- Public pages (login / signup) render standalone, no app chrome. -->
+      <Transition v-if="route.meta.public" name="page" mode="out-in">
+        <component :is="Component" :key="route.path" />
+      </Transition>
+      <!-- App pages get the header + control-room grid shell. -->
+      <div v-else class="min-h-svh bg-background app-grid">
+        <AppHeader />
+        <main class="mx-auto max-w-7xl px-5 py-8">
+          <Transition name="page" mode="out-in">
+            <component :is="Component" :key="route.path" />
+          </Transition>
+        </main>
+      </div>
+    </RouterView>
     <Toaster position="bottom-right" />
-  </div>
+  </template>
 </template>
 
 <style>

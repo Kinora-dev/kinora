@@ -4,3 +4,7 @@ trustPolicy: no-downgrade
 
 packages:
   - packages/*
+
+peerDependencyRules:
+  allowedVersions:
+    '@vee-validate/zod>zod': '4'

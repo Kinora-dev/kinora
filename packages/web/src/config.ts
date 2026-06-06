@@ -6,6 +6,8 @@ import { z } from 'zod'
 // Empty baseUrl + dev => mock data.
 export const runtimeConfigSchema = z.object({
   baseUrl: z.string().default(''),
+  // kinora server (tRPC API + better-auth). Empty in prod => same origin.
+  serverUrl: z.string().default(''),
   // 'static': fetch manifest.json + reports/ files. 'rest': fetch /api/* endpoints.
   mode: z.enum(['static', 'rest']).default('static'),
   title: z.string().default('Kinora'),
@@ -27,11 +29,15 @@ function resolveConfig(): RuntimeConfig {
   const base = injected.success ? injected.data : runtimeConfigSchema.parse({})
   const envBase = import.meta.env.VITE_KINORA_BASE_URL as string | undefined
   const envViewer = import.meta.env.VITE_KINORA_VIEWER_URL as string | undefined
+  const envServer = import.meta.env.VITE_KINORA_SERVER_URL as string | undefined
   // Dev: the viewer runs on its own dev server (pnpm dev:viewer). Prod: /trace/.
   const defaultViewer = import.meta.env.DEV ? 'http://localhost:5174/' : '/trace/'
+  // Dev: the server runs on :3000 (pnpm --filter @kinora/server dev). Prod: same origin.
+  const defaultServer = import.meta.env.DEV ? 'http://localhost:3000' : ''
   return {
     ...base,
     baseUrl: base.baseUrl || envBase || '',
+    serverUrl: base.serverUrl || envServer || defaultServer,
     viewerBaseUrl: base.viewerBaseUrl || envViewer || defaultViewer,
   }
 }

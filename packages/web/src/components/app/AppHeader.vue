@@ -1,8 +1,17 @@
 <script setup lang="ts">
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@kinora/ui/dropdown-menu'
 import { ThemeToggle } from '@kinora/ui/theme-toggle'
+import { LogOut } from 'lucide-vue-next'
 import { computed } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { config, useMock } from '@/config'
+import { authClient } from '@/lib/auth'
+import { session } from '@/lib/session'
+
+const router = useRouter()
+const user = session.user
+
+const initial = computed(() => (user.value?.name || user.value?.email || '?').charAt(0).toUpperCase())
 
 const source = computed(() => {
   if (useMock)
@@ -14,6 +23,12 @@ const source = computed(() => {
     return { label: 'LIVE', detail: config.baseUrl || 'unset' }
   }
 })
+
+async function signOut(): Promise<void> {
+  await authClient.signOut()
+  session.setUser(null)
+  router.push({ name: 'login' })
+}
 </script>
 
 <template>
@@ -43,8 +58,33 @@ const source = computed(() => {
         <span class="text-muted-foreground/60">/ {{ source.detail }}</span>
       </span>
 
-      <div class="ml-auto flex items-center gap-1">
+      <div class="ml-auto flex items-center gap-1.5">
         <ThemeToggle />
+
+        <DropdownMenu v-if="user">
+          <DropdownMenuTrigger as-child>
+            <button
+              type="button"
+              class="flex size-8 items-center justify-center rounded-full bg-signal/15 text-xs font-semibold text-signal ring-1 ring-signal/30 transition-colors hover:ring-signal/60"
+              :title="user.name ?? user.email"
+            >
+              {{ initial }}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" class="w-56">
+            <DropdownMenuLabel>
+              <div class="flex min-w-0 flex-col">
+                <span class="truncate text-sm font-medium">{{ user.name }}</span>
+                <span class="truncate text-xs font-normal text-muted-foreground">{{ user.email }}</span>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem @click="signOut">
+              <LogOut class="size-4" />
+              Sign out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   </header>

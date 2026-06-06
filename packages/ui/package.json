@@ -28,6 +28,7 @@
     "clsx": "^2.1.1",
     "reka-ui": "^2.9.9",
     "tailwind-merge": "^3.6.0",
+    "vee-validate": "^4.15.1",
     "vue-sonner": "^2.0.9"
   },
   "devDependencies": {
