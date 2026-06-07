@@ -16,3 +16,11 @@ export function useProjectHistory(projectId: string) {
     { immediate: true },
   )
 }
+
+export function useCompareRuns(projectId: string, baseRunId: string, headRunId: string) {
+  return useAsyncState(
+    () => trpc.dashboard.compareRuns.query({ projectId, baseRunId, headRunId }),
+    null,
+    { immediate: true },
+  )
+}

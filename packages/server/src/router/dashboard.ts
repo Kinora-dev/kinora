@@ -1,5 +1,5 @@
-import type { Manifest, NormTest, ProjectEntry, ProjectHistory, RunReport, RunSummary } from '@kinora/core'
-import { buildTestHistories, SCHEMA_VERSION } from '@kinora/core'
+import type { Manifest, NormTest, ProjectEntry, ProjectHistory, RunComparison, RunReport, RunSummary } from '@kinora/core'
+import { buildTestHistories, compareRuns, SCHEMA_VERSION } from '@kinora/core'
 import { TRPCError } from '@trpc/server'
 import { and, asc, desc, eq } from 'drizzle-orm'
 import { z } from 'zod'
@@ -123,5 +123,28 @@ export const dashboardRouter = router({
       const reports = runs.map(r => runReport(input.projectId, r, byRun.get(r.id) ?? []))
       const entry: ProjectEntry = { id: p.slug, name: p.name, runs: runs.map(r => runSummary(p.slug, r)) }
       return { project: entry, histories: buildTestHistories(reports) }
+    }),
+
+  compareRuns: authProcedure
+    .input(z.object({ projectId: z.string().min(1), baseRunId: z.string().min(1), headRunId: z.string().min(1) }))
+    .query(async ({ ctx, input }): Promise<RunComparison> => {
+      const p = await ownedProject(ctx.user.id, input.projectId)
+      const [base, head] = await Promise.all([
+        db.query.run.findFirst({ where: and(eq(run.id, input.baseRunId), eq(run.projectId, p.id)) }),
+        db.query.run.findFirst({ where: and(eq(run.id, input.headRunId), eq(run.projectId, p.id)) }),
+      ])
+      if (!base || !head)
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Run not found' })
+
+      const [baseTests, headTests] = await Promise.all([
+        db.query.test.findMany({ where: eq(test.runId, base.id) }),
+        db.query.test.findMany({ where: eq(test.runId, head.id) }),
+      ])
+
+      return {
+        base: { runId: base.id, startedAt: base.startedAt.toISOString(), counts: base.counts, git: base.git ?? undefined },
+        head: { runId: head.id, startedAt: head.startedAt.toISOString(), counts: head.counts, git: head.git ?? undefined },
+        tests: compareRuns(baseTests.map(t => toNormTest(t)), headTests.map(t => toNormTest(t))),
+      }
     }),
 })

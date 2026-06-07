@@ -21,6 +21,12 @@ export const router = createRouter({
       props: true,
     },
     {
+      path: '/projects/:projectId/compare',
+      name: 'compare',
+      component: () => import('@/pages/ComparePage.vue'),
+      props: true,
+    },
+    {
       path: '/projects/:projectId/tests',
       name: 'tests',
       component: () => import('@/pages/TestsPage.vue'),

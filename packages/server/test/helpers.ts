@@ -1,4 +1,4 @@
-import type { IngestRun } from '@kinora/core'
+import type { IngestRun, NormTest } from '@kinora/core'
 import type { AuthType } from '../src/lib/auth'
 import { makeTestKey } from '@kinora/core'
 import { sql } from 'drizzle-orm'
@@ -34,15 +34,17 @@ export async function ingest(key: string | null, payload: IngestRun = runPayload
   return app.request('/api/v1/runs', { method: 'POST', headers, body: JSON.stringify(payload) })
 }
 
-export function runPayload(slug = 'web-app', tag = '@smoke'): IngestRun {
+export function runPayload(slug = 'web-app', tag = '@smoke', status: NormTest['status'] = 'expected'): IngestRun {
   const file = 'tests/checkout.spec.ts'
   const titlePath = [file, 'completes a purchase']
+  const counts = { total: 1, expected: 0, unexpected: 0, flaky: 0, skipped: 0 }
+  counts[status] = 1
   return {
     project: { slug, name: slug },
     run: {
       startedAt: new Date().toISOString(),
       duration: 1234,
-      counts: { total: 1, expected: 1, unexpected: 0, flaky: 0, skipped: 0 },
+      counts,
     },
     tests: [{
       testKey: makeTestKey(file, titlePath, 'chromium'),
@@ -52,8 +54,8 @@ export function runPayload(slug = 'web-app', tag = '@smoke'): IngestRun {
       line: 12,
       column: 3,
       projectName: 'chromium',
-      status: 'expected',
-      ok: true,
+      status,
+      ok: status !== 'unexpected',
       duration: 1234,
       retries: 0,
       tags: [tag],

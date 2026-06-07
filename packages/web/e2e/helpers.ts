@@ -49,3 +49,13 @@ export function findTracedRun(page: Page): Promise<{ slug: string, runId: string
 export function findAnnotatedRun(page: Page): Promise<{ slug: string, runId: string }> {
   return findRun(page, t => t.annotations.length > 0)
 }
+
+// A project with >= 2 runs; returns the latest as head and the one before as base.
+export async function findTwoRuns(page: Page): Promise<{ slug: string, base: string, head: string }> {
+  const manifest = await query<Manifest>(page, 'dashboard.manifest', {})
+  for (const p of manifest?.projects ?? []) {
+    if (p.runs.length >= 2)
+      return { slug: p.id, base: p.runs[1].runId, head: p.runs[0].runId }
+  }
+  throw new Error('no project with >=2 runs - reseed with `pnpm --filter @kinora/server db:seed`')
+}

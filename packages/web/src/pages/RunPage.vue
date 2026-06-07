@@ -7,7 +7,7 @@ import { Separator } from '@kinora/ui/separator'
 import { Skeleton } from '@kinora/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '@kinora/ui/tabs'
 import { useRouteQuery } from '@vueuse/router'
-import { ArrowLeft, ExternalLink, Film, GitBranch, Paperclip } from 'lucide-vue-next'
+import { ArrowLeft, ExternalLink, Film, GitBranch, GitCompareArrows, Paperclip } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import CopyLinkButton from '@/components/app/CopyLinkButton.vue'
@@ -24,6 +24,16 @@ const { state: manifest } = useManifest()
 const projectName = computed(
   () => manifest.value?.projects.find(p => p.id === props.projectId)?.name ?? props.projectId,
 )
+
+// The run just before this one (older startedAt) in the same project, for "Compare with previous".
+const previousRunId = computed(() => {
+  const proj = manifest.value?.projects.find(p => p.id === props.projectId)
+  if (!proj)
+    return undefined
+  const sorted = [...proj.runs].sort((a, b) => +new Date(b.startedAt) - +new Date(a.startedAt))
+  const idx = sorted.findIndex(r => r.runId === props.runId)
+  return idx >= 0 && idx + 1 < sorted.length ? sorted[idx + 1].runId : undefined
+})
 
 const filter = useRouteQuery<'all' | PwTestStatus>('status', 'all')
 const search = useRouteQuery('q', '')
@@ -101,6 +111,18 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
           </div>
 
           <div class="flex shrink-0 items-center gap-2">
+            <Button
+              v-if="previousRunId"
+              as-child
+              variant="outline"
+              size="sm"
+              class="font-mono text-xs text-muted-foreground"
+            >
+              <RouterLink :to="{ name: 'compare', params: { projectId }, query: { base: previousRunId, head: runId } }">
+                <GitCompareArrows class="size-3.5" />
+                Compare
+              </RouterLink>
+            </Button>
             <Button
               v-if="report.meta.ci?.runUrl"
               as-child

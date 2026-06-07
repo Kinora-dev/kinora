@@ -151,3 +151,42 @@ export const projectHistorySchema = z.object({
   histories: z.array(testHistorySchema),
 })
 export type ProjectHistory = z.infer<typeof projectHistorySchema>
+
+// Run-to-run comparison: per-test change between two runs, joined by testKey.
+export const testChangeSchema = z.enum([
+  'broken',
+  'fixed',
+  'newly-flaky',
+  'still-failing',
+  'added',
+  'removed',
+  'unchanged',
+])
+export type TestChange = z.infer<typeof testChangeSchema>
+
+export const testDeltaSchema = z.object({
+  testKey: z.string(),
+  title: z.string(),
+  titlePath: z.array(z.string()),
+  file: z.string(),
+  projectName: z.string(),
+  change: testChangeSchema,
+  baseStatus: pwTestStatus.nullable(),
+  headStatus: pwTestStatus.nullable(),
+  durationDelta: z.number(), // head - base, ms (0 if one side is missing)
+})
+export type TestDelta = z.infer<typeof testDeltaSchema>
+
+const comparisonRunSchema = z.object({
+  runId: z.string(),
+  startedAt: z.string(),
+  counts: countsSchema,
+  git: gitMetaSchema.optional(),
+})
+
+export const runComparisonSchema = z.object({
+  base: comparisonRunSchema,
+  head: comparisonRunSchema,
+  tests: z.array(testDeltaSchema),
+})
+export type RunComparison = z.infer<typeof runComparisonSchema>
