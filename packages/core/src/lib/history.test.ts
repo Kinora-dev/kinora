@@ -1,6 +1,6 @@
 import type { NormTest, RunReport } from '../contracts/kinora'
 import { describe, expect, it } from 'vitest'
-import { buildTestHistories, byInstability, isUnstable } from './history'
+import { buildTestHistories, byInstability, byRecency, isUnstable } from './history'
 
 function makeTest(over: Partial<NormTest> & { testKey: string, status: NormTest['status'] }): NormTest {
   return {
@@ -84,5 +84,37 @@ describe('buildTestHistories', () => {
     const failing = buildTestHistories([makeReport('r1', '2026-01-01T00:00:00Z', [makeTest({ testKey: 'F', status: 'unexpected' })])])[0]
     const flaky = buildTestHistories([makeReport('r1', '2026-01-01T00:00:00Z', [makeTest({ testKey: 'L', status: 'flaky' })])])[0]
     expect([flaky, failing].sort(byInstability)[0].testKey).toBe('F')
+  })
+})
+
+describe('windowed flakiness', () => {
+  function histFromStatuses(statuses: NormTest['status'][]): ReturnType<typeof buildTestHistories>[number] {
+    const runs = statuses.map((status, i) =>
+      makeReport(`r${i}`, `2026-01-${String(i + 1).padStart(2, '0')}T00:00:00Z`, [makeTest({ testKey: 'K', status })]),
+    )
+    return buildTestHistories(runs)[0]
+  }
+
+  it('flags newlyFlaky when flakiness only appears in the recent window', () => {
+    const h = histFromStatuses(['expected', 'expected', 'expected', 'expected', 'expected', 'flaky', 'expected', 'expected'])
+    expect(h.newlyFlaky).toBe(true)
+    expect(h.newlyBroken).toBe(false)
+    expect(h.recentFlakyRate).toBeCloseTo(1 / 5)
+  })
+
+  it('does not flag newlyFlaky when it was already flaky before the window', () => {
+    const h = histFromStatuses(['flaky', 'expected', 'expected', 'expected', 'expected', 'flaky', 'expected', 'expected'])
+    expect(h.newlyFlaky).toBe(false)
+  })
+
+  it('flags newlyBroken on a recent first failure', () => {
+    const h = histFromStatuses(['expected', 'expected', 'expected', 'expected', 'expected', 'expected', 'expected', 'unexpected'])
+    expect(h.newlyBroken).toBe(true)
+  })
+
+  it('byRecency surfaces newly-broken first', () => {
+    const newlyBroken = histFromStatuses(['expected', 'expected', 'expected', 'expected', 'expected', 'unexpected'])
+    const oldFlaky = histFromStatuses(['flaky', 'flaky', 'flaky', 'flaky', 'flaky', 'flaky'])
+    expect([oldFlaky, newlyBroken].sort(byRecency)[0]).toBe(newlyBroken)
   })
 })

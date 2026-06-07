@@ -2,6 +2,9 @@ import type { RunReport, TestHistory } from '../contracts/kinora'
 
 export type { TestHistory, TestPoint } from '../contracts/kinora'
 
+// Sliding window for "recent" flaky/fail rates and the newly-flaky/broken signals.
+export const RECENT_WINDOW = 5
+
 // A test is interesting if it has ever failed or flaked.
 export function isUnstable(h: TestHistory): boolean {
   return h.failed > 0 || h.flaky > 0
@@ -35,6 +38,10 @@ export function buildTestHistories(reports: RunReport[]): TestHistory[] {
           flakyRate: 0,
           failRate: 0,
           passRate: 1,
+          recentFlakyRate: 0,
+          recentFailRate: 0,
+          newlyFlaky: false,
+          newlyBroken: false,
           lastStatus: t.status,
         }
         byKey.set(t.testKey, h)
@@ -67,6 +74,18 @@ export function buildTestHistories(reports: RunReport[]): TestHistory[] {
     h.failRate = h.failed / d
     h.passRate = h.executed === 0 ? 1 : (h.passed + h.flaky) / d
     h.lastStatus = h.points.at(-1)?.status ?? h.lastStatus
+
+    // Windowed view: rates over the last N runs, and whether instability is new.
+    const recent = h.points.slice(-RECENT_WINDOW)
+    const prior = h.points.slice(0, -RECENT_WINDOW)
+    const recentExecuted = recent.filter(p => p.status !== 'skipped').length
+    const recentFlaky = recent.filter(p => p.status === 'flaky').length
+    const recentFailed = recent.filter(p => p.status === 'unexpected').length
+    const rd = Math.max(1, recentExecuted)
+    h.recentFlakyRate = recentFlaky / rd
+    h.recentFailRate = recentFailed / rd
+    h.newlyFlaky = prior.length > 0 && !prior.some(p => p.status === 'flaky') && recentFlaky > 0
+    h.newlyBroken = prior.length > 0 && !prior.some(p => p.status === 'unexpected') && recentFailed > 0
   }
 
   return [...byKey.values()]
@@ -76,4 +95,10 @@ export function buildTestHistories(reports: RunReport[]): TestHistory[] {
 export function byInstability(a: TestHistory, b: TestHistory): number {
   const score = (h: TestHistory) => h.failRate * 2 + h.flakyRate
   return score(b) - score(a)
+}
+
+// Surface newly-broken, then newly-flaky, then fall back to overall instability.
+export function byRecency(a: TestHistory, b: TestHistory): number {
+  const rank = (h: TestHistory) => (h.newlyBroken ? 2 : h.newlyFlaky ? 1 : 0)
+  return rank(b) - rank(a) || byInstability(a, b)
 }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { byInstability, formatPct, isUnstable } from '@kinora/core'
+import { byRecency, formatPct, isUnstable, RECENT_WINDOW } from '@kinora/core'
+import { Badge } from '@kinora/ui/badge'
 import { Button } from '@kinora/ui/button'
 import { Input } from '@kinora/ui/input'
 import { Separator } from '@kinora/ui/separator'
@@ -29,6 +30,8 @@ const unstableOnly = useRouteQuery<string, boolean>('unstable', 'true', {
 })
 
 const unstableCount = computed(() => histories.value.filter(isUnstable).length)
+const newlyFlakyCount = computed(() => histories.value.filter(h => h.newlyFlaky).length)
+const newlyBrokenCount = computed(() => histories.value.filter(h => h.newlyBroken).length)
 
 const rows = computed(() => {
   const q = search.value.trim().toLowerCase()
@@ -40,7 +43,7 @@ const rows = computed(() => {
         || h.titlePath.join(' ').toLowerCase().includes(q)
         || h.file.toLowerCase().includes(q),
     )
-    .sort(byInstability)
+    .sort(byRecency)
 })
 </script>
 
@@ -69,7 +72,7 @@ const rows = computed(() => {
               Tests
             </h1>
             <p class="mt-1 text-sm text-muted-foreground">
-              Per-test history across {{ project?.runs.length ?? 0 }} runs of {{ project?.name }}.
+              Per-test history across {{ project?.runs.length ?? 0 }} runs of {{ project?.name }}. Rates over the last {{ RECENT_WINDOW }} runs.
             </p>
           </div>
           <CopyLinkButton class="shrink-0" />
@@ -79,6 +82,10 @@ const rows = computed(() => {
           <StatBlock label="Tests tracked" :value="histories.length" />
           <Separator orientation="vertical" class="h-10" />
           <StatBlock label="Unstable" :value="unstableCount" :tone="unstableCount ? 'flaky' : 'pass'" />
+          <Separator orientation="vertical" class="h-10" />
+          <StatBlock label="Newly flaky" :value="newlyFlakyCount" :tone="newlyFlakyCount ? 'flaky' : 'default'" />
+          <Separator orientation="vertical" class="h-10" />
+          <StatBlock label="Newly broken" :value="newlyBrokenCount" :tone="newlyBrokenCount ? 'fail' : 'default'" />
         </div>
       </div>
 
@@ -105,9 +112,15 @@ const rows = computed(() => {
           class="group grid grid-cols-[1fr_auto] items-center gap-4 rounded-lg border border-border/70 bg-card/80 px-4 py-3 transition-colors hover:border-border"
         >
           <div class="min-w-0">
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
               <TestStatusBadge :status="h.lastStatus" />
               <span class="truncate text-sm font-medium">{{ h.titlePath.join(' › ') }}</span>
+              <Badge v-if="h.newlyBroken" class="border-fail/30 bg-fail/15 text-[10px] text-fail">
+                Newly broken
+              </Badge>
+              <Badge v-else-if="h.newlyFlaky" class="border-flaky/30 bg-flaky/15 text-[10px] text-flaky">
+                Newly flaky
+              </Badge>
             </div>
             <div class="mt-0.5 font-mono text-[11px] text-muted-foreground">
               {{ h.file }} · {{ h.projectName }}
@@ -119,16 +132,16 @@ const rows = computed(() => {
               <StatusTimeline :points="h.points" :project-id="projectId" :height="18" :link="false" />
             </div>
             <div class="w-14 text-right">
-              <div class="font-mono text-sm tabular-nums" :class="h.flaky ? 'text-flaky' : 'text-muted-foreground'">
-                {{ formatPct(h.flakyRate) }}
+              <div class="font-mono text-sm tabular-nums" :class="h.recentFlakyRate ? 'text-flaky' : 'text-muted-foreground'">
+                {{ formatPct(h.recentFlakyRate) }}
               </div>
               <div class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                 flaky
               </div>
             </div>
             <div class="w-14 text-right">
-              <div class="font-mono text-sm tabular-nums" :class="h.failed ? 'text-fail' : 'text-muted-foreground'">
-                {{ formatPct(h.failRate) }}
+              <div class="font-mono text-sm tabular-nums" :class="h.recentFailRate ? 'text-fail' : 'text-muted-foreground'">
+                {{ formatPct(h.recentFailRate) }}
               </div>
               <div class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                 fail

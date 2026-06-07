@@ -142,6 +142,12 @@ export const testHistorySchema = z.object({
   flakyRate: z.number(),
   failRate: z.number(),
   passRate: z.number(),
+  // Same rates but over the last RECENT_WINDOW runs (sliding window), plus flags
+  // for tests that only started flaking / failing inside that window.
+  recentFlakyRate: z.number(),
+  recentFailRate: z.number(),
+  newlyFlaky: z.boolean(),
+  newlyBroken: z.boolean(),
   lastStatus: pwTestStatus,
 })
 export type TestHistory = z.infer<typeof testHistorySchema>
