@@ -1,4 +1,5 @@
 import type { Counts, NormTest } from '@kinora/core'
+import type { Buffer } from 'node:buffer'
 import { randomUUID } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import process from 'node:process'
@@ -104,12 +105,15 @@ async function ensureUser(): Promise<string> {
   return res.user.id
 }
 
-// A complete Playwright trace (screenshots + sources), reused for every seeded trace so "View trace" works in dev.
-const TRACE_FIXTURE = fileURLToPath(new URL('../../trace-viewer/public/fixtures/demo.zip', import.meta.url))
+// Failed tests get a real failing trace (carries error-context -> the viewer's "Copy prompt");
+// flaky tests get a passing demo trace. Both make "View trace" work in dev.
+const FAIL_TRACE = fileURLToPath(new URL('../../trace-viewer/public/fixtures/error-trace.zip', import.meta.url))
+const PASS_TRACE = fileURLToPath(new URL('../../trace-viewer/public/fixtures/demo.zip', import.meta.url))
 
 async function main(): Promise<void> {
   const userId = await ensureUser()
-  const traceBuf = await readFile(TRACE_FIXTURE)
+  const failTrace = await readFile(FAIL_TRACE)
+  const passTrace = await readFile(PASS_TRACE)
 
   // Fresh data: cascade-deletes runs/tests/artifacts via FKs.
   await db.delete(project).where(eq(project.userId, userId))
@@ -138,12 +142,12 @@ async function main(): Promise<void> {
       })
 
       // Attach a trace to the tests a user would actually inspect (failed / flaky).
-      const traced: { id: string, storageKey: string }[] = []
+      const traced: { id: string, storageKey: string, buf: Buffer }[] = []
       const testRows = tests.map((t) => {
         const id = randomUUID()
         const hasTrace = t.status === 'unexpected' || t.status === 'flaky'
         if (hasTrace)
-          traced.push({ id, storageKey: `${projectId}/${runId}/${randomUUID()}-trace.zip` })
+          traced.push({ id, storageKey: `${projectId}/${runId}/${randomUUID()}-trace.zip`, buf: t.status === 'unexpected' ? failTrace : passTrace })
         return {
           id,
           runId,
@@ -170,7 +174,7 @@ async function main(): Promise<void> {
       await db.insert(test).values(testRows)
 
       for (const tr of traced)
-        await storage.put(tr.storageKey, traceBuf)
+        await storage.put(tr.storageKey, tr.buf)
 
       if (traced.length) {
         await db.insert(artifact).values(traced.map(tr => ({
@@ -181,7 +185,7 @@ async function main(): Promise<void> {
           name: 'trace',
           contentType: 'application/zip',
           storageKey: tr.storageKey,
-          size: traceBuf.length,
+          size: tr.buf.length,
         })))
       }
     }
