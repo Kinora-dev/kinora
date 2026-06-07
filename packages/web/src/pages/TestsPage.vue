@@ -2,7 +2,6 @@
 import { byRecency, formatPct, isUnstable, RECENT_WINDOW } from '@kinora/core'
 import { Badge } from '@kinora/ui/badge'
 import { Button } from '@kinora/ui/button'
-import { Input } from '@kinora/ui/input'
 import { Separator } from '@kinora/ui/separator'
 import { Skeleton } from '@kinora/ui/skeleton'
 import { useRouteQuery } from '@vueuse/router'
@@ -10,6 +9,7 @@ import { ArrowLeft, ChevronRight } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import CopyLinkButton from '@/components/app/CopyLinkButton.vue'
+import SearchInput from '@/components/app/SearchInput.vue'
 import StatBlock from '@/components/viz/StatBlock.vue'
 import StatusTimeline from '@/components/viz/StatusTimeline.vue'
 import TestStatusBadge from '@/components/viz/TestStatusBadge.vue'
@@ -100,7 +100,7 @@ const rows = computed(() => {
         >
           {{ unstableOnly ? 'Unstable only' : 'All tests' }}
         </Button>
-        <Input v-model="search" placeholder="Filter by title or file..." class="h-9 w-64 font-mono text-xs" />
+        <SearchInput v-model="search" placeholder="Filter by title or file..." />
       </div>
 
       <!-- List -->

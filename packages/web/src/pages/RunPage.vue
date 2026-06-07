@@ -2,7 +2,6 @@
 import type { PwTestStatus } from '@kinora/core'
 import { formatDuration, formatPct, passRate } from '@kinora/core'
 import { Button } from '@kinora/ui/button'
-import { Input } from '@kinora/ui/input'
 import { Separator } from '@kinora/ui/separator'
 import { Skeleton } from '@kinora/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '@kinora/ui/tabs'
@@ -11,6 +10,7 @@ import { ArrowLeft, ExternalLink, Film, GitBranch, GitCompareArrows, Paperclip }
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import CopyLinkButton from '@/components/app/CopyLinkButton.vue'
+import SearchInput from '@/components/app/SearchInput.vue'
 import StatBlock from '@/components/viz/StatBlock.vue'
 import TestStatusBadge from '@/components/viz/TestStatusBadge.vue'
 import { useManifest, useRun } from '@/composables/queries'
@@ -175,7 +175,7 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
             </TabsTrigger>
           </TabsList>
         </Tabs>
-        <Input v-model="search" placeholder="Filter by title or file..." class="h-9 w-64 font-mono text-xs" />
+        <SearchInput v-model="search" placeholder="Filter by title or file..." />
       </div>
 
       <!-- Tests -->
