@@ -43,6 +43,7 @@
   --flaky: oklch(0.72 0.15 75);
   --fail: oklch(0.55 0.22 27);
   --signal: oklch(0.68 0.18 50);
+  --info: oklch(0.6 0.16 250);
 }
 
 .dark {
@@ -81,6 +82,7 @@
   --flaky: oklch(0.81 0.16 82);
   --fail: oklch(0.68 0.2 25);
   --signal: oklch(0.76 0.18 55);
+  --info: oklch(0.7 0.15 250);
 }
 
 @theme inline {

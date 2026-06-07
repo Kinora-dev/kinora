@@ -34,7 +34,7 @@ const ready = session.ready
       </RouterView>
     </div>
   </Transition>
-  <Toaster position="bottom-right" />
+  <Toaster rich-colors position="bottom-right" />
 </template>
 
 <style>
