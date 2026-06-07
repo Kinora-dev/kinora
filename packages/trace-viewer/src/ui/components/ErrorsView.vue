@@ -5,12 +5,15 @@ import { useTraceStore } from '../store'
 
 const store = useTraceStore()
 
+// Playwright error messages carry ANSI colour codes (ESC[..m); strip them for plain display.
+const ANSI_RE = new RegExp(`${String.fromCharCode(0x1B)}\\[[0-9;]*m`, 'g')
+
 const errors = computed(() => {
   const m = store.model.value
   if (!m)
     return []
   return m.errorDescriptors.map(e => ({
-    message: e.message,
+    message: e.message.replace(ANSI_RE, ''),
     where: e.action ? `${e.action.class}.${e.action.method}` : undefined,
   }))
 })
