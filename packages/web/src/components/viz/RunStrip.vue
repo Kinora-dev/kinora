@@ -62,10 +62,10 @@ const bars = computed(() =>
           <div class="font-semibold">
             {{ b.date }}
           </div>
-          <div class="mt-0.5 tabular-nums text-muted-foreground">
+          <div class="mt-0.5 tabular-nums text-background/70">
             {{ formatPct(b.pct) }} pass
           </div>
-          <div class="tabular-nums text-muted-foreground">
+          <div class="tabular-nums text-background/70">
             {{ b.run.counts.unexpected }} fail / {{ b.run.counts.flaky }} flaky
           </div>
         </TooltipContent>

@@ -54,7 +54,7 @@ const cells = computed(() =>
           <div class="mt-0.5" :class="c.meta.text">
             {{ c.meta.label }}
           </div>
-          <div v-if="c.point.retries" class="text-muted-foreground">
+          <div v-if="c.point.retries" class="text-background/70">
             {{ c.point.retries }} retry
           </div>
         </TooltipContent>
