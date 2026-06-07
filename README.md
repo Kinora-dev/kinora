@@ -34,10 +34,10 @@ Auto-uploads at the end of every `playwright test` run. One line in your config:
 ```ts
 // playwright.config.ts
 export default defineConfig({
-  reporter: [['@kinora/reporter', { project: { slug: 'web-app' } }]],
+  reporter: [["@kinora/reporter", { project: { slug: "web-app" } }]],
   // enable tracing so View trace works
-  use: { trace: 'on-first-retry' },
-})
+  use: { trace: "on-first-retry" },
+});
 ```
 
 Set the target + token via env (keep the token out of the config / in CI secrets):
@@ -92,7 +92,7 @@ pnpm build        # build every package
 pnpm typecheck    # vue-tsc / tsc across the workspace
 pnpm lint         # eslint
 pnpm test         # unit tests
-pnpm test:e2e     # trace-viewer e2e (Playwright)
+pnpm test:e2e     # trace-viewer and web e2e (Playwright)
 ```
 
 ## Self-hosting
