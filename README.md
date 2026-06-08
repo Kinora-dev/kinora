@@ -4,11 +4,29 @@ A dashboard for your Playwright tests - across projects and over time - with an 
 
 Playwright ships a great HTML report for a single run. kinora sits one level up: push every CI run to a kinora server and get one place to track pass rates, spot trends, and surface flaky tests over time. Failing tests get a **View trace** button that opens the full Playwright trace (DOM / timeline / network / console) right in the dashboard - no separate tooling.
 
-> Status: in active development, pre-release. Expect breaking changes.
+> Status: in active development, pre-release.
 
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="docs/screenshots/overview-light.png">
   <img alt="Overview" src="docs/screenshots/overview-dark.png">
+</picture>
+
+### Embedded trace viewer
+
+Failing tests get a **View trace** button that opens the full Playwright trace inline - DOM, timeline, network, console - plus a **Copy prompt** to hand the failure to an LLM.
+
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/screenshots/trace-viewer-light.png">
+  <img alt="Embedded Playwright trace viewer" src="docs/screenshots/trace-viewer-dark.png">
+</picture>
+
+### Run-to-run compare
+
+Diff any two runs: newly failing, fixed, newly flaky, and still failing, grouped for you.
+
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/screenshots/compare-light.png">
+  <img alt="Run-to-run comparison" src="docs/screenshots/compare-dark.png">
 </picture>
 
 ## Packages
@@ -34,10 +52,10 @@ Auto-uploads at the end of every `playwright test` run. One line in your config:
 ```ts
 // playwright.config.ts
 export default defineConfig({
-  reporter: [['@kinora/reporter', { project: { slug: 'web-app' } }]],
+  reporter: [["@kinora/reporter", { project: { slug: "web-app" } }]],
   // enable tracing so View trace works
-  use: { trace: 'on-first-retry' },
-})
+  use: { trace: "on-first-retry" },
+});
 ```
 
 Set the target + token via env (keep the token out of the config / in CI secrets):
