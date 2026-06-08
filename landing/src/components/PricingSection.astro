@@ -1,0 +1,187 @@
+---
+import { ArrowRight, Check } from '@lucide/astro'
+import { SITE } from '../lib/site'
+import GithubIcon from './GithubIcon.astro'
+
+interface Tier {
+  id: string
+  name: string
+  price: string
+  period: string
+  blurb: string
+  meter?: string
+  cta: { label: string, href: string }
+  featured?: boolean
+  features: string[]
+}
+
+const tiers: Tier[] = [
+  {
+    id: 'free',
+    name: 'Free',
+    price: '$0',
+    period: '/mo',
+    blurb: 'Try kinora cloud on a side project.',
+    cta: { label: 'Start free', href: SITE.waitlist },
+    features: [
+      '2,500 test results / mo',
+      '1 project',
+      '7-day retention',
+      'Unlimited seats',
+      'Community support',
+    ],
+  },
+  {
+    id: 'team',
+    name: 'Team',
+    price: '$49',
+    period: '/mo',
+    blurb: 'For teams shipping on CI every day.',
+    meter: '10k results included, then $5 / 1k',
+    featured: true,
+    cta: { label: 'Join the waitlist', href: SITE.waitlist },
+    features: [
+      'Everything in Free, plus',
+      '10,000 test results / mo',
+      'Unlimited projects',
+      '90-day retention',
+      'Regression alerts (Slack, email, webhook)',
+      'Run-to-run compare',
+      'Chat & email support',
+    ],
+  },
+  {
+    id: 'pro',
+    name: 'Pro',
+    price: '$149',
+    period: '/mo',
+    blurb: 'For heavy CI and longer history.',
+    meter: '50k results included, then $4 / 1k',
+    cta: { label: 'Join the waitlist', href: SITE.waitlist },
+    features: [
+      'Everything in Team, plus',
+      '50,000 test results / mo',
+      '1-year retention',
+      'Priority support',
+    ],
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    price: 'Custom',
+    period: '',
+    blurb: 'For scale and compliance needs.',
+    cta: { label: 'Contact us', href: SITE.contact },
+    features: [
+      'Everything in Pro, plus',
+      'Unlimited volume',
+      'SSO / SAML + SCIM',
+      'Custom retention',
+      'SLA & dedicated support',
+    ],
+  },
+]
+---
+
+<section id="pricing" class="border-b border-border">
+  <div class="mx-auto max-w-7xl px-5 py-20 sm:px-8 sm:py-28">
+    <header class="reveal mb-12 max-w-3xl">
+      <p class="font-mono text-xs font-medium uppercase tracking-wider text-signal">
+        [ Pricing ]
+      </p>
+      <h2 class="mt-4 text-balance text-3xl font-semibold tracking-tight sm:text-5xl">
+        Priced by your tests, not your team.
+      </h2>
+      <p class="mt-5 text-pretty text-base leading-relaxed text-muted-foreground">
+        Self-host free, forever. Or let us run it: every cloud plan has unlimited seats, so the
+        whole team watches without counting logins. You pay for test results, not people.
+      </p>
+    </header>
+
+    {/* Self-host strip */}
+    <div class="reveal mb-8 flex flex-col gap-5 rounded-xl border border-border bg-card/40 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-7">
+      <div>
+        <div class="flex items-center gap-2.5">
+          <span class="size-2 rec-dot rounded-full bg-signal" aria-hidden="true"></span>
+          <span class="font-mono text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Self-hosted
+          </span>
+        </div>
+        <h3 class="mt-2.5 text-xl font-semibold tracking-tight">Run it yourself, free forever.</h3>
+        <p class="mt-1.5 max-w-xl text-sm leading-relaxed text-muted-foreground">
+          The full dashboard and embedded trace viewer, AGPL-3.0, on your own infrastructure.
+          Unlimited everything, no account needed.
+        </p>
+      </div>
+      <a
+        href={SITE.repo}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex h-11 shrink-0 items-center gap-2 rounded-md border border-border px-6 font-mono text-sm font-semibold transition-colors hover:bg-muted"
+      >
+        <GithubIcon class="size-4" />
+        Self-host it
+      </a>
+    </div>
+
+    {/* Cloud tiers */}
+    <div class="grid gap-5 lg:grid-cols-4">
+      {tiers.map((tier, i) => (
+        <article
+          class:list={[
+            'reveal relative flex flex-col rounded-xl border bg-card/40 p-6',
+            tier.featured ? 'border-signal/50 ring-1 ring-signal/30' : 'border-border',
+          ]}
+          style={`--reveal-delay: ${i * 70}ms`}
+        >
+          {tier.featured && (
+            <span class="absolute -top-2.5 left-6 rounded-full bg-signal px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-background">
+              Most popular
+            </span>
+          )}
+          <h3 class="font-mono text-sm font-semibold uppercase tracking-wider text-foreground">
+            {tier.name}
+          </h3>
+          <p class="mt-1.5 text-sm text-muted-foreground">{tier.blurb}</p>
+
+          <div class="mt-5 flex items-end gap-1">
+            <span class="font-mono text-4xl font-semibold tracking-tight tabular-nums">{tier.price}</span>
+            {tier.period && <span class="pb-1 font-mono text-sm text-muted-foreground">{tier.period}</span>}
+          </div>
+          <p class="mt-1.5 h-4 font-mono text-[11px] text-muted-foreground">{tier.meter}</p>
+
+          <a
+            href={tier.cta.href}
+            class:list={[
+              'mt-5 inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 font-mono text-xs font-semibold transition-colors',
+              tier.featured
+                ? 'bg-signal text-background hover:opacity-90'
+                : 'border border-border hover:bg-muted',
+            ]}
+          >
+            {tier.cta.label}
+            {tier.id !== 'enterprise' && <ArrowRight class="size-3.5" aria-hidden="true" />}
+          </a>
+
+          <ul class="mt-6 flex flex-col gap-2.5 text-sm">
+            {tier.features.map(f => (
+              f.startsWith('Everything in')
+                ? <li class="font-medium text-foreground">{f}</li>
+                : (
+                    <li class="flex gap-2.5 text-muted-foreground">
+                      <Check class="mt-0.5 size-4 shrink-0 text-signal" aria-hidden="true" />
+                      <span>{f}</span>
+                    </li>
+                  )
+            ))}
+          </ul>
+        </article>
+      ))}
+    </div>
+
+    <p class="reveal mt-8 max-w-3xl font-mono text-[11px] leading-relaxed text-muted-foreground">
+      A test result is one test in one run. Cloud is in early access, prices are final, join the
+      waitlist to get in at launch.
+    </p>
+  </div>
+</section>
