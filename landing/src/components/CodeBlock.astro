@@ -1,14 +1,14 @@
 ---
-import { Check, Copy } from "@lucide/astro";
-import { Code } from "astro:components";
+import { Check, Copy } from '@lucide/astro'
+import { Code } from 'astro:components'
 
 interface Props {
-  code: string;
-  lang?: "ts" | "bash";
-  filename?: string;
-  class?: string;
+  code: string
+  lang?: 'ts' | 'bash'
+  filename?: string
+  class?: string
 }
-const { code, lang, filename, class: klass = "" }: Props = Astro.props;
+const { code, lang, filename, class: klass = '' }: Props = Astro.props;
 ---
 
 <div
@@ -26,14 +26,16 @@ const { code, lang, filename, class: klass = "" }: Props = Astro.props;
   <div class="relative">
     <div class="overflow-x-auto px-4 py-3.5 text-[13px] leading-relaxed">
       {
-        lang ? (
+        lang
+? (
           <Code
             code={code}
             lang={lang}
-            themes={{ light: "vitesse-light", dark: "vitesse-dark" }}
+            themes={{ light: 'vitesse-light', dark: 'vitesse-dark' }}
             defaultColor={false}
           />
-        ) : (
+        )
+: (
           <pre class="font-mono text-muted-foreground">
             <code>{code}</code>
           </pre>
@@ -56,20 +58,22 @@ const { code, lang, filename, class: klass = "" }: Props = Astro.props;
 </div>
 
 <script is:inline>
-  document.querySelectorAll("[data-copy-root]").forEach((root) => {
-    if (root.dataset.copyBound) return;
-    root.dataset.copyBound = "1";
-    const btn = root.querySelector("[data-copy-btn]");
-    const text =
-      root.getAttribute("data-copy") ??
-      root.querySelector("[data-copy-text]")?.textContent ??
-      "";
-    btn?.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(text);
-        btn.setAttribute("data-copied", "");
-        setTimeout(() => btn.removeAttribute("data-copied"), 1600);
-      } catch {}
-    });
-  });
+document.querySelectorAll('[data-copy-root]').forEach((root) => {
+  if (root.dataset.copyBound)
+    return
+  root.dataset.copyBound = '1'
+  const btn = root.querySelector('[data-copy-btn]')
+  const text
+    = root.getAttribute('data-copy')
+      ?? root.querySelector('[data-copy-text]')?.textContent
+      ?? ''
+  btn?.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(text)
+      btn.setAttribute('data-copied', '')
+      setTimeout(() => btn.removeAttribute('data-copied'), 1600)
+    }
+    catch {}
+  })
+})
 </script>

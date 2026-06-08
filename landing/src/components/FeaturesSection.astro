@@ -1,46 +1,46 @@
 ---
-import { History, ScanLine, TrendingUp } from "@lucide/astro";
-import projectDark from "../assets/screenshots/project-dark.png";
-import projectLight from "../assets/screenshots/project-light.png";
-import testHistoryDark from "../assets/screenshots/test-history-dark.png";
-import testHistoryLight from "../assets/screenshots/test-history-light.png";
-import testsDark from "../assets/screenshots/tests-dark.png";
-import testsLight from "../assets/screenshots/tests-light.png";
-import Screenshot from "./Screenshot.astro";
+import { History, ScanLine, TrendingUp } from '@lucide/astro'
+import projectDark from '../assets/screenshots/project-dark.png'
+import projectLight from '../assets/screenshots/project-light.png'
+import testHistoryDark from '../assets/screenshots/test-history-dark.png'
+import testHistoryLight from '../assets/screenshots/test-history-light.png'
+import testsDark from '../assets/screenshots/tests-dark.png'
+import testsLight from '../assets/screenshots/tests-light.png'
+import Screenshot from './Screenshot.astro'
 
 const features = [
   {
-    num: "01",
+    num: '01',
     icon: TrendingUp,
-    eyebrow: "Trends over time",
-    title: "Every run, one strip at a time.",
-    body: "Push from CI and kinora keeps the history. Pass rate, run count, and duration per project, with a sparkline trend and one colored strip per run, so a slow drift is obvious long before it breaks the build.",
+    eyebrow: 'Trends over time',
+    title: 'Every run, one strip at a time.',
+    body: 'Push from CI and kinora keeps the history. Pass rate, run count, and duration per project, with a sparkline trend and one colored strip per run, so a slow drift is obvious long before it breaks the build.',
     light: projectLight,
     dark: projectDark,
-    label: "kinora.dev/project/web-app",
-    alt: "Per-project page with pass rate, trend sparkline and per-run history strips",
+    label: 'kinora.dev/project/web-app',
+    alt: 'Per-project page with pass rate, trend sparkline and per-run history strips',
   },
   {
-    num: "02",
+    num: '02',
     icon: ScanLine,
-    eyebrow: "Flakiness",
-    title: "Catch flaky tests before they catch you.",
-    body: "Every test gets a flaky rate and a fail rate computed across its run history. Flip on Unstable only to see what is quietly costing you retries, and spot the ones newly broken or newly flaky since the last run.",
+    eyebrow: 'Flakiness',
+    title: 'Catch flaky tests before they catch you.',
+    body: 'Every test gets a flaky rate and a fail rate computed across its run history. Flip on Unstable only to see what is quietly costing you retries, and spot the ones newly broken or newly flaky since the last run.',
     light: testsLight,
     dark: testsDark,
-    label: "kinora.dev/project/web-app/tests",
-    alt: "Tests page listing per-test flaky rate and fail rate across runs with an unstable-only filter",
+    label: 'kinora.dev/project/web-app/tests',
+    alt: 'Tests page listing per-test flaky rate and fail rate across runs with an unstable-only filter',
   },
   {
-    num: "03",
+    num: '03',
     icon: History,
-    eyebrow: "Per-test history",
-    title: "Follow a single test across runs.",
-    body: "Each test keeps a stable identity regardless of how it was uploaded, so you can track one test run-to-run: when it started flaking, when it was fixed, and how long it has been green.",
+    eyebrow: 'Per-test history',
+    title: 'Follow a single test across runs.',
+    body: 'Each test keeps a stable identity regardless of how it was uploaded, so you can track one test run-to-run: when it started flaking, when it was fixed, and how long it has been green.',
     light: testHistoryLight,
     dark: testHistoryDark,
-    label: "kinora.dev/test/reset-password",
-    alt: "Per-test history with a status timeline, pass and flaky rates, and a list of failures and flakes",
+    label: 'kinora.dev/test/reset-password',
+    alt: 'Per-test history with a status timeline, pass and flaky rates, and a list of failures and flakes',
   },
 ];
 ---
@@ -63,10 +63,10 @@ const features = [
     <div class="flex flex-col gap-20 sm:gap-28">
       {
         features.map((f, i) => {
-          const Icon = f.icon;
+          const Icon = f.icon
           return (
             <div class="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
-              <div class={`reveal ${i % 2 === 1 ? "lg:order-2" : ""}`}>
+              <div class={`reveal ${i % 2 === 1 ? 'lg:order-2' : ''}`}>
                 <div class="flex items-center gap-3">
                   <span class="grid size-9 place-items-center rounded-md border border-signal/30 bg-signal/10 text-signal">
                     <Icon class="size-4.5" aria-hidden="true" />
@@ -83,7 +83,7 @@ const features = [
                 </p>
               </div>
               <div
-                class={`reveal ${i % 2 === 1 ? "lg:order-1" : ""}`}
+                class={`reveal ${i % 2 === 1 ? 'lg:order-1' : ''}`}
                 style="--reveal-delay: 120ms"
               >
                 <Screenshot
@@ -94,7 +94,7 @@ const features = [
                 />
               </div>
             </div>
-          );
+          )
         })
       }
     </div>

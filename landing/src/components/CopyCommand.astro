@@ -1,12 +1,12 @@
 ---
-import { Check, Copy } from "@lucide/astro";
+import { Check, Copy } from '@lucide/astro'
 
 interface Props {
-  command: string;
-  prompt?: string;
-  class?: string;
+  command: string
+  prompt?: string
+  class?: string
 }
-const { command, prompt = "$", class: klass = "" }: Props = Astro.props;
+const { command, prompt = '$', class: klass = '' }: Props = Astro.props;
 ---
 
 <div
@@ -30,20 +30,22 @@ const { command, prompt = "$", class: klass = "" }: Props = Astro.props;
 </div>
 
 <script is:inline>
-  document.querySelectorAll("[data-copy-root]").forEach((root) => {
-    if (root.dataset.copyBound) return;
-    root.dataset.copyBound = "1";
-    const btn = root.querySelector("[data-copy-btn]");
-    const text =
-      root.getAttribute("data-copy") ??
-      root.querySelector("[data-copy-text]")?.textContent ??
-      "";
-    btn?.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(text);
-        btn.setAttribute("data-copied", "");
-        setTimeout(() => btn.removeAttribute("data-copied"), 1600);
-      } catch {}
-    });
-  });
+document.querySelectorAll('[data-copy-root]').forEach((root) => {
+  if (root.dataset.copyBound)
+    return
+  root.dataset.copyBound = '1'
+  const btn = root.querySelector('[data-copy-btn]')
+  const text
+    = root.getAttribute('data-copy')
+      ?? root.querySelector('[data-copy-text]')?.textContent
+      ?? ''
+  btn?.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(text)
+      btn.setAttribute('data-copied', '')
+      setTimeout(() => btn.removeAttribute('data-copied'), 1600)
+    }
+    catch {}
+  })
+})
 </script>

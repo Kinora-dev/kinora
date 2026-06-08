@@ -1,7 +1,7 @@
 ---
-import { SITE } from "../lib/site";
-import GithubIcon from "./GithubIcon.astro";
-import Wordmark from "./Wordmark.astro";
+import { SITE } from '../lib/site'
+import GithubIcon from './GithubIcon.astro'
+import Wordmark from './Wordmark.astro'
 
 const year = new Date().getFullYear();
 ---
@@ -23,28 +23,28 @@ const year = new Date().getFullYear();
         <div class="flex flex-col gap-3">
           <span
             class="text-[11px] uppercase tracking-wider text-muted-foreground"
-            >Product</span
+          >Product</span
           >
           <a
             href="#features"
             class="text-muted-foreground transition-colors hover:text-foreground"
-            >Features</a
+          >Features</a
           >
           <a
             href="#trace"
             class="text-muted-foreground transition-colors hover:text-foreground"
-            >Trace viewer</a
+          >Trace viewer</a
           >
           <a
             href="#setup"
             class="text-muted-foreground transition-colors hover:text-foreground"
-            >Setup</a
+          >Setup</a
           >
         </div>
         <div class="flex flex-col gap-3">
           <span
             class="text-[11px] uppercase tracking-wider text-muted-foreground"
-            >Project</span
+          >Project</span
           >
           <a
             href={SITE.repo}
@@ -60,7 +60,7 @@ const year = new Date().getFullYear();
             target="_blank"
             rel="noopener noreferrer"
             class="text-muted-foreground transition-colors hover:text-foreground"
-            >License</a
+          >License</a
           >
         </div>
       </nav>

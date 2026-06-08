@@ -6,38 +6,38 @@ import {
   Server,
   Tags,
   Upload,
-} from "@lucide/astro";
+} from '@lucide/astro'
 
 const items = [
   {
     icon: GitBranch,
-    title: "Branch & tag filters",
-    body: "Slice the overview by branch or tag to compare main against a feature branch, or smoke against nightly.",
+    title: 'Branch & tag filters',
+    body: 'Slice the overview by branch or tag to compare main against a feature branch, or smoke against nightly.',
   },
   {
     icon: Upload,
-    title: "Reporter or CLI",
-    body: "Auto-upload at the end of every run, or push an existing results.json from a separate CI job. Same data either way.",
+    title: 'Reporter or CLI',
+    body: 'Auto-upload at the end of every run, or push an existing results.json from a separate CI job. Same data either way.',
   },
   {
     icon: FingerprintPattern,
-    title: "Stable test identity",
-    body: "A test keeps the same key across runs and ingest paths, so its history never silently breaks.",
+    title: 'Stable test identity',
+    body: 'A test keeps the same key across runs and ingest paths, so its history never silently breaks.',
   },
   {
     icon: GitCompareArrows,
-    title: "Run-to-run compare",
-    body: "Diff two runs and see what is newly failing, what got fixed, and what just turned flaky.",
+    title: 'Run-to-run compare',
+    body: 'Diff two runs and see what is newly failing, what got fixed, and what just turned flaky.',
   },
   {
     icon: Tags,
-    title: "Annotations surfaced",
-    body: "skip, fixme and slow annotations show up where they matter instead of hiding in the raw report.",
+    title: 'Annotations surfaced',
+    body: 'skip, fixme and slow annotations show up where they matter instead of hiding in the raw report.',
   },
   {
     icon: Server,
-    title: "Self-hosted, open-core",
-    body: "Your results stay on your own box. AGPL server and dashboard, MIT client libraries you embed.",
+    title: 'Self-hosted, open-core',
+    body: 'Your results stay on your own box. AGPL server and dashboard, MIT client libraries you embed.',
   },
 ];
 ---
@@ -62,7 +62,7 @@ const items = [
     >
       {
         items.map((item, i) => {
-          const Icon = item.icon;
+          const Icon = item.icon
           return (
             <article
               class="reveal bg-background p-7"
@@ -78,7 +78,7 @@ const items = [
                 {item.body}
               </p>
             </article>
-          );
+          )
         })
       }
     </div>

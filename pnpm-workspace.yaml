@@ -5,6 +5,9 @@ trustPolicy: no-downgrade
 packages:
   - packages/*
 
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
 peerDependencyRules:
   allowedVersions:
     '@vee-validate/zod>zod': '4'

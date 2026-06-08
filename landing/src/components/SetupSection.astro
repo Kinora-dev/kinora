@@ -1,45 +1,45 @@
 ---
-import { SITE } from "../lib/site";
-import CodeBlock from "./CodeBlock.astro";
+import { SITE } from '../lib/site'
+import CodeBlock from './CodeBlock.astro'
 
 const configSnippet = `export default defineConfig({
   reporter: [['@kinora/reporter', { project: { slug: 'web-app' } }]],
   // enable tracing so View trace works
   use: { trace: 'on-first-retry' },
-})`;
+})`
 
 const runSnippet = `KINORA_URL=https://your-kinora-server \\
 KINORA_TOKEN=<project-token> \\
-  npx playwright test`;
+  npx playwright test`
 
 const steps: {
-  num: string;
-  title: string;
-  body: string;
-  code: string | null;
-  filename: string | null;
-  lang: "ts" | "bash" | null;
+  num: string
+  title: string
+  body: string
+  code: string | null
+  filename: string | null
+  lang: 'ts' | 'bash' | null
 }[] = [
   {
-    num: "01",
-    title: "Add the reporter",
-    body: "One line in your Playwright config. It auto-uploads at the end of every run.",
+    num: '01',
+    title: 'Add the reporter',
+    body: 'One line in your Playwright config. It auto-uploads at the end of every run.',
     code: configSnippet,
-    filename: "playwright.config.ts",
-    lang: "ts",
+    filename: 'playwright.config.ts',
+    lang: 'ts',
   },
   {
-    num: "02",
-    title: "Point it at your server",
-    body: "Pass the target and a project token by env, kept out of the config and in CI secrets.",
+    num: '02',
+    title: 'Point it at your server',
+    body: 'Pass the target and a project token by env, kept out of the config and in CI secrets.',
     code: runSnippet,
-    filename: "CI",
+    filename: 'CI',
     lang: null,
   },
   {
-    num: "03",
-    title: "Watch the dashboard",
-    body: "Pass rates, trends, flaky tests and full traces land in kinora, one strip per run.",
+    num: '03',
+    title: 'Watch the dashboard',
+    body: 'Pass rates, trends, flaky tests and full traces land in kinora, one strip per run.',
     code: null,
     filename: null,
     lang: null,
@@ -66,11 +66,11 @@ const steps: {
         >
           The reporter is the quick path. Prefer to upload an existing <code
             class="rounded bg-muted px-1.5 py-0.5 font-mono text-[13px]"
-            >results.json</code
+                                                                       >results.json</code
           >
           from a separate job? The CLI does the same, and both share <code
             class="rounded bg-muted px-1.5 py-0.5 font-mono text-[13px]"
-            >@kinora/core</code
+                                                                     >@kinora/core</code
           >
           so a test keeps a stable identity across runs and ingest methods.
         </p>

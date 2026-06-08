@@ -1,7 +1,7 @@
 ---
-import { NAV, SITE } from "../lib/site";
-import GithubIcon from "./GithubIcon.astro";
-import Wordmark from "./Wordmark.astro";
+import { NAV, SITE } from '../lib/site'
+import GithubIcon from './GithubIcon.astro'
+import Wordmark from './Wordmark.astro';
 ---
 
 <header
@@ -14,7 +14,7 @@ import Wordmark from "./Wordmark.astro";
 
     <nav class="ml-6 hidden items-center gap-1 md:flex">
       {
-        NAV.map((item) => (
+        NAV.map(item => (
           <a
             href={item.href}
             class="rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
