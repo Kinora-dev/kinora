@@ -37,9 +37,7 @@ const { code, lang, filename, class: klass = '', event }: Props = Astro.props;
           />
         )
 : (
-          <pre class="font-mono text-muted-foreground">
-            <code>{code}</code>
-          </pre>
+          <pre class="font-mono text-muted-foreground"><code>{code}</code></pre>
         )
       }
     </div>
