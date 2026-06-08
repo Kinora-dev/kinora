@@ -32,7 +32,7 @@ const { command, prompt = '$', class: klass = '' }: Props = Astro.props
       return
     root.dataset.copyBound = '1'
     const btn = root.querySelector('[data-copy-btn]')
-    const text = root.querySelector('[data-copy-text]')?.textContent ?? ''
+    const text = root.getAttribute('data-copy') ?? root.querySelector('[data-copy-text]')?.textContent ?? ''
     btn?.addEventListener('click', async () => {
       try {
         await navigator.clipboard.writeText(text)

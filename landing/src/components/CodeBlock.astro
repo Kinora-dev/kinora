@@ -1,22 +1,28 @@
 ---
 import { Check, Copy } from '@lucide/astro'
+import { Code } from 'astro:components'
 
 interface Props {
   code: string
+  lang?: 'ts' | 'bash'
   filename?: string
   class?: string
 }
-const { code, filename, class: klass = '' }: Props = Astro.props
+const { code, lang, filename, class: klass = '' }: Props = Astro.props
 ---
 
-<div class={`overflow-hidden rounded-lg border border-border bg-card/60 ${klass}`} data-copy-root>
+<div class={`overflow-hidden rounded-lg border border-border bg-card/60 ${klass}`} data-copy-root data-copy={code}>
   {filename && (
     <div class="border-b border-border/80 px-4 py-2 font-mono text-[11px] text-muted-foreground">
       {filename}
     </div>
   )}
   <div class="relative">
-    <pre class="overflow-x-auto px-4 py-3.5 font-mono text-[13px] leading-relaxed text-foreground"><code data-copy-text>{code}</code></pre>
+    <div class="overflow-x-auto px-4 py-3.5 text-[13px] leading-relaxed">
+      {lang
+        ? <Code code={code} lang={lang} themes={{ light: 'vitesse-light', dark: 'vitesse-dark' }} defaultColor={false} />
+        : <pre class="font-mono text-muted-foreground"><code>{code}</code></pre>}
+    </div>
     <button
       type="button"
       data-copy-btn
@@ -35,7 +41,7 @@ const { code, filename, class: klass = '' }: Props = Astro.props
       return
     root.dataset.copyBound = '1'
     const btn = root.querySelector('[data-copy-btn]')
-    const text = root.querySelector('[data-copy-text]')?.textContent ?? ''
+    const text = root.getAttribute('data-copy') ?? root.querySelector('[data-copy-text]')?.textContent ?? ''
     btn?.addEventListener('click', async () => {
       try {
         await navigator.clipboard.writeText(text)

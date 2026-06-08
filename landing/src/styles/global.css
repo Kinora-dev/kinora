@@ -92,6 +92,25 @@ kbd {
   background: color-mix(in oklch, var(--signal) 30%, transparent);
 }
 
+/* Shiki dual-theme (build-time highlight): transparent bg, follow system scheme. */
+.astro-code {
+  background: transparent !important;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: inherit;
+  line-height: inherit;
+}
+.astro-code,
+.astro-code span {
+  color: var(--shiki-light);
+}
+@media (prefers-color-scheme: dark) {
+  .astro-code,
+  .astro-code span {
+    color: var(--shiki-dark);
+  }
+}
+
 /* Faint control-room grid behind everything. */
 .app-grid {
   background-image:

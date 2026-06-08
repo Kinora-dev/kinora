@@ -1,56 +1,77 @@
 ---
-import { SITE } from '../lib/site'
-import CodeBlock from './CodeBlock.astro'
+import { SITE } from "../lib/site";
+import CodeBlock from "./CodeBlock.astro";
 
-const configSnippet = `// playwright.config.ts
-export default defineConfig({
+const configSnippet = `export default defineConfig({
   reporter: [['@kinora/reporter', { project: { slug: 'web-app' } }]],
   // enable tracing so View trace works
   use: { trace: 'on-first-retry' },
-})`
+})`;
 
 const runSnippet = `KINORA_URL=https://your-kinora-server \\
 KINORA_TOKEN=<project-token> \\
-  npx playwright test`
+  npx playwright test`;
 
-const steps = [
+const steps: {
+  num: string;
+  title: string;
+  body: string;
+  code: string | null;
+  filename: string | null;
+  lang: "ts" | "bash" | null;
+}[] = [
   {
-    num: '01',
-    title: 'Add the reporter',
-    body: 'One line in your Playwright config. It auto-uploads at the end of every run.',
+    num: "01",
+    title: "Add the reporter",
+    body: "One line in your Playwright config. It auto-uploads at the end of every run.",
     code: configSnippet,
-    filename: 'playwright.config.ts',
+    filename: "playwright.config.ts",
+    lang: "ts",
   },
   {
-    num: '02',
-    title: 'Point it at your server',
-    body: 'Pass the target and a project token by env, kept out of the config and in CI secrets.',
+    num: "02",
+    title: "Point it at your server",
+    body: "Pass the target and a project token by env, kept out of the config and in CI secrets.",
     code: runSnippet,
-    filename: 'ci',
+    filename: "CI",
+    lang: null,
   },
   {
-    num: '03',
-    title: 'Watch the dashboard',
-    body: 'Pass rates, trends, flaky tests and full traces land in kinora, one strip per run.',
+    num: "03",
+    title: "Watch the dashboard",
+    body: "Pass rates, trends, flaky tests and full traces land in kinora, one strip per run.",
     code: null,
     filename: null,
+    lang: null,
   },
-]
+];
 ---
 
 <section id="setup" class="border-b border-border">
   <div class="mx-auto max-w-7xl px-5 py-20 sm:px-8 sm:py-28">
     <div class="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
       <header class="reveal lg:sticky lg:top-24 lg:self-start">
-        <p class="font-mono text-xs font-medium uppercase tracking-wider text-signal">
+        <p
+          class="font-mono text-xs font-medium uppercase tracking-wider text-signal"
+        >
           [ Setup ]
         </p>
-        <h2 class="mt-4 text-balance text-3xl font-semibold tracking-tight sm:text-5xl">
+        <h2
+          class="mt-4 text-balance text-3xl font-semibold tracking-tight sm:text-5xl"
+        >
           Two ways in. Both take a minute.
         </h2>
-        <p class="mt-5 text-pretty text-base leading-relaxed text-muted-foreground">
-          The reporter is the quick path. Prefer to upload an existing <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-[13px]">results.json</code>
-          from a separate job? The CLI does the same, and both share <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-[13px]">@kinora/core</code>
+        <p
+          class="mt-5 text-pretty text-base leading-relaxed text-muted-foreground"
+        >
+          The reporter is the quick path. Prefer to upload an existing <code
+            class="rounded bg-muted px-1.5 py-0.5 font-mono text-[13px]"
+            >results.json</code
+          >
+          from a separate job? The CLI does the same, and both share <code
+            class="rounded bg-muted px-1.5 py-0.5 font-mono text-[13px]"
+            >@kinora/core</code
+          >
           so a test keeps a stable identity across runs and ingest methods.
         </p>
         <a
@@ -64,18 +85,29 @@ const steps = [
       </header>
 
       <ol class="flex flex-col gap-8">
-        {steps.map((s, i) => (
-          <li class="reveal flex gap-5" style={`--reveal-delay: ${i * 80}ms`}>
-            <span class="flex size-9 shrink-0 items-center justify-center rounded-md border border-signal/30 bg-signal/10 font-mono text-xs font-semibold text-signal">
-              {s.num}
-            </span>
-            <div class="min-w-0 flex-1 pt-1">
-              <h3 class="text-lg font-semibold tracking-tight">{s.title}</h3>
-              <p class="mt-1.5 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
-              {s.code && <CodeBlock code={s.code} filename={s.filename ?? undefined} class="mt-3.5" />}
-            </div>
-          </li>
-        ))}
+        {
+          steps.map((s, i) => (
+            <li class="reveal flex gap-5" style={`--reveal-delay: ${i * 80}ms`}>
+              <span class="flex size-9 shrink-0 items-center justify-center rounded-md border border-signal/30 bg-signal/10 font-mono text-xs font-semibold text-signal">
+                {s.num}
+              </span>
+              <div class="min-w-0 flex-1 pt-1">
+                <h3 class="text-lg font-semibold tracking-tight">{s.title}</h3>
+                <p class="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                  {s.body}
+                </p>
+                {s.code && (
+                  <CodeBlock
+                    code={s.code}
+                    lang={s.lang ?? undefined}
+                    filename={s.filename ?? undefined}
+                    class="mt-3.5"
+                  />
+                )}
+              </div>
+            </li>
+          ))
+        }
       </ol>
     </div>
   </div>
