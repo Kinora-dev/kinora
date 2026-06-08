@@ -1,7 +1,7 @@
 ---
 import { Clock, CodeXml, Globe, SquareTerminal } from '@lucide/astro'
-import runDark from '../assets/screenshots/run-dark.png'
-import runLight from '../assets/screenshots/run-light.png'
+import traceDark from '../assets/screenshots/trace-viewer-dark.png'
+import traceLight from '../assets/screenshots/trace-viewer-light.png'
 import Screenshot from './Screenshot.astro'
 
 const chips = [
@@ -52,10 +52,10 @@ const chips = [
 
     <div class="reveal mt-14" style="--reveal-delay: 120ms">
       <Screenshot
-        light={runLight}
-        dark={runDark}
-        label="kinora.dev/run/2026-07-run-30"
-        alt="Run detail page with pass rate, failure filters and a failing test ready to open its trace"
+        light={traceLight}
+        dark={traceDark}
+        label="kinora.dev/trace"
+        alt="Embedded Playwright trace viewer showing the action timeline, a DOM snapshot, and the failing assertion in the source"
         class="mx-auto max-w-5xl"
       />
     </div>
