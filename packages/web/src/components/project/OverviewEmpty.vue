@@ -19,7 +19,7 @@ async function generate(): Promise<void> {
 const configSnippet = `// playwright.config.ts
 reporter: [
   ['@kinora/reporter', { project: { slug: 'web-app' } }],
-],`
+]`
 
 const runSnippet = `KINORA_URL=${env.serverUrl} KINORA_TOKEN=<token> \\
   npx playwright test`
