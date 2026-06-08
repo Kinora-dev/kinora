@@ -22,6 +22,8 @@ const {
 const canonical = new URL(pathname, site).toString()
 const imageUrl = new URL(image, site).toString()
 
+const isProd = import.meta.env.MODE === 'production'
+
 const structuredData = {
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
@@ -99,5 +101,15 @@ else {
   els.forEach(el => el.classList.add('is-visible'))
 }
 </script>
+    {
+      isProd && (
+        <script
+          is:inline
+          defer
+          src="https://analytics.jorisgallot.dev/j.js"
+          data-website-id="910fe634-7e37-486a-80d4-831bbecbf3da"
+        />
+      )
+    }
   </body>
 </html>

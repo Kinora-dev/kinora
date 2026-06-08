@@ -63,6 +63,7 @@ import Screenshot from './Screenshot.astro';
     >
       <a
         href="#setup"
+        data-umami-event="get-started-hero"
         class="inline-flex h-11 items-center gap-2 rounded-md bg-signal px-6 font-mono text-sm font-semibold text-background transition-opacity hover:opacity-90"
       >
         Get started
@@ -72,6 +73,7 @@ import Screenshot from './Screenshot.astro';
         href={SITE.repo}
         target="_blank"
         rel="noopener noreferrer"
+        data-umami-event="github-hero"
         class="inline-flex h-11 items-center gap-2 rounded-md border border-border px-6 font-mono text-sm font-semibold transition-colors hover:bg-muted bg-background"
       >
         <GithubIcon class="size-4" />
@@ -81,6 +83,7 @@ import Screenshot from './Screenshot.astro';
 
     <CopyCommand
       command="pnpm add -D @kinora/reporter"
+      event="copy-install-hero"
       class="reveal mx-auto mt-6 max-w-sm"
     />
 
