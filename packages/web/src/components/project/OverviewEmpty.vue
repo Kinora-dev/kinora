@@ -16,10 +16,11 @@ async function generate(): Promise<void> {
     tokenName.value = ''
 }
 
-const configSnippet = `// playwright.config.ts
-reporter: [
-  ['@kinora/reporter', { project: { slug: 'web-app' } }],
-]`
+const configSnippet = `export default defineConfig({
+  reporter: [['@kinora/reporter', { project: { slug: 'web-app' } }]],
+  // enable tracing so View trace works
+  use: { trace: 'on-first-retry' },
+})`
 
 const runSnippet = `KINORA_URL=${env.serverUrl} KINORA_TOKEN=<token> \\
   npx playwright test`
@@ -97,9 +98,14 @@ const runSnippet = `KINORA_URL=${env.serverUrl} KINORA_TOKEN=<token> \\
             <p class="text-sm">
               Add the kinora reporter to your Playwright config.
             </p>
-            <div class="relative mt-2">
-              <pre class="overflow-x-auto rounded-md border border-border bg-background/60 py-2.5 pr-10 pl-3 font-mono text-xs leading-relaxed text-muted-foreground">{{ configSnippet }}</pre>
-              <CopyButton :text="configSnippet" class="absolute top-1.5 right-1.5" />
+            <div class="mt-2 overflow-hidden rounded-md border border-border bg-background/60">
+              <div class="border-b border-border/80 px-3 py-1.5 font-mono text-[10px] text-muted-foreground">
+                playwright.config.ts
+              </div>
+              <div class="relative">
+                <pre class="overflow-x-auto py-2.5 pr-10 pl-3 font-mono text-xs leading-relaxed text-muted-foreground">{{ configSnippet }}</pre>
+                <CopyButton :text="configSnippet" class="absolute top-1.5 right-1.5" />
+              </div>
             </div>
           </div>
         </li>
@@ -112,9 +118,14 @@ const runSnippet = `KINORA_URL=${env.serverUrl} KINORA_TOKEN=<token> \\
             <p class="text-sm">
               Run your suite pointed at this server (paste the token above into <code class="rounded bg-background/60 px-1 py-0.5 font-mono text-xs">KINORA_TOKEN</code>).
             </p>
-            <div class="relative mt-2">
-              <pre class="overflow-x-auto rounded-md border border-border bg-background/60 py-2.5 pr-10 pl-3 font-mono text-xs leading-relaxed text-muted-foreground">{{ runSnippet }}</pre>
-              <CopyButton :text="runSnippet" class="absolute top-1.5 right-1.5" />
+            <div class="mt-2 overflow-hidden rounded-md border border-border bg-background/60">
+              <div class="border-b border-border/80 px-3 py-1.5 font-mono text-[10px] text-muted-foreground">
+                CI
+              </div>
+              <div class="relative">
+                <pre class="overflow-x-auto py-2.5 pr-10 pl-3 font-mono text-xs leading-relaxed text-muted-foreground">{{ runSnippet }}</pre>
+                <CopyButton :text="runSnippet" class="absolute top-1.5 right-1.5" />
+              </div>
             </div>
           </div>
         </li>
