@@ -35,7 +35,7 @@ const rng = mulberry32(0xC0FFEE)
 const jitter = (n: number): number => Math.floor(rng() * n)
 
 type Status = NormTest['status']
-type Profile = 'solid' | 'mostlyGreen' | 'flakyHistory' | 'newlyFlaky' | 'newlyBroken' | 'fixmeSkip'
+type Profile = 'solid' | 'mostlyGreen' | 'flakyHistory' | 'newlyFlaky' | 'newlyBroken' | 'newlyFailing' | 'fixed' | 'fixmeSkip'
 
 // Status sequence per profile across run ordinals (0 = oldest, LATEST = newest).
 // prior = ordinals 0..24, recent window = 25..29 (RECENT_WINDOW = 5 in core).
@@ -51,6 +51,11 @@ function statusAt(profile: Profile, i: number): Status {
       return i === LATEST ? 'flaky' : 'expected'
     case 'newlyBroken':
       return i >= LATEST - 1 ? 'unexpected' : 'expected'
+    // Compare(run-29 -> run-30) story: pass->fail (newly failing) and fail->pass (fixed).
+    case 'newlyFailing':
+      return i === LATEST ? 'unexpected' : 'expected'
+    case 'fixed':
+      return i === LATEST - 1 ? 'unexpected' : 'expected'
     case 'fixmeSkip':
       return 'skipped'
   }
@@ -93,9 +98,9 @@ const PROJECTS: ProjectDef[] = [
       { file: 'tests/health.spec.ts', title: 'responds 200 on /healthz', profile: 'solid', tags: ['@smoke'] },
       { file: 'tests/payments.spec.ts', title: 'charges a card', profile: 'mostlyGreen', tags: ['@critical'] },
       { file: 'tests/payments.spec.ts', title: 'refunds an order', profile: 'newlyBroken', tags: ['@critical'] },
-      { file: 'tests/webhooks.spec.ts', title: 'delivers order.paid', profile: 'flakyHistory' },
-      { file: 'tests/auth.spec.ts', title: 'rejects an expired token', profile: 'solid', tags: ['@smoke'] },
-      { file: 'tests/rate-limit.spec.ts', title: 'throttles past the quota', profile: 'solid' },
+      { file: 'tests/webhooks.spec.ts', title: 'delivers order.paid', profile: 'newlyFlaky' },
+      { file: 'tests/auth.spec.ts', title: 'rejects an expired token', profile: 'fixed', tags: ['@smoke'] },
+      { file: 'tests/rate-limit.spec.ts', title: 'throttles past the quota', profile: 'newlyFailing' },
     ],
   },
   {

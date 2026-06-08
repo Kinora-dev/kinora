@@ -1,5 +1,5 @@
 ---
-import { Clock, CodeXml, Globe, SquareTerminal } from '@lucide/astro'
+import { Clock, CodeXml, Globe, Sparkles, SquareTerminal } from '@lucide/astro'
 import traceDark from '../assets/screenshots/trace-viewer-dark.png'
 import traceLight from '../assets/screenshots/trace-viewer-light.png'
 import Screenshot from './Screenshot.astro'
@@ -9,6 +9,7 @@ const chips = [
   { icon: Globe, label: 'Network' },
   { icon: SquareTerminal, label: 'Console' },
   { icon: Clock, label: 'Timeline' },
+  { icon: Sparkles, label: 'Copy prompt' },
 ];
 ---
 
@@ -43,7 +44,10 @@ const chips = [
       Failing tests get a <span class="font-medium text-foreground">View trace</span
       > button that opens the full Playwright trace inline, DOM, timeline, network
       and console, no download, no separate tooling. The replay engine is vendored
-      straight from Playwright, so it is the viewer you already know.
+      straight from Playwright, so it is the viewer you already know. Want a second
+      opinion? <span class="font-medium text-foreground">Copy prompt</span> turns the
+      failure into an LLM-ready prompt, error and context included, to paste into your
+      assistant.
     </p>
 
     <div

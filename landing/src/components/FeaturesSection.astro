@@ -1,5 +1,7 @@
 ---
-import { History, ScanLine, TrendingUp } from '@lucide/astro'
+import { GitCompare, History, ScanLine, TrendingUp } from '@lucide/astro'
+import compareDark from '../assets/screenshots/compare-dark.png'
+import compareLight from '../assets/screenshots/compare-light.png'
 import projectDark from '../assets/screenshots/project-dark.png'
 import projectLight from '../assets/screenshots/project-light.png'
 import testHistoryDark from '../assets/screenshots/test-history-dark.png'
@@ -41,6 +43,17 @@ const features = [
     dark: testHistoryDark,
     label: 'kinora.dev/test/reset-password',
     alt: 'Per-test history with a status timeline, pass and flaky rates, and a list of failures and flakes',
+  },
+  {
+    num: '04',
+    icon: GitCompare,
+    eyebrow: 'Run-to-run diff',
+    title: 'See exactly what changed between two runs.',
+    body: 'Pick any two runs and kinora groups every difference for you: newly failing, fixed, newly flaky, and still failing. No more diffing two HTML reports by eye to find the one test that regressed since green.',
+    light: compareLight,
+    dark: compareDark,
+    label: 'kinora.dev/project/checkout-api/compare',
+    alt: 'Run comparison page grouping tests into newly failing, fixed, newly flaky and still failing, with pass-rate delta',
   },
 ];
 ---
