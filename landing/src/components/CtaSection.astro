@@ -1,0 +1,56 @@
+---
+import { ArrowRight } from '@lucide/astro'
+import { SITE } from '../lib/site'
+import GithubIcon from './GithubIcon.astro'
+---
+
+<section class="relative overflow-hidden border-b border-border">
+  <div
+    class="pointer-events-none absolute -bottom-40 left-1/2 size-[40rem] -translate-x-1/2 rounded-full opacity-[0.14] blur-3xl"
+    style="background: radial-gradient(circle, var(--signal), transparent 70%)"
+    aria-hidden="true"
+  >
+  </div>
+
+  <div class="relative mx-auto max-w-3xl px-5 py-24 text-center sm:px-8 sm:py-32">
+    <div class="reveal mx-auto flex w-fit items-center gap-2.5">
+      <span class="size-2.5 rec-dot rounded-full bg-signal" aria-hidden="true"></span>
+      <span class="font-mono text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        Awaiting first signal
+      </span>
+    </div>
+    <h2
+      class="reveal mt-5 text-balance text-4xl font-semibold tracking-tight sm:text-6xl"
+      style="--reveal-delay: 80ms"
+    >
+      Push your first run.
+    </h2>
+    <p
+      class="reveal mx-auto mt-5 max-w-xl text-pretty text-lg text-muted-foreground"
+      style="--reveal-delay: 140ms"
+    >
+      Add the reporter, point it at a kinora server, and watch the history build itself.
+    </p>
+    <div
+      class="reveal mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row"
+      style="--reveal-delay: 200ms"
+    >
+      <a
+        href="#setup"
+        class="inline-flex h-11 items-center gap-2 rounded-md bg-signal px-6 font-mono text-sm font-semibold text-background transition-opacity hover:opacity-90"
+      >
+        Get started
+        <ArrowRight class="size-4" aria-hidden="true" />
+      </a>
+      <a
+        href={SITE.repo}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex h-11 items-center gap-2 rounded-md border border-border px-6 font-mono text-sm font-semibold transition-colors hover:bg-muted"
+      >
+        <GithubIcon class="size-4" />
+        Star on GitHub
+      </a>
+    </div>
+  </div>
+</section>

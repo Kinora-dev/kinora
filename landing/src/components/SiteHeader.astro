@@ -1,0 +1,42 @@
+---
+import { NAV, SITE } from '../lib/site'
+import GithubIcon from './GithubIcon.astro'
+import Wordmark from './Wordmark.astro'
+---
+
+<header class="sticky top-0 z-40 border-b border-border/80 bg-background/80 backdrop-blur-md">
+  <div class="mx-auto flex h-14 max-w-7xl items-center gap-4 px-5 sm:px-8">
+    <a href="/" class="shrink-0" aria-label="kinora home">
+      <Wordmark size="sm" />
+    </a>
+
+    <nav class="ml-6 hidden items-center gap-1 md:flex">
+      {NAV.map(item => (
+        <a
+          href={item.href}
+          class="rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
+
+    <div class="ml-auto flex items-center gap-2">
+      <a
+        href={SITE.repo}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="grid size-9 place-items-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        aria-label="kinora on GitHub"
+      >
+        <GithubIcon class="size-4" />
+      </a>
+      <a
+        href="#setup"
+        class="hidden h-9 items-center rounded-md bg-signal px-4 font-mono text-xs font-semibold text-background transition-opacity hover:opacity-90 sm:inline-flex"
+      >
+        Get started
+      </a>
+    </div>
+  </div>
+</header>

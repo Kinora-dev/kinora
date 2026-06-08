@@ -1,0 +1,47 @@
+---
+import { Check, Copy } from '@lucide/astro'
+
+interface Props {
+  code: string
+  filename?: string
+  class?: string
+}
+const { code, filename, class: klass = '' }: Props = Astro.props
+---
+
+<div class={`overflow-hidden rounded-lg border border-border bg-card/60 ${klass}`} data-copy-root>
+  {filename && (
+    <div class="border-b border-border/80 px-4 py-2 font-mono text-[11px] text-muted-foreground">
+      {filename}
+    </div>
+  )}
+  <div class="relative">
+    <pre class="overflow-x-auto px-4 py-3.5 font-mono text-[13px] leading-relaxed text-foreground"><code data-copy-text>{code}</code></pre>
+    <button
+      type="button"
+      data-copy-btn
+      aria-label="Copy code"
+      class="absolute right-2 top-2 grid size-7 place-items-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+    >
+      <Copy class="size-3.5 [[data-copied]_&]:hidden" aria-hidden="true" />
+      <Check class="hidden size-3.5 text-pass [[data-copied]_&]:block" aria-hidden="true" />
+    </button>
+  </div>
+</div>
+
+<script is:inline>
+  document.querySelectorAll('[data-copy-root]').forEach((root) => {
+    if (root.dataset.copyBound)
+      return
+    root.dataset.copyBound = '1'
+    const btn = root.querySelector('[data-copy-btn]')
+    const text = root.querySelector('[data-copy-text]')?.textContent ?? ''
+    btn?.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(text)
+        btn.setAttribute('data-copied', '')
+        setTimeout(() => btn.removeAttribute('data-copied'), 1600)
+      } catch {}
+    })
+  })
+</script>

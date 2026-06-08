@@ -1,0 +1,38 @@
+---
+import type { ImageMetadata } from 'astro'
+import { Image } from 'astro:assets'
+
+interface Props {
+  light: ImageMetadata
+  dark: ImageMetadata
+  alt: string
+  label: string
+  loading?: 'eager' | 'lazy'
+  class?: string
+}
+
+const { light, dark, alt, label, loading = 'lazy', class: klass = '' }: Props = Astro.props
+---
+
+<figure class={`overflow-hidden rounded-xl border border-border bg-card shadow-2xl ${klass}`}>
+  <div class="flex items-center gap-2 border-b border-border/80 bg-background/40 px-4 py-2.5">
+    <span class="flex gap-1.5" aria-hidden="true">
+      <span class="size-2.5 rounded-full bg-fail/70"></span>
+      <span class="size-2.5 rounded-full bg-flaky/70"></span>
+      <span class="size-2.5 rounded-full bg-pass/70"></span>
+    </span>
+    <span class="ml-2 font-mono text-[11px] tracking-wide text-muted-foreground lowercase">{label}</span>
+  </div>
+  <Image
+    src={light}
+    alt={alt}
+    loading={loading}
+    class="block w-full dark:hidden"
+  />
+  <Image
+    src={dark}
+    alt={alt}
+    loading={loading}
+    class="hidden w-full dark:block"
+  />
+</figure>

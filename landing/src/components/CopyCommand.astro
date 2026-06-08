@@ -1,0 +1,44 @@
+---
+import { Check, Copy } from '@lucide/astro'
+
+interface Props {
+  command: string
+  prompt?: string
+  class?: string
+}
+const { command, prompt = '$', class: klass = '' }: Props = Astro.props
+---
+
+<div
+  class={`group flex items-center gap-3 rounded-md border border-border bg-card/60 py-2.5 pl-3.5 pr-2 font-mono text-sm ${klass}`}
+  data-copy-root
+>
+  <span class="select-none text-signal" aria-hidden="true">{prompt}</span>
+  <code class="flex-1 truncate text-foreground" data-copy-text>{command}</code>
+  <button
+    type="button"
+    data-copy-btn
+    aria-label="Copy command"
+    class="grid size-7 shrink-0 place-items-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+  >
+    <Copy class="size-3.5 [[data-copied]_&]:hidden" aria-hidden="true" />
+    <Check class="hidden size-3.5 text-pass [[data-copied]_&]:block" aria-hidden="true" />
+  </button>
+</div>
+
+<script is:inline>
+  document.querySelectorAll('[data-copy-root]').forEach((root) => {
+    if (root.dataset.copyBound)
+      return
+    root.dataset.copyBound = '1'
+    const btn = root.querySelector('[data-copy-btn]')
+    const text = root.querySelector('[data-copy-text]')?.textContent ?? ''
+    btn?.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(text)
+        btn.setAttribute('data-copied', '')
+        setTimeout(() => btn.removeAttribute('data-copied'), 1600)
+      } catch {}
+    })
+  })
+</script>
