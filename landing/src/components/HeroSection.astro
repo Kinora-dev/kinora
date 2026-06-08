@@ -1,11 +1,11 @@
 ---
-import { ArrowRight } from '@lucide/astro'
-import overviewDark from '../assets/screenshots/overview-dark.png'
-import overviewLight from '../assets/screenshots/overview-light.png'
-import { SITE } from '../lib/site'
-import CopyCommand from './CopyCommand.astro'
-import GithubIcon from './GithubIcon.astro'
-import Screenshot from './Screenshot.astro'
+import { ArrowRight } from "@lucide/astro";
+import overviewDark from "../assets/screenshots/overview-dark.png";
+import overviewLight from "../assets/screenshots/overview-light.png";
+import { SITE } from "../lib/site";
+import CopyCommand from "./CopyCommand.astro";
+import GithubIcon from "./GithubIcon.astro";
+import Screenshot from "./Screenshot.astro";
 ---
 
 <section class="relative overflow-hidden border-b border-border">
@@ -23,10 +23,17 @@ import Screenshot from './Screenshot.astro'
   >
   </div>
 
-  <div class="relative mx-auto max-w-7xl px-5 pt-20 pb-16 text-center sm:px-8 sm:pt-28">
-    <div class="reveal mx-auto flex w-fit items-center gap-2.5 rounded-full border border-border bg-card/50 py-1.5 pl-3 pr-4 backdrop-blur-sm">
-      <span class="size-2 rec-dot rounded-full bg-signal" aria-hidden="true"></span>
-      <span class="font-mono text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+  <div
+    class="relative mx-auto max-w-7xl px-5 pt-20 pb-16 text-center sm:px-8 sm:pt-28"
+  >
+    <div
+      class="reveal mx-auto flex w-fit items-center gap-2.5 rounded-full border border-border bg-card/50 py-1.5 pl-3 pr-4 backdrop-blur-sm"
+    >
+      <span class="size-2 rec-dot rounded-full bg-signal" aria-hidden="true"
+      ></span>
+      <span
+        class="font-mono text-[11px] font-medium uppercase tracking-wider text-muted-foreground"
+      >
         Open source &middot; self-hosted &middot; pre-release
       </span>
     </div>
@@ -43,9 +50,9 @@ import Screenshot from './Screenshot.astro'
       class="reveal mx-auto mt-6 max-w-2xl text-pretty text-lg text-muted-foreground"
       style="--reveal-delay: 160ms"
     >
-      Playwright ships a great report for a single run. kinora sits one level up: push every CI run
-      and get one place to track pass rates, spot trends, surface flaky tests, and open the full
-      trace inline.
+      Playwright ships a great report for a single run. kinora sits one level
+      up: push every CI run and get one place to track pass rates, spot trends,
+      surface flaky tests, and open the full trace inline.
     </p>
 
     <div
@@ -63,7 +70,7 @@ import Screenshot from './Screenshot.astro'
         href={SITE.repo}
         target="_blank"
         rel="noopener noreferrer"
-        class="inline-flex h-11 items-center gap-2 rounded-md border border-border px-6 font-mono text-sm font-semibold transition-colors hover:bg-muted"
+        class="inline-flex h-11 items-center gap-2 rounded-md border border-border px-6 font-mono text-sm font-semibold transition-colors hover:bg-muted bg-background"
       >
         <GithubIcon class="size-4" />
         View on GitHub
