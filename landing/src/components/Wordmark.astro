@@ -1,17 +1,20 @@
 ---
 interface Props {
-  size?: 'sm' | 'md' | 'lg'
+  size?: "sm" | "md" | "lg";
 }
-const { size = 'md' }: Props = Astro.props
+const { size = "md" }: Props = Astro.props;
 const text = {
-  sm: 'text-[15px]',
-  md: 'text-lg',
-  lg: 'text-2xl',
-}[size]
-const dot = size === 'lg' ? 'size-3' : 'size-2.5'
+  sm: "text-[15px]",
+  md: "text-lg",
+  lg: "text-2xl",
+}[size];
+const dot = size === "lg" ? "size-3" : "size-2.5";
 ---
 
 <span class="inline-flex items-center gap-2.5">
-  <span class={`${dot} rec-dot rounded-full bg-signal`} aria-hidden="true"></span>
-  <span class={`${text} font-mono font-semibold lowercase tracking-tight`}>kinora</span>
+  <span class={`${dot} rec-dot rounded-full bg-signal`} aria-hidden="true"
+  ></span>
+  <span class={`${text} font-mono font-semibold lowercase tracking-tight`}
+    >kinora</span
+  >
 </span>

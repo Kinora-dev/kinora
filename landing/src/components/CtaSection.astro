@@ -1,7 +1,7 @@
 ---
-import { ArrowRight } from '@lucide/astro'
-import { SITE } from '../lib/site'
-import GithubIcon from './GithubIcon.astro'
+import { ArrowRight } from "@lucide/astro";
+import { SITE } from "../lib/site";
+import GithubIcon from "./GithubIcon.astro";
 ---
 
 <section class="relative overflow-hidden border-b border-border">
@@ -12,10 +12,15 @@ import GithubIcon from './GithubIcon.astro'
   >
   </div>
 
-  <div class="relative mx-auto max-w-3xl px-5 py-24 text-center sm:px-8 sm:py-32">
+  <div
+    class="relative mx-auto max-w-3xl px-5 py-24 text-center sm:px-8 sm:py-32"
+  >
     <div class="reveal mx-auto flex w-fit items-center gap-2.5">
-      <span class="size-2.5 rec-dot rounded-full bg-signal" aria-hidden="true"></span>
-      <span class="font-mono text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+      <span class="size-2.5 rec-dot rounded-full bg-signal" aria-hidden="true"
+      ></span>
+      <span
+        class="font-mono text-[11px] font-medium uppercase tracking-wider text-muted-foreground"
+      >
         Awaiting first signal
       </span>
     </div>
@@ -29,7 +34,8 @@ import GithubIcon from './GithubIcon.astro'
       class="reveal mx-auto mt-5 max-w-xl text-pretty text-lg text-muted-foreground"
       style="--reveal-delay: 140ms"
     >
-      Add the reporter, point it at a kinora server, and watch the history build itself.
+      Add the reporter, point it at a kinora server, and watch the history build
+      itself.
     </p>
     <div
       class="reveal mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row"

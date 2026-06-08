@@ -1,24 +1,28 @@
 ---
-import { NAV, SITE } from '../lib/site'
-import GithubIcon from './GithubIcon.astro'
-import Wordmark from './Wordmark.astro'
+import { NAV, SITE } from "../lib/site";
+import GithubIcon from "./GithubIcon.astro";
+import Wordmark from "./Wordmark.astro";
 ---
 
-<header class="sticky top-0 z-40 border-b border-border/80 bg-background/80 backdrop-blur-md">
+<header
+  class="sticky top-0 z-40 border-b border-border/80 bg-background/80 backdrop-blur-md"
+>
   <div class="mx-auto flex h-14 max-w-7xl items-center gap-4 px-5 sm:px-8">
     <a href="/" class="shrink-0" aria-label="kinora home">
       <Wordmark size="sm" />
     </a>
 
     <nav class="ml-6 hidden items-center gap-1 md:flex">
-      {NAV.map(item => (
-        <a
-          href={item.href}
-          class="rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        >
-          {item.label}
-        </a>
-      ))}
+      {
+        NAV.map((item) => (
+          <a
+            href={item.href}
+            class="rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            {item.label}
+          </a>
+        ))
+      }
     </nav>
 
     <div class="ml-auto flex items-center gap-2">
