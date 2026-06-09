@@ -2,6 +2,7 @@ import { checkout, polar, portal, usage, webhooks } from '@polar-sh/better-auth'
 import { Polar } from '@polar-sh/sdk'
 import { cloud, env } from '../lib/env'
 import { logger } from '../lib/logger'
+import { getTrustedOrigins } from '../lib/utils'
 import { syncCustomerState } from './entitlements'
 
 export const polarClient = cloud
@@ -24,7 +25,7 @@ export function polarAuthPlugin() {
           { productId: cloud.teamProductId, slug: 'team' },
           { productId: cloud.proProductId, slug: 'pro' },
         ],
-        successUrl: '/billing/success?checkout_id={CHECKOUT_ID}',
+        successUrl: `${getTrustedOrigins()[0] ?? ''}/settings?checkout=success`,
         authenticatedUsersOnly: true,
       }),
       portal(),
