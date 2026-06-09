@@ -1,10 +1,6 @@
 import type { Env } from '../src/lib/env'
 import process from 'node:process'
 
-// Self-contained env for integration tests: no .env needed. Typed against Env so
-// every required key is set. Only the Postgres connection has to be real (dev
-// compose defaults; override via process.env in CI). POSTGRES_DB is pinned to
-// kinora_test so the dev DB is never reachable; the rest are throwaway values.
 export const TEST_ENV: Record<keyof Env, string> = {
   NODE_ENV: 'development',
   PORT: '3000',
@@ -20,4 +16,9 @@ export const TEST_ENV: Record<keyof Env, string> = {
   GOOGLE_CLIENT_SECRET: 'test',
   GITHUB_CLIENT_ID: 'test',
   GITHUB_CLIENT_SECRET: 'test',
+  KINORA_CLOUD: 'false',
+  POLAR_ACCESS_TOKEN: '',
+  POLAR_WEBHOOK_SECRET: '',
+  POLAR_PRODUCT_TEAM_ID: '',
+  POLAR_PRODUCT_PRO_ID: '',
 }

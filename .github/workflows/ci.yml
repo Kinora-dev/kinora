@@ -113,6 +113,7 @@ jobs:
       GOOGLE_CLIENT_SECRET: ''
       GITHUB_CLIENT_ID: ''
       GITHUB_CLIENT_SECRET: ''
+      KINORA_CLOUD: 'false'
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
