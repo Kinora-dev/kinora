@@ -9,7 +9,7 @@ import {
 } from '@kinora/core'
 import { Separator } from '@kinora/ui/separator'
 import { Skeleton } from '@kinora/ui/skeleton'
-import { ArrowLeft, ArrowRight, Settings } from 'lucide-vue-next'
+import { ArrowLeft, History, Settings } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import RunHistoryTable from '@/components/project/RunHistoryTable.vue'
@@ -56,23 +56,25 @@ const toneText = computed(() =>
     <template v-else>
       <!-- Header -->
       <div class="flex flex-col gap-6">
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <h1 class="text-2xl font-semibold tracking-tight">
-              {{ project.name }}
-            </h1>
-            <p v-if="project.description" class="mt-1 text-sm text-muted-foreground">
-              {{ project.description }}
-            </p>
-          </div>
-          <div class="flex flex-col items-end gap-2">
+        <div class="flex flex-col gap-3">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <h1 class="text-2xl font-semibold tracking-tight">
+                {{ project.name }}
+              </h1>
+              <p v-if="project.description" class="mt-1 text-sm text-muted-foreground">
+                {{ project.description }}
+              </p>
+            </div>
             <HealthBadge :health="health" />
+          </div>
+          <div class="flex items-center justify-between gap-4">
             <RouterLink
               :to="{ name: 'tests', params: { projectId: project.id } }"
               class="flex items-center gap-1 font-mono text-xs text-muted-foreground hover:text-foreground"
             >
+              <History class="size-3" />
               Per-test history
-              <ArrowRight class="size-3" />
             </RouterLink>
             <RouterLink
               :to="{ name: 'project-settings', params: { projectId: project.id } }"
