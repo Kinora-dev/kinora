@@ -31,17 +31,17 @@ Diff any two runs: newly failing, fixed, newly flaky, and still failing, grouped
 
 ## Packages
 
-Monorepo (pnpm workspaces). Open-core: the deployable surface is AGPL, the client libraries you embed are MIT.
+Monorepo (pnpm workspaces). Fair source: the deployable surface is FSL-1.1-MIT (source-available, converts to MIT after 2 years), the client libraries you embed are MIT.
 
-| Package                                         | Role                                                                     | License  |
-| ----------------------------------------------- | ------------------------------------------------------------------------ | -------- |
-| [`@kinora/server`](packages/server)             | Hono + tRPC API, better-auth, Drizzle/Postgres - ingest + dashboard data | AGPL-3.0 |
-| [`@kinora/web`](packages/web)                   | Vue 3 dashboard (auth, runs, history, flakiness)                         | AGPL-3.0 |
-| [`@kinora/trace-viewer`](packages/trace-viewer) | Vendored Playwright trace engine (Apache-2.0) + our Vue UI               | MIT      |
-| [`@kinora/reporter`](packages/reporter)         | Playwright reporter - auto-uploads on `onEnd`                            | MIT      |
-| [`@kinora/cli`](packages/cli)                   | Manual upload of a `results.json`                                        | MIT      |
-| [`@kinora/core`](packages/core)                 | zod contracts + normalize + ingest client (shared)                       | MIT      |
-| [`@kinora/ui`](packages/ui)                     | Shared shadcn-vue design system                                          | MIT      |
+| Package                                         | Role                                                                     | License     |
+| ----------------------------------------------- | ------------------------------------------------------------------------ | ----------- |
+| [`@kinora/server`](packages/server)             | Hono + tRPC API, better-auth, Drizzle/Postgres - ingest + dashboard data | FSL-1.1-MIT |
+| [`@kinora/web`](packages/web)                   | Vue 3 dashboard (auth, runs, history, flakiness)                         | FSL-1.1-MIT |
+| [`@kinora/trace-viewer`](packages/trace-viewer) | Vendored Playwright trace engine (Apache-2.0) + our Vue UI               | MIT         |
+| [`@kinora/reporter`](packages/reporter)         | Playwright reporter - auto-uploads on `onEnd`                            | MIT         |
+| [`@kinora/cli`](packages/cli)                   | Manual upload of a `results.json`                                        | MIT         |
+| [`@kinora/core`](packages/core)                 | zod contracts + normalize + ingest client (shared)                       | MIT         |
+| [`@kinora/ui`](packages/ui)                     | Shared shadcn-vue design system                                          | MIT         |
 
 ## Send your tests
 
@@ -119,4 +119,4 @@ A single `docker compose` bundle (web + server + Postgres + S3-compatible storag
 
 ## Licensing
 
-kinora is open-core. The deployable product (`server`, `web`) is **AGPL-3.0-or-later**; the libraries you embed in your own test suite (`reporter`, `cli`, `core`, `ui`) and the trace viewer are **MIT**. The trace engine under `packages/trace-viewer/src/core` and `src/sw` is vendored from [microsoft/playwright](https://github.com/microsoft/playwright) (Apache-2.0).
+kinora is fair source. The deployable product (`server`, `web`) is **FSL-1.1-MIT**: source-available, free to self-host, and each release converts to **MIT** on its second anniversary. The libraries you embed in your own test suite (`reporter`, `cli`, `core`, `ui`) and the trace viewer are **MIT**. The trace engine under `packages/trace-viewer/src/core` and `src/sw` is vendored from [microsoft/playwright](https://github.com/microsoft/playwright) (Apache-2.0).

@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.0.0",
   "private": true,
-  "license": "AGPL-3.0-or-later",
+  "license": "FSL-1.1-MIT",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
