@@ -6,7 +6,7 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@kinor
 import { Input } from '@kinora/ui/input'
 import { colorMode } from '@kinora/ui/theme'
 import { toTypedSchema } from '@vee-validate/zod'
-import { ArrowUpRight, Check, Copy, CreditCard, KeyRound, Monitor, Moon, Plus, Sun, Trash2 } from 'lucide-vue-next'
+import { ArrowUpRight, Building2, Check, Copy, CreditCard, KeyRound, Monitor, Moon, Plus, Sun, Trash2 } from 'lucide-vue-next'
 import { useForm } from 'vee-validate'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -116,6 +116,8 @@ const TIER_LABELS: Record<string, string> = {
   enterprise: 'Enterprise',
   selfhost: 'Self-host',
 }
+
+const CONTACT_HREF = 'mailto:contact@kinora.dev?subject=kinora%20enterprise'
 
 const isPaid = computed(() => ['team', 'pro', 'enterprise'].includes(billing.value?.tier ?? ''))
 
@@ -240,6 +242,19 @@ function fmtDate(d: Date | string | null | undefined): string {
             {{ billingPending === opt.slug ? 'Redirecting…' : opt.label }}
           </Button>
         </div>
+
+        <Button
+          v-if="billing.tier !== 'enterprise'"
+          as-child
+          variant="link"
+          size="sm"
+          class="self-start font-mono text-xs text-muted-foreground -mt-2"
+        >
+          <a :href="CONTACT_HREF">
+            <Building2 class="size-3.5" />
+            Need more? Contact us about Enterprise
+          </a>
+        </Button>
       </CardContent>
     </Card>
 
