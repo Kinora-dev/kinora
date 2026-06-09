@@ -82,6 +82,16 @@ export const subscription = pgTable('subscription', {
   updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
 })
 
+// One Slack channel per project for run/regression notifications.
+export const slackIntegration = pgTable('slack_integration', {
+  projectId: text('project_id').primaryKey().references(() => project.id, { onDelete: 'cascade' }),
+  webhookUrl: text('webhook_url').notNull(),
+  policy: text('policy').$type<'always' | 'on-failure' | 'on-regression'>().notNull().default('on-failure'),
+  enabled: boolean('enabled').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
+})
+
 export const projectRelations = relations(project, ({ one, many }) => ({
   user: one(user, { fields: [project.userId], references: [user.id] }),
   runs: many(run),
