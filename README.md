@@ -11,7 +11,7 @@ Playwright ships a great HTML report for a single run. kinora sits one level up:
   <img alt="Overview" src="docs/screenshots/overview-dark.png">
 </picture>
 
-### Embedded trace viewer
+## Embedded trace viewer
 
 Failing tests get a **View trace** button that opens the full Playwright trace inline - DOM, timeline, network, console - plus a **Copy prompt** to hand the failure to an LLM.
 
@@ -20,7 +20,7 @@ Failing tests get a **View trace** button that opens the full Playwright trace i
   <img alt="Embedded Playwright trace viewer" src="docs/screenshots/trace-viewer-dark.png">
 </picture>
 
-### Run-to-run compare
+## Run-to-run compare
 
 Diff any two runs: newly failing, fixed, newly flaky, and still failing, grouped for you.
 
