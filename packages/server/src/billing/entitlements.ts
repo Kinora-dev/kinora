@@ -1,9 +1,9 @@
 import { eq } from 'drizzle-orm'
 import { db } from '../db'
 import { subscription } from '../db/schemas/index'
-import { env } from '../lib/env'
+import { cloud, env } from '../lib/env'
 
-export type Tier = 'free' | 'team' | 'pro' | 'enterprise'
+export type Tier = 'free' | 'team' | 'pro' | 'enterprise' | 'selfhost'
 
 export interface Entitlements {
   tier: Tier
@@ -18,9 +18,12 @@ const LIMITS: Record<Tier, Omit<Entitlements, 'tier'>> = {
   team: { maxProjects: Number.POSITIVE_INFINITY, retentionDays: 90, includedResults: 10_000, alerts: true },
   pro: { maxProjects: Number.POSITIVE_INFINITY, retentionDays: 365, includedResults: 50_000, alerts: true },
   enterprise: { maxProjects: Number.POSITIVE_INFINITY, retentionDays: Number.POSITIVE_INFINITY, includedResults: Number.POSITIVE_INFINITY, alerts: true },
+  selfhost: { maxProjects: Number.POSITIVE_INFINITY, retentionDays: Number.POSITIVE_INFINITY, includedResults: Number.POSITIVE_INFINITY, alerts: true },
 }
 
-function tierForProduct(productId: string | undefined): Tier {
+function tierForProduct(productId: string | undefined): 'free' | 'team' | 'pro' {
+  if (!productId)
+    return 'free'
   if (productId === env.POLAR_PRODUCT_TEAM_ID)
     return 'team'
   if (productId === env.POLAR_PRODUCT_PRO_ID)
@@ -62,6 +65,9 @@ export async function syncCustomerState(state: CustomerStateInput): Promise<void
 }
 
 export async function getEntitlements(userId: string): Promise<Entitlements> {
+  if (!cloud)
+    return { tier: 'selfhost', ...LIMITS.selfhost }
+
   const row = await db.query.subscription.findFirst({
     where: eq(subscription.userId, userId),
     columns: { tier: true },

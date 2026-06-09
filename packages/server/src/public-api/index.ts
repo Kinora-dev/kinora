@@ -104,7 +104,7 @@ publicApi.post('/runs', zValidator('json', ingestRunSchema), async (c) => {
     return { projectId, runId, tests: input.tests.length }
   })
 
-  if (result.tests > 0) {
+  if (polarClient && result.tests > 0) {
     try {
       await polarClient.events.ingest({
         events: [{
