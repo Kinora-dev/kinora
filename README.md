@@ -31,7 +31,7 @@ Diff any two runs: newly failing, fixed, newly flaky, and still failing, grouped
 
 ## Packages
 
-Monorepo (pnpm workspaces). Fair source: the deployable surface is FSL-1.1-MIT (source-available, converts to MIT after 2 years), the client libraries you embed are MIT.
+Monorepo, fair source: the deployable surface is FSL-1.1-MIT, the client libraries you embed are MIT.
 
 | Package                                         | Role                                                                     | License     |
 | ----------------------------------------------- | ------------------------------------------------------------------------ | ----------- |
@@ -52,10 +52,10 @@ Auto-uploads at the end of every `playwright test` run. One line in your config:
 ```ts
 // playwright.config.ts
 export default defineConfig({
-  reporter: [['@kinora/reporter', { project: { slug: 'web-app' } }]],
+  reporter: [["@kinora/reporter", { project: { slug: "web-app" } }]],
   // enable tracing so View trace works
-  use: { trace: 'on-first-retry' },
-})
+  use: { trace: "on-first-retry" },
+});
 ```
 
 Set the target + token via env (keep the token out of the config / in CI secrets):
