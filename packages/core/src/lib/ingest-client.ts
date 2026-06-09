@@ -48,6 +48,30 @@ export interface UploadArtifactInput {
   body: Uint8Array | Blob
 }
 
+export class IngestError extends Error {
+  readonly status: number
+  constructor(status: number, message: string) {
+    super(message)
+    this.name = 'IngestError'
+    this.status = status
+  }
+}
+
+// Prefer the server's JSON `error` field (human-readable, e.g. plan-limit messages).
+async function toIngestError(res: Response, fallback: string): Promise<IngestError> {
+  const text = await res.text()
+  let message = text || fallback
+  try {
+    const body = JSON.parse(text) as { error?: unknown }
+    if (typeof body.error === 'string')
+      message = body.error
+  }
+  catch {
+    // non-JSON body: keep the raw text / fallback
+  }
+  return new IngestError(res.status, message)
+}
+
 export function createIngestClient(opts: IngestClientOptions) {
   const base = opts.baseUrl.replace(/\/+$/, '')
   const doFetch = opts.fetch ?? globalThis.fetch
@@ -61,7 +85,7 @@ export function createIngestClient(opts: IngestClientOptions) {
         body: JSON.stringify(input),
       })
       if (!res.ok)
-        throw new Error(`kinora ingest failed: ${res.status} ${await res.text()}`)
+        throw await toIngestError(res, `kinora ingest failed (${res.status})`)
       return ingestRunResultSchema.parse(await res.json())
     },
 
@@ -79,7 +103,7 @@ export function createIngestClient(opts: IngestClientOptions) {
         body: form,
       })
       if (!res.ok)
-        throw new Error(`kinora artifact upload failed: ${res.status} ${await res.text()}`)
+        throw await toIngestError(res, `kinora artifact upload failed (${res.status})`)
       return uploadArtifactResultSchema.parse(await res.json())
     },
   }
