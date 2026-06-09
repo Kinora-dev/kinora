@@ -265,7 +265,7 @@ function fmtDate(d: Date | string | null | undefined): string {
     <Card>
       <CardHeader>
         <CardTitle>Appearance</CardTitle>
-        <CardDescription>Theme is stored locally and shared with the trace viewer.</CardDescription>
+        <CardDescription>Light, dark, or match your system.</CardDescription>
       </CardHeader>
       <CardContent>
         <div class="flex gap-2">
