@@ -1,13 +1,48 @@
 <script setup lang="ts">
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@kinora/ui/alert-dialog'
+import { Button } from '@kinora/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kinora/ui/card'
+import { Input } from '@kinora/ui/input'
 import { ArrowLeft } from 'lucide-vue-next'
-import { computed } from 'vue'
-import { RouterLink } from 'vue-router'
+import { computed, ref, watch } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
 import SlackAlertsCard from '@/components/project/SlackAlertsCard.vue'
 import { useManifest } from '@/composables/queries'
+import { useProjectAdmin } from '@/composables/useProjectAdmin'
 
 const props = defineProps<{ projectId: string }>()
-const { state: manifest } = useManifest()
+
+const router = useRouter()
+const { state: manifest, execute: refreshManifest } = useManifest()
 const project = computed(() => manifest.value?.projects.find(p => p.id === props.projectId))
+
+const { savingGeneral, deleting, saveGeneral, deleteProject } = useProjectAdmin(props.projectId)
+
+const labelClass = 'font-mono text-[11px] tracking-wider text-muted-foreground uppercase'
+
+const name = ref('')
+const description = ref('')
+watch(project, (p) => {
+  if (!p)
+    return
+  name.value = p.name
+  description.value = p.description ?? ''
+}, { immediate: true })
+
+async function onSaveGeneral(): Promise<void> {
+  if (await saveGeneral({ name: name.value.trim(), description: description.value.trim() }))
+    await refreshManifest()
+}
+
+const confirmName = ref('')
+const canDelete = computed(() => !!project.value && confirmName.value.trim() === project.value.name)
+
+async function onDelete(): Promise<void> {
+  if (!canDelete.value)
+    return
+  if (await deleteProject())
+    await router.push({ name: 'overview' })
+}
 </script>
 
 <template>
@@ -24,10 +59,76 @@ const project = computed(() => manifest.value?.projects.find(p => p.id === props
         Project settings
       </h1>
       <p class="mt-1 text-sm text-muted-foreground">
-        Notifications for {{ project?.name ?? 'this project' }}.
+        Name, notifications, and danger zone.
       </p>
     </div>
 
+    <!-- General -->
+    <Card>
+      <CardHeader>
+        <CardTitle>General</CardTitle>
+        <CardDescription>Display name and description. The project slug used by CI never changes.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form class="flex flex-col gap-4" @submit.prevent="onSaveGeneral">
+          <div class="grid gap-2">
+            <label :class="labelClass" for="project-name">Name</label>
+            <Input id="project-name" v-model="name" />
+          </div>
+          <div class="grid gap-2">
+            <label :class="labelClass" for="project-description">Description</label>
+            <Input id="project-description" v-model="description" placeholder="What this suite covers" />
+          </div>
+          <Button type="submit" size="sm" class="w-fit font-mono text-xs" :disabled="savingGeneral || !name.trim()">
+            {{ savingGeneral ? 'Saving…' : 'Save' }}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+
     <SlackAlertsCard :project-id="projectId" />
+
+    <!-- Danger zone -->
+    <Card class="border-fail/30">
+      <CardHeader>
+        <CardTitle class="text-fail">
+          Danger zone
+        </CardTitle>
+        <CardDescription>Deleting a project removes all its runs, tests, and traces. This cannot be undone.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <AlertDialog>
+          <AlertDialogTrigger as-child>
+            <Button type="button" variant="destructive" size="sm" class="w-fit font-mono text-xs">
+              Delete project
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete {{ project?.name }}?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This removes all runs, tests, and traces for this project. This cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div class="grid gap-2">
+              <label :class="labelClass" for="confirm-name">
+                Type <span class="text-foreground normal-case">{{ project?.name }}</span> to confirm
+              </label>
+              <Input id="confirm-name" v-model="confirmName" :placeholder="project?.name ?? ''" />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                class="bg-destructive text-white hover:bg-destructive/90"
+                :disabled="!canDelete || deleting"
+                @click="onDelete"
+              >
+                {{ deleting ? 'Deleting…' : 'Delete' }}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </CardContent>
+    </Card>
   </div>
 </template>

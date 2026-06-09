@@ -78,7 +78,7 @@ export const dashboardRouter = router({
     const entries: ProjectEntry[] = []
     for (const p of projects) {
       const runs = await db.query.run.findMany({ where: eq(run.projectId, p.id), orderBy: desc(run.startedAt) })
-      entries.push({ id: p.slug, name: p.name, runs: runs.map(r => runSummary(p.slug, r)) })
+      entries.push({ id: p.slug, name: p.name, description: p.description ?? undefined, runs: runs.map(r => runSummary(p.slug, r)) })
     }
     return { schemaVersion: SCHEMA_VERSION, generatedAt: new Date().toISOString(), projects: entries }
   }),
