@@ -38,6 +38,8 @@ export interface IngestClientOptions {
   baseUrl: string
   token: string
   fetch?: typeof globalThis.fetch
+  // Historical/bulk import: tells the server to skip alerts for these runs.
+  backfill?: boolean
 }
 
 export interface UploadArtifactInput {
@@ -76,10 +78,11 @@ export function createIngestClient(opts: IngestClientOptions) {
   const base = opts.baseUrl.replace(/\/+$/, '')
   const doFetch = opts.fetch ?? globalThis.fetch
   const auth = `Bearer ${opts.token}`
+  const runsUrl = `${base}/api/v1/runs${opts.backfill ? '?backfill=1' : ''}`
 
   return {
     async uploadRun(input: IngestRun): Promise<IngestRunResult> {
-      const res = await doFetch(`${base}/api/v1/runs`, {
+      const res = await doFetch(runsUrl, {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'authorization': auth },
         body: JSON.stringify(input),
