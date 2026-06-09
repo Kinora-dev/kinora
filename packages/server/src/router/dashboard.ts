@@ -11,7 +11,7 @@ import { authProcedure, router } from '../trpc/index'
 type RunRow = typeof run.$inferSelect
 type TestRow = typeof test.$inferSelect
 
-async function ownedProject(userId: string, slug: string) {
+export async function ownedProject(userId: string, slug: string) {
   const p = await db.query.project.findFirst({
     where: and(eq(project.slug, slug), eq(project.userId, userId)),
   })

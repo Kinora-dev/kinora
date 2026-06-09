@@ -4,6 +4,7 @@ import { zValidator } from '@hono/zod-validator'
 import { countsByTagFrom, ingestRunSchema } from '@kinora/core'
 import { and, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
+import { notifyRun } from '../alerts/notify'
 import { getEntitlements } from '../billing/entitlements'
 import { polarClient } from '../billing/polar'
 import { currentPeriodResults, projectCount } from '../billing/usage'
@@ -135,6 +136,21 @@ publicApi.post('/runs', zValidator('json', ingestRunSchema), async (c) => {
     catch (error) {
       logger.error({ error, userId, runId: result.runId }, 'polar usage ingest failed')
     }
+  }
+
+  try {
+    await notifyRun({
+      userId,
+      projectId: result.projectId,
+      runId: result.runId,
+      startedAt: new Date(input.run.startedAt),
+      branch: input.run.git?.branch,
+      counts: input.run.counts,
+      tests: input.tests,
+    })
+  }
+  catch (error) {
+    logger.error({ error, runId: result.runId }, 'alert notify failed')
   }
 
   return c.json(result, 201)

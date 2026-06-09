@@ -9,7 +9,7 @@ import {
 } from '@kinora/core'
 import { Separator } from '@kinora/ui/separator'
 import { Skeleton } from '@kinora/ui/skeleton'
-import { ArrowLeft, ArrowRight } from 'lucide-vue-next'
+import { ArrowLeft, ArrowRight, Settings } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import RunHistoryTable from '@/components/project/RunHistoryTable.vue'
@@ -73,6 +73,13 @@ const toneText = computed(() =>
             >
               Per-test history
               <ArrowRight class="size-3" />
+            </RouterLink>
+            <RouterLink
+              :to="{ name: 'project-settings', params: { projectId: project.id } }"
+              class="flex items-center gap-1 font-mono text-xs text-muted-foreground hover:text-foreground"
+            >
+              <Settings class="size-3" />
+              Settings
             </RouterLink>
           </div>
         </div>
