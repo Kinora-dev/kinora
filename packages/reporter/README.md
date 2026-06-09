@@ -18,13 +18,13 @@ npm i -D @kinora/reporter
 Add it to `playwright.config.ts`:
 
 ```ts
-import { defineConfig } from "@playwright/test";
+import { defineConfig } from '@playwright/test'
 
 export default defineConfig({
-  reporter: [["@kinora/reporter", { project: { slug: "web-app" } }]],
+  reporter: [['@kinora/reporter', { project: { slug: 'web-app' } }]],
   // enable tracing so failures upload a trace
-  use: { trace: "on-first-retry" },
-});
+  use: { trace: 'on-first-retry' },
+})
 ```
 
 The server URL and token come from the environment (keep the token out of the config file):
@@ -39,11 +39,11 @@ Create a project API token in the kinora dashboard (Settings → API tokens).
 
 ```ts
 [
-  "@kinora/reporter",
+  '@kinora/reporter',
   {
-    project: { slug: "web-app", name: "Web App" },
+    project: { slug: 'web-app', name: 'Web App' },
   },
-];
+]
 ```
 
 | Option    | Type                                 | Default                | Description                                |
