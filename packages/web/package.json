@@ -18,6 +18,8 @@
     "@kinora/core": "workspace:*",
     "@kinora/ui": "workspace:*",
     "@lucide/vue": "^1.17.0",
+    "@polar-sh/better-auth": "^1.8.4",
+    "@polar-sh/sdk": "^0.47.1",
     "@tanstack/vue-table": "^8.21.3",
     "@trpc/client": "^11.16.0",
     "@vee-validate/zod": "^4.15.1",

@@ -70,6 +70,18 @@ export const artifact = pgTable('artifact', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, table => [index('artifact_runId_idx').on(table.runId)])
 
+// Cached Polar billing state, synced from the customer.state_changed webhook.
+export const subscription = pgTable('subscription', {
+  userId: text('user_id').primaryKey().references(() => user.id, { onDelete: 'cascade' }),
+  polarCustomerId: text('polar_customer_id').notNull(),
+  tier: text('tier').$type<'free' | 'team' | 'pro' | 'enterprise'>().notNull().default('free'),
+  status: text('status'),
+  productId: text('product_id'),
+  currentPeriodEnd: timestamp('current_period_end'),
+  cancelAtPeriodEnd: boolean('cancel_at_period_end').notNull().default(false),
+  updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
+})
+
 export const projectRelations = relations(project, ({ one, many }) => ({
   user: one(user, { fields: [project.userId], references: [user.id] }),
   runs: many(run),

@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import process from 'node:process'
 import { parseArgs } from 'node:util'
+import { IngestError } from '@kinora/core'
 import { uploadReport } from './upload'
 
 const USAGE = `kinora - upload a Playwright json report to a kinora server
@@ -92,6 +93,9 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-  console.error(err)
+  if (err instanceof IngestError)
+    console.error(`error: ${err.message}`)
+  else
+    console.error(err)
   process.exit(1)
 })

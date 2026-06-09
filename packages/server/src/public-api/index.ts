@@ -4,15 +4,18 @@ import { zValidator } from '@hono/zod-validator'
 import { countsByTagFrom, ingestRunSchema } from '@kinora/core'
 import { and, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
+import { getEntitlements } from '../billing/entitlements'
+import { polarClient } from '../billing/polar'
+import { currentPeriodResults, projectCount } from '../billing/usage'
 import { db } from '../db'
 import { artifact, project, run, test } from '../db/schemas/index'
 import { auth } from '../lib/auth'
+import { logger } from '../lib/logger'
 import { storage } from '../lib/storage'
 
 const BEARER_PREFIX = 'Bearer '
 
 // Public ingest API (api-key authed) - the reporter / cli upload here.
-// Plain REST so any CI, curl, or language can hit it.
 export const publicApi = new Hono<{ Variables: { userId: string } }>()
 
 publicApi.use('*', async (c, next) => {
@@ -32,6 +35,35 @@ publicApi.use('*', async (c, next) => {
 publicApi.post('/runs', zValidator('json', ingestRunSchema), async (c) => {
   const userId = c.get('userId')
   const input = c.req.valid('json')
+
+  const entitlements = await getEntitlements(userId)
+  if (entitlements.tier === 'free') {
+    // Cap ingested test results: blocks ingesting more if the monthly limit is already reached, but doesn't block if the limit is exceeded after ingesting.
+    const used = await currentPeriodResults(userId)
+    if (used >= entitlements.includedResults) {
+      return c.json({
+        error: 'Free plan monthly test-result limit reached. Upgrade to keep ingesting.',
+        limit: entitlements.includedResults,
+      }, 402)
+    }
+  }
+
+  // Cap distinct projects: only blocks creating a new one beyond the plan limit.
+  if (Number.isFinite(entitlements.maxProjects)) {
+    const existing = await db.query.project.findFirst({
+      where: and(eq(project.userId, userId), eq(project.slug, input.project.slug)),
+      columns: { id: true },
+    })
+    if (!existing) {
+      const projects = await projectCount(userId)
+      if (projects >= entitlements.maxProjects) {
+        return c.json({
+          error: 'Plan project limit reached. Upgrade to add more projects.',
+          limit: entitlements.maxProjects,
+        }, 402)
+      }
+    }
+  }
 
   const result = await db.transaction(async (tx) => {
     const existing = await tx.query.project.findFirst({
@@ -89,6 +121,21 @@ publicApi.post('/runs', zValidator('json', ingestRunSchema), async (c) => {
 
     return { projectId, runId, tests: input.tests.length }
   })
+
+  if (polarClient && result.tests > 0) {
+    try {
+      await polarClient.events.ingest({
+        events: [{
+          name: 'test_results',
+          externalCustomerId: userId,
+          metadata: { results: result.tests },
+        }],
+      })
+    }
+    catch (error) {
+      logger.error({ error, userId, runId: result.runId }, 'polar usage ingest failed')
+    }
+  }
 
   return c.json(result, 201)
 })

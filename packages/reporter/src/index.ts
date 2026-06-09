@@ -2,7 +2,7 @@ import type { CiMeta, Counts, GitMeta, IngestRun, NormTest } from '@kinora/core'
 import type { FullConfig, FullResult, Reporter, Suite, TestCase } from '@playwright/test/reporter'
 import { readFile } from 'node:fs/promises'
 import process from 'node:process'
-import { createIngestClient, isTraceAttachment, makeTestKey } from '@kinora/core'
+import { createIngestClient, IngestError, isTraceAttachment, makeTestKey } from '@kinora/core'
 
 export interface KinoraReporterOptions {
   /** kinora server base URL. Defaults to env KINORA_URL. */
@@ -144,7 +144,10 @@ export default class KinoraReporter implements Reporter {
       console.log(`[kinora] uploaded ${res.tests} tests + ${traces} traces (run ${res.runId})`)
     }
     catch (err) {
-      console.error(`[kinora] upload failed:`, err instanceof Error ? err.message : err)
+      if (err instanceof IngestError && err.status === 402)
+        console.warn(`[kinora] ${err.message}`)
+      else
+        console.error(`[kinora] upload failed:`, err instanceof Error ? err.message : err)
     }
   }
 }

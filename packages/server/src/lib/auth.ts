@@ -2,6 +2,7 @@ import { apiKey } from '@better-auth/api-key'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { lastLoginMethod } from 'better-auth/plugins'
+import { polarAuthPlugin } from '../billing/polar'
 import { db } from '../db'
 import { env } from './env'
 import { getTrustedOrigins } from './utils'
@@ -24,7 +25,9 @@ export const auth = betterAuth({
   // No SMTP yet: emails stay unverified, so apply the new address directly instead of mailing a verification link.
   user: { changeEmail: { enabled: true, updateEmailWithoutVerification: true } },
   secret: env.AUTH_SECRET,
-  plugins: [apiKey(), lastLoginMethod()],
+  plugins: [apiKey(), lastLoginMethod(), polarAuthPlugin()].filter(
+    (plugin): plugin is NonNullable<typeof plugin> => plugin !== null,
+  ),
 })
 
 export interface AuthType {
