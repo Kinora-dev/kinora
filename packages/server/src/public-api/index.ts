@@ -36,6 +36,8 @@ publicApi.use('*', async (c, next) => {
 publicApi.post('/runs', zValidator('json', ingestRunSchema), async (c) => {
   const userId = c.get('userId')
   const input = c.req.valid('json')
+  // Bulk/historical import: still capped + metered, but no alerts (anti-spam).
+  const backfill = c.req.query('backfill') === '1'
 
   const entitlements = await getEntitlements(userId)
   if (entitlements.tier === 'free') {
@@ -138,19 +140,21 @@ publicApi.post('/runs', zValidator('json', ingestRunSchema), async (c) => {
     }
   }
 
-  try {
-    await notifyRun({
-      userId,
-      projectId: result.projectId,
-      runId: result.runId,
-      startedAt: new Date(input.run.startedAt),
-      branch: input.run.git?.branch,
-      counts: input.run.counts,
-      tests: input.tests,
-    })
-  }
-  catch (error) {
-    logger.error({ error, runId: result.runId }, 'alert notify failed')
+  if (!backfill) {
+    try {
+      await notifyRun({
+        userId,
+        projectId: result.projectId,
+        runId: result.runId,
+        startedAt: new Date(input.run.startedAt),
+        branch: input.run.git?.branch,
+        counts: input.run.counts,
+        tests: input.tests,
+      })
+    }
+    catch (error) {
+      logger.error({ error, runId: result.runId }, 'alert notify failed')
+    }
   }
 
   return c.json(result, 201)

@@ -4,12 +4,14 @@ import { readFile } from 'node:fs/promises'
 import process from 'node:process'
 import { parseArgs } from 'node:util'
 import { IngestError } from '@kinora/core'
+import { importReports } from './import'
 import { uploadReport } from './upload'
 
 const USAGE = `kinora - upload a Playwright json report to a kinora server
 
 Usage:
   kinora upload <results.json> --project <slug> [options]
+  kinora import <dir>          --project <slug> [options]   # bulk-import every *.json (historical, no traces)
 
 Required:
   --project <slug>      Target project slug
@@ -25,6 +27,7 @@ Options:
   --ci-provider <name>
   --ci-run-url <url>
   --ci-run-number <n>
+  --concurrency <n>     Parallel uploads for bulk import (default 6)
   -h, --help`
 
 function fail(msg: string): never {
@@ -46,6 +49,7 @@ async function main(): Promise<void> {
       'ci-provider': { type: 'string' },
       'ci-run-url': { type: 'string' },
       'ci-run-number': { type: 'string' },
+      'concurrency': { type: 'string' },
       'help': { type: 'boolean', short: 'h' },
     },
   })
@@ -55,16 +59,8 @@ async function main(): Promise<void> {
     return
   }
 
-  // Accept both `kinora upload <file>` and `kinora <file>`.
-  const args = positionals[0] === 'upload' ? positionals.slice(1) : positionals
-  if (args.length !== 1)
-    fail('pass exactly one Playwright results.json path')
   if (!values.project)
     fail('--project <slug> is required')
-
-  const reportFile = args[0]
-  if (!existsSync(reportFile))
-    fail(`report not found: ${reportFile}`)
 
   const url = values.url ?? process.env.KINORA_URL
   const token = values.token ?? process.env.KINORA_TOKEN
@@ -72,6 +68,30 @@ async function main(): Promise<void> {
     fail('--url or KINORA_URL is required')
   if (!token)
     fail('--token or KINORA_TOKEN is required')
+
+  // Bulk import: kinora import <dir> - backfill every results.json under a directory.
+  if (positionals[0] === 'import') {
+    const dir = positionals[1]
+    if (!dir)
+      fail('pass a directory: kinora import <dir> --project <slug>')
+    const { imported, failed } = await importReports({
+      dir,
+      project: { slug: values.project, name: values.name },
+      url,
+      token,
+      concurrency: values.concurrency ? Number(values.concurrency) : undefined,
+    })
+    console.log(`imported ${imported} runs into ${values.project}${failed ? ` (${failed} skipped)` : ''}`)
+    return
+  }
+
+  // Single upload: kinora upload <file> (or kinora <file>).
+  const args = positionals[0] === 'upload' ? positionals.slice(1) : positionals
+  if (args.length !== 1)
+    fail('pass exactly one Playwright results.json path')
+  const reportFile = args[0]
+  if (!existsSync(reportFile))
+    fail(`report not found: ${reportFile}`)
 
   const git = values['git-sha'] || values['git-branch']
     ? { sha: values['git-sha'], branch: values['git-branch'] }
