@@ -17,6 +17,10 @@ const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string(),
   GITHUB_CLIENT_ID: z.string(),
   GITHUB_CLIENT_SECRET: z.string(),
+  POLAR_ACCESS_TOKEN: z.string(),
+  POLAR_WEBHOOK_SECRET: z.string(),
+  POLAR_PRODUCT_TEAM_ID: z.string(),
+  POLAR_PRODUCT_PRO_ID: z.string(),
 })
 
 export type Env = z.infer<typeof envSchema>

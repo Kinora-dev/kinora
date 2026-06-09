@@ -4,15 +4,18 @@ import { zValidator } from '@hono/zod-validator'
 import { countsByTagFrom, ingestRunSchema } from '@kinora/core'
 import { and, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
+import { getEntitlements } from '../billing/entitlements'
+import { polarClient } from '../billing/polar'
+import { currentPeriodResults } from '../billing/usage'
 import { db } from '../db'
 import { artifact, project, run, test } from '../db/schemas/index'
 import { auth } from '../lib/auth'
+import { logger } from '../lib/logger'
 import { storage } from '../lib/storage'
 
 const BEARER_PREFIX = 'Bearer '
 
 // Public ingest API (api-key authed) - the reporter / cli upload here.
-// Plain REST so any CI, curl, or language can hit it.
 export const publicApi = new Hono<{ Variables: { userId: string } }>()
 
 publicApi.use('*', async (c, next) => {
@@ -32,6 +35,17 @@ publicApi.use('*', async (c, next) => {
 publicApi.post('/runs', zValidator('json', ingestRunSchema), async (c) => {
   const userId = c.get('userId')
   const input = c.req.valid('json')
+
+  const entitlements = await getEntitlements(userId)
+  if (entitlements.tier === 'free') {
+    const used = await currentPeriodResults(userId)
+    if (used >= entitlements.includedResults) {
+      return c.json({
+        error: 'Free plan monthly test-result limit reached. Upgrade to keep ingesting.',
+        limit: entitlements.includedResults,
+      }, 402)
+    }
+  }
 
   const result = await db.transaction(async (tx) => {
     const existing = await tx.query.project.findFirst({
@@ -89,6 +103,21 @@ publicApi.post('/runs', zValidator('json', ingestRunSchema), async (c) => {
 
     return { projectId, runId, tests: input.tests.length }
   })
+
+  if (result.tests > 0) {
+    try {
+      await polarClient.events.ingest({
+        events: [{
+          name: 'test_results',
+          externalCustomerId: userId,
+          metadata: { results: result.tests },
+        }],
+      })
+    }
+    catch (error) {
+      logger.error({ error, userId, runId: result.runId }, 'polar usage ingest failed')
+    }
+  }
 
   return c.json(result, 201)
 })
