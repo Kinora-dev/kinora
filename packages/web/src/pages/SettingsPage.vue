@@ -144,6 +144,21 @@ const upgradeOptions = computed(() => {
   return []
 })
 
+const planNote = computed<{ text: string, tone: string } | null>(() => {
+  const b = billing.value
+  if (!b || !b.status)
+    return null
+  if (b.status === 'trialing')
+    return { text: `Trial · ends ${fmtDate(b.currentPeriodEnd)}`, tone: 'text-signal' }
+  if (b.cancelAtPeriodEnd && b.currentPeriodEnd)
+    return { text: `Cancels ${fmtDate(b.currentPeriodEnd)}`, tone: 'text-fail' }
+  if (b.status === 'past_due')
+    return { text: 'Payment past due', tone: 'text-fail' }
+  if (b.currentPeriodEnd)
+    return { text: `Renews ${fmtDate(b.currentPeriodEnd)}`, tone: 'text-muted-foreground' }
+  return null
+})
+
 onMounted(() => {
   if (route.query.checkout === 'success') {
     toast.success('Subscription active. It may take a moment to reflect here.')
@@ -180,7 +195,10 @@ function fmtDate(d: Date | string | null | undefined): string {
         <div class="flex items-center justify-between gap-4">
           <div class="flex items-center gap-2.5">
             <span class="size-2 rounded-full bg-signal" aria-hidden="true" />
-            <span class="font-mono text-sm font-semibold tracking-tight">{{ TIER_LABELS[billing.tier] ?? billing.tier }}</span>
+            <div class="flex flex-col">
+              <span class="font-mono text-sm font-semibold tracking-tight">{{ TIER_LABELS[billing.tier] ?? billing.tier }}</span>
+              <span v-if="planNote" class="font-mono text-[11px]" :class="planNote.tone">{{ planNote.text }}</span>
+            </div>
           </div>
           <Button v-if="isPaid" type="button" variant="outline" size="sm" class="font-mono text-xs" :disabled="!!billingPending" @click="openPortal">
             <CreditCard class="size-3.5" />

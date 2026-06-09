@@ -1,4 +1,4 @@
-import { getEntitlements } from '../billing/entitlements'
+import { getEntitlements, getSubscription } from '../billing/entitlements'
 import { currentPeriodResults } from '../billing/usage'
 import { authProcedure, router } from '../trpc/index'
 
@@ -10,8 +10,9 @@ function finiteOrNull(n: number): number | null {
 export const billingRouter = router({
   summary: authProcedure.query(async ({ ctx }) => {
     const userId = ctx.user.id
-    const [entitlements, usedResults] = await Promise.all([
+    const [entitlements, sub, usedResults] = await Promise.all([
       getEntitlements(userId),
+      getSubscription(userId),
       currentPeriodResults(userId),
     ])
 
@@ -22,6 +23,9 @@ export const billingRouter = router({
       retentionDays: finiteOrNull(entitlements.retentionDays),
       includedResults: finiteOrNull(entitlements.includedResults),
       usedResults,
+      status: sub?.status ?? null,
+      currentPeriodEnd: sub?.currentPeriodEnd?.toISOString() ?? null,
+      cancelAtPeriodEnd: sub?.cancelAtPeriodEnd ?? false,
     }
   }),
 })

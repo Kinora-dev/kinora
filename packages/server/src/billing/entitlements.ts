@@ -64,6 +64,23 @@ export async function syncCustomerState(state: CustomerStateInput): Promise<void
     .onConflictDoUpdate({ target: subscription.userId, set: values })
 }
 
+export interface SubscriptionState {
+  status: string | null
+  currentPeriodEnd: Date | null
+  cancelAtPeriodEnd: boolean
+}
+
+export async function getSubscription(userId: string): Promise<SubscriptionState | null> {
+  if (!cloud)
+    return null
+
+  const row = await db.query.subscription.findFirst({
+    where: eq(subscription.userId, userId),
+    columns: { status: true, currentPeriodEnd: true, cancelAtPeriodEnd: true },
+  })
+  return row ?? null
+}
+
 export async function getEntitlements(userId: string): Promise<Entitlements> {
   if (!cloud)
     return { tier: 'selfhost', ...LIMITS.selfhost }
