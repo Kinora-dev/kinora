@@ -19,6 +19,6 @@ export const TEST_ENV: Record<keyof Env, string> = {
   KINORA_CLOUD: 'false',
   POLAR_ACCESS_TOKEN: '',
   POLAR_WEBHOOK_SECRET: '',
-  POLAR_PRODUCT_TEAM_ID: '',
-  POLAR_PRODUCT_PRO_ID: '',
+  POLAR_PRODUCT_TEAM_ID: 'prod_team_test',
+  POLAR_PRODUCT_PRO_ID: 'prod_pro_test',
 }

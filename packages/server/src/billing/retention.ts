@@ -18,7 +18,7 @@ function cutoff(now: Date, days: number): Date {
   return new Date(now.getTime() - days * DAY_MS)
 }
 
-async function purgeScope(before: Date, scope: Scope): Promise<number> {
+export async function purgeScope(before: Date, scope: Scope): Promise<number> {
   // A tier with no users on it: nothing to do.
   if (scope.includeUsers && scope.includeUsers.length === 0)
     return 0
