@@ -17,3 +17,12 @@ export async function currentPeriodResults(userId: string): Promise<number> {
 
   return row?.total ?? 0
 }
+
+export async function projectCount(userId: string): Promise<number> {
+  const [row] = await db
+    .select({ total: count() })
+    .from(project)
+    .where(eq(project.userId, userId))
+
+  return row?.total ?? 0
+}
