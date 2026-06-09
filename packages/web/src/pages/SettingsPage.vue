@@ -225,6 +225,9 @@ function fmtDate(d: Date | string | null | undefined): string {
           <p v-if="overCap" class="font-mono text-[11px] text-fail">
             Monthly limit reached - upgrade to keep ingesting.
           </p>
+          <p class="font-mono text-[11px] text-muted-foreground">
+            {{ billing.retentionDays != null ? `${billing.retentionDays}-day history` : 'Unlimited history' }}
+          </p>
         </div>
 
         <div v-if="upgradeOptions.length" class="flex flex-wrap gap-2">

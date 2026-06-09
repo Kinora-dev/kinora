@@ -1,13 +1,12 @@
 import type { Buffer } from 'node:buffer'
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, rm, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { env } from './env'
 
-// Local-FS object storage. Swap for S3/R2 (MinIO in self-host compose) later;
-// callers only depend on this interface.
 export interface Storage {
   put: (key: string, body: Buffer | Uint8Array) => Promise<void>
   url: (key: string) => string
+  delete: (key: string) => Promise<void>
 }
 
 const root = resolve(env.STORAGE_DIR)
@@ -20,5 +19,9 @@ export const storage: Storage = {
   },
   url(key) {
     return `${env.BASE_URL}/artifacts/${key}`
+  },
+  async delete(key) {
+    // force ignores a missing file, so retention purge stays idempotent.
+    await rm(join(root, key), { force: true })
   },
 }

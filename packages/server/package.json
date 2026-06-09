@@ -22,7 +22,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx scripts/seed.ts",
-    "db:seed:market": "tsx scripts/seed-market.ts"
+    "db:seed:market": "tsx scripts/seed-market.ts",
+    "purge-expired-runs": "tsx scripts/purge-expired-runs.ts"
   },
   "dependencies": {
     "@better-auth/api-key": "^1.5.6",

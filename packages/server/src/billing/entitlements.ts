@@ -21,6 +21,10 @@ const LIMITS: Record<Tier, Omit<Entitlements, 'tier'>> = {
   selfhost: { maxProjects: Number.POSITIVE_INFINITY, retentionDays: Number.POSITIVE_INFINITY, includedResults: Number.POSITIVE_INFINITY, alerts: true },
 }
 
+export function retentionDaysFor(tier: Tier): number {
+  return LIMITS[tier].retentionDays
+}
+
 function tierForProduct(productId: string | undefined): 'free' | 'team' | 'pro' {
   if (!productId)
     return 'free'
