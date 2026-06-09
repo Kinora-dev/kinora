@@ -1,38 +1,38 @@
 ---
-import { SITE } from '../lib/site'
-import '../styles/global.css'
+import { SITE } from "../lib/site";
+import "../styles/global.css";
 
 interface Props {
-  title?: string
-  description?: string
-  pathname?: string
-  robots?: string
-  image?: string
+  title?: string;
+  description?: string;
+  pathname?: string;
+  robots?: string;
+  image?: string;
 }
 
-const site = Astro.site ?? new URL(SITE.url)
+const site = Astro.site ?? new URL(SITE.url);
 const {
   title = `${SITE.name} - ${SITE.tagline}`,
   description = SITE.description,
   pathname = Astro.url.pathname,
-  robots = 'index,follow',
-  image = '/og-image.png',
-} = Astro.props
+  robots = "index,follow",
+  image = "/og-image.png",
+} = Astro.props;
 
-const canonical = new URL(pathname, site).toString()
-const imageUrl = new URL(image, site).toString()
+const canonical = new URL(pathname, site).toString();
+const imageUrl = new URL(image, site).toString();
 
-const isProd = import.meta.env.MODE === 'production'
+const isProd = import.meta.env.MODE === "production";
 
 const structuredData = {
-  '@context': 'https://schema.org',
-  '@type': 'SoftwareApplication',
-  'name': 'kinora',
-  'description': SITE.description,
-  'url': site.toString(),
-  'applicationCategory': 'DeveloperApplication',
-  'operatingSystem': 'Web, Self-hosted',
-  'offers': { '@type': 'Offer', 'price': '0', 'priceCurrency': 'USD' },
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "kinora",
+  description: SITE.description,
+  url: site.toString(),
+  applicationCategory: "DeveloperApplication",
+  operatingSystem: "Web, Self-hosted",
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
 };
 ---
 
@@ -54,7 +54,12 @@ const structuredData = {
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="kinora" />
+    <link rel="manifest" href="/site.webmanifest" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="robots" content={robots} />
@@ -82,25 +87,24 @@ const structuredData = {
     <slot />
 
     <script is:inline>
-const els = document.querySelectorAll('.reveal')
-if (els.length && 'IntersectionObserver' in window) {
-  const io = new IntersectionObserver(
-    (entries) => {
-      for (const e of entries) {
-        if (e.isIntersecting) {
-          e.target.classList.add('is-visible')
-          io.unobserve(e.target)
-        }
+      const els = document.querySelectorAll(".reveal");
+      if (els.length && "IntersectionObserver" in window) {
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const e of entries) {
+              if (e.isIntersecting) {
+                e.target.classList.add("is-visible");
+                io.unobserve(e.target);
+              }
+            }
+          },
+          { threshold: 0.12 },
+        );
+        els.forEach((el) => io.observe(el));
+      } else {
+        els.forEach((el) => el.classList.add("is-visible"));
       }
-    },
-    { threshold: 0.12 },
-  )
-  els.forEach(el => io.observe(el))
-}
-else {
-  els.forEach(el => el.classList.add('is-visible'))
-}
-</script>
+    </script>
     {
       isProd && (
         <script
