@@ -30,6 +30,13 @@ async function load(): Promise<void> {
   loading.value = false
 }
 
+// Clear the shared cache on sign-out so the next login reloads fresh (avoids a stale switcher).
+export function resetOrgState(): void {
+  org.value = null
+  orgs.value = []
+  loaded = false
+}
+
 export function useOrg(options?: { autoLoad?: boolean }) {
   const members = computed(() => org.value?.members ?? [])
   const invitations = computed(() => (org.value?.invitations ?? []).filter(i => i.status === 'pending'))

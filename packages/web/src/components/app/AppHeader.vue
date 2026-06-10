@@ -4,7 +4,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Check, ChevronsUpDown, LogOut, Settings, SlidersHorizontal } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { useOrg } from '@/composables/useOrg'
+import { resetOrgState, useOrg } from '@/composables/useOrg'
 import { authClient } from '@/lib/auth'
 import { session } from '@/lib/session'
 
@@ -19,6 +19,7 @@ const initial = computed(() => (user.value?.name || user.value?.email || '?').ch
 
 async function signOut(): Promise<void> {
   await authClient.signOut()
+  resetOrgState()
   session.setUser(null)
   router.push({ name: 'login' })
 }
