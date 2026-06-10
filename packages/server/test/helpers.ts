@@ -1,13 +1,14 @@
 import type { IngestRun, NormTest } from '@kinora/core'
 import type { AuthType } from '../src/lib/auth'
 import { makeTestKey } from '@kinora/core'
-import { sql } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { app } from '../src/app'
 import { db } from '../src/db'
+import { apikey, member } from '../src/db/schemas/index'
 import { auth } from '../src/lib/auth'
 import { appRouter } from '../src/router/index'
 
-const TABLES = ['artifact', 'test', 'run', 'project', 'subscription', 'apikey', 'verification', 'account', 'session', 'user']
+const TABLES = ['artifact', 'test', 'run', 'project', 'subscription', 'slack_integration', 'invitation', 'member', 'organization', 'apikey', 'verification', 'account', 'session', 'user']
 
 export async function resetDb(): Promise<void> {
   await db.execute(sql.raw(`TRUNCATE ${TABLES.map(t => `"${t}"`).join(', ')} RESTART IDENTITY CASCADE`))
@@ -18,13 +19,24 @@ export async function createUser(email = 'user@test.dev') {
   return res.user
 }
 
+// The signup hook auto-creates a personal org; resolve the one this user owns.
+export async function ownedOrgId(userId: string): Promise<string> {
+  const m = await db.query.member.findFirst({ where: eq(member.userId, userId), columns: { organizationId: true } })
+  if (!m)
+    throw new Error('user has no organization')
+  return m.organizationId
+}
+
 export async function createApiKey(userId: string): Promise<string> {
   const res = await auth.api.createApiKey({ body: { name: 'integration', userId } })
+  // Ingest tokens reference the owning org.
+  await db.update(apikey).set({ referenceId: await ownedOrgId(userId) }).where(eq(apikey.id, res.id))
   return res.key
 }
 
-export function caller(user: { id: string }) {
-  return appRouter.createCaller({ user: user as AuthType['user'], req: new Request('http://test') })
+export async function caller(user: { id: string }) {
+  const organizationId = await ownedOrgId(user.id)
+  return appRouter.createCaller({ user: user as AuthType['user'], organizationId, req: new Request('http://test') })
 }
 
 export async function ingest(key: string | null, payload: IngestRun = runPayload()) {

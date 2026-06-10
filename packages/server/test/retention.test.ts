@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { purgeScope } from '../src/billing/retention'
 import { db } from '../src/db'
 import { project, run } from '../src/db/schemas/index'
-import { createUser, resetDb } from './helpers'
+import { createUser, ownedOrgId, resetDb } from './helpers'
 
 const DAY = 24 * 60 * 60 * 1000
 
@@ -12,7 +12,7 @@ beforeEach(resetDb)
 
 async function seedRun(userId: string, startedAt: Date): Promise<string> {
   const projectId = randomUUID()
-  await db.insert(project).values({ id: projectId, userId, slug: `s-${projectId}`, name: 'p' })
+  await db.insert(project).values({ id: projectId, organizationId: await ownedOrgId(userId), slug: `s-${projectId}`, name: 'p' })
   const runId = randomUUID()
   await db.insert(run).values({
     id: runId,
@@ -37,7 +37,7 @@ describe('purgeScope', () => {
     const recentA = await seedRun(a.id, new Date(now - 1 * DAY))
     const oldB = await seedRun(b.id, new Date(now - 100 * DAY))
 
-    await purgeScope(new Date(now - 30 * DAY), { includeUsers: [a.id] })
+    await purgeScope(new Date(now - 30 * DAY), { includeOrgs: [await ownedOrgId(a.id)] })
 
     expect(await exists(oldA)).toBeFalsy()
     expect(await exists(recentA)).toBeTruthy()
@@ -51,7 +51,7 @@ describe('purgeScope', () => {
     const oldA = await seedRun(a.id, new Date(now - 100 * DAY))
     const oldB = await seedRun(b.id, new Date(now - 100 * DAY))
 
-    await purgeScope(new Date(now - 30 * DAY), { excludeUsers: [b.id] })
+    await purgeScope(new Date(now - 30 * DAY), { excludeOrgs: [await ownedOrgId(b.id)] })
 
     expect(await exists(oldA)).toBeFalsy()
     expect(await exists(oldB)).toBeTruthy()
@@ -61,7 +61,7 @@ describe('purgeScope', () => {
     const a = await createUser('a@test.dev')
     const old = await seedRun(a.id, new Date(Date.now() - 100 * DAY))
 
-    await purgeScope(new Date(), { includeUsers: [] })
+    await purgeScope(new Date(), { includeOrgs: [] })
 
     expect(await exists(old)).toBeTruthy()
   })

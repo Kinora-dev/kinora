@@ -9,6 +9,12 @@ export const router = createRouter({
     { path: '/', name: 'overview', component: () => import('@/pages/OverviewPage.vue') },
     { path: '/settings', name: 'settings', component: () => import('@/pages/SettingsPage.vue') },
     {
+      path: '/accept-invite/:invitationId',
+      name: 'accept-invite',
+      component: () => import('@/pages/AcceptInvitePage.vue'),
+      props: true,
+    },
+    {
       path: '/projects/:projectId',
       name: 'project',
       component: () => import('@/pages/ProjectPage.vue'),

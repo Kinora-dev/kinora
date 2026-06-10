@@ -3,6 +3,7 @@ import { alertsRouter } from './alerts'
 import { billingRouter } from './billing'
 import { dashboardRouter } from './dashboard'
 import { projectRouter } from './project'
+import { tokenRouter } from './tokens'
 import { userRouter } from './user'
 
 export const appRouter = router({
@@ -11,6 +12,7 @@ export const appRouter = router({
   billing: billingRouter,
   alerts: alertsRouter,
   project: projectRouter,
+  tokens: tokenRouter,
 })
 
 export type AppRouter = typeof appRouter

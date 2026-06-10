@@ -24,3 +24,10 @@ export const authProcedure = loggedProcedure.use(async (opts) => {
     throw new TRPCError({ code: 'UNAUTHORIZED' })
   return opts.next({ ctx: { user: opts.ctx.user } })
 })
+
+// Most dashboard data is scoped to the session's active organization.
+export const orgProcedure = authProcedure.use(async (opts) => {
+  if (!opts.ctx.organizationId)
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'No active organization' })
+  return opts.next({ ctx: { organizationId: opts.ctx.organizationId } })
+})

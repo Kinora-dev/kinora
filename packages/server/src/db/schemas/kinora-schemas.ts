@@ -1,22 +1,22 @@
 import type { Counts, NormTest, RunReport } from '@kinora/core'
 import { relations } from 'drizzle-orm'
 import { boolean, index, integer, jsonb, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core'
-import { user } from './auth-schemas'
+import { organization } from './auth-schemas'
 
 type GitMeta = NonNullable<RunReport['meta']['git']>
 type CiMeta = NonNullable<RunReport['meta']['ci']>
 
 export const project = pgTable('project', {
   id: text('id').primaryKey(),
-  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  organizationId: text('organization_id').notNull().references(() => organization.id, { onDelete: 'cascade' }),
   slug: text('slug').notNull(),
   name: text('name').notNull(),
   description: text('description'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
 }, table => [
-  index('project_userId_idx').on(table.userId),
-  unique('project_user_slug_uniq').on(table.userId, table.slug),
+  index('project_organizationId_idx').on(table.organizationId),
+  unique('project_org_slug_uniq').on(table.organizationId, table.slug),
 ])
 
 export const run = pgTable('run', {
@@ -73,7 +73,7 @@ export const artifact = pgTable('artifact', {
 
 // Cached Polar billing state, synced from the customer.state_changed webhook.
 export const subscription = pgTable('subscription', {
-  userId: text('user_id').primaryKey().references(() => user.id, { onDelete: 'cascade' }),
+  organizationId: text('organization_id').primaryKey().references(() => organization.id, { onDelete: 'cascade' }),
   polarCustomerId: text('polar_customer_id').notNull(),
   tier: text('tier').$type<'free' | 'team' | 'pro' | 'enterprise'>().notNull().default('free'),
   status: text('status'),
@@ -97,7 +97,7 @@ export const slackIntegration = pgTable('slack_integration', {
 })
 
 export const projectRelations = relations(project, ({ one, many }) => ({
-  user: one(user, { fields: [project.userId], references: [user.id] }),
+  organization: one(organization, { fields: [project.organizationId], references: [organization.id] }),
   runs: many(run),
 }))
 

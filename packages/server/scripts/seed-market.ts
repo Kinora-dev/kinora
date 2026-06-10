@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url'
 import { countsByTagFrom, makeTestKey } from '@kinora/core'
 import { eq } from 'drizzle-orm'
 import { db } from '../src/db'
-import { artifact, project, run, test, user as userTable } from '../src/db/schemas/index'
+import { apikey, artifact, member, project, run, test, user as userTable } from '../src/db/schemas/index'
 import { auth } from '../src/lib/auth'
 import { logger } from '../src/lib/logger'
 import { storage } from '../src/lib/storage'
@@ -171,6 +171,14 @@ async function ensureUser(): Promise<string> {
   return res.user.id
 }
 
+// The signup hook auto-creates a personal org; resolve the one this user owns.
+async function ownedOrgId(userId: string): Promise<string> {
+  const m = await db.query.member.findFirst({ where: eq(member.userId, userId), columns: { organizationId: true } })
+  if (!m)
+    throw new Error('seeded user has no organization')
+  return m.organizationId
+}
+
 // Failed -> real failing trace (carries error-context for the viewer's Copy prompt);
 // flaky -> passing demo trace. Both make "View trace" work.
 const FAIL_TRACE = fileURLToPath(new URL('../../trace-viewer/public/fixtures/error-trace.zip', import.meta.url))
@@ -178,15 +186,17 @@ const PASS_TRACE = fileURLToPath(new URL('../../trace-viewer/public/fixtures/dem
 
 async function main(): Promise<void> {
   const userId = await ensureUser()
+  const orgId = await ownedOrgId(userId)
   const failTrace = await readFile(FAIL_TRACE)
   const passTrace = await readFile(PASS_TRACE)
 
-  await db.delete(project).where(eq(project.userId, userId))
+  await db.delete(project).where(eq(project.organizationId, orgId))
   const apiKey = await auth.api.createApiKey({ body: { name: 'market seed token', userId } })
+  await db.update(apikey).set({ referenceId: orgId }).where(eq(apikey.id, apiKey.id))
 
   for (const pdef of PROJECTS) {
     const projectId = randomUUID()
-    await db.insert(project).values({ id: projectId, userId, slug: pdef.slug, name: pdef.name })
+    await db.insert(project).values({ id: projectId, organizationId: orgId, slug: pdef.slug, name: pdef.name })
 
     for (let i = 0; i < RUNS; i++) {
       const startedAt = new Date(Date.now() - (LATEST - i) * DAY - jitter(6 * 3_600_000))

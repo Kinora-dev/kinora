@@ -1,6 +1,6 @@
 import { getEntitlements, getSubscription } from '../billing/entitlements'
 import { currentPeriodResults } from '../billing/usage'
-import { authProcedure, router } from '../trpc/index'
+import { orgProcedure, router } from '../trpc/index'
 
 // Infinity doesn't survive JSON: unlimited limits go over the wire as null.
 function finiteOrNull(n: number): number | null {
@@ -8,12 +8,12 @@ function finiteOrNull(n: number): number | null {
 }
 
 export const billingRouter = router({
-  summary: authProcedure.query(async ({ ctx }) => {
-    const userId = ctx.user.id
+  summary: orgProcedure.query(async ({ ctx }) => {
+    const organizationId = ctx.organizationId
     const [entitlements, sub, usedResults] = await Promise.all([
-      getEntitlements(userId),
-      getSubscription(userId),
-      currentPeriodResults(userId),
+      getEntitlements(organizationId),
+      getSubscription(organizationId),
+      currentPeriodResults(organizationId),
     ])
 
     return {

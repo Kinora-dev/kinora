@@ -12,8 +12,10 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { z } from 'zod'
+import TeamCard from '@/components/app/TeamCard.vue'
 import { useApiTokens } from '@/composables/useApiTokens'
 import { useBilling } from '@/composables/useBilling'
+import { useOrg } from '@/composables/useOrg'
 import { authClient } from '@/lib/auth'
 import { session } from '@/lib/session'
 
@@ -106,6 +108,7 @@ async function createToken(): Promise<void> {
 
 // --- Plan & billing ---
 const { summary: billing, refresh: refreshBilling, pending: billingPending, checkout, openPortal } = useBilling()
+const { isOwner } = useOrg()
 const route = useRoute()
 const router = useRouter()
 
@@ -202,7 +205,7 @@ function fmtDate(d: Date | string | null | undefined): string {
               <span v-if="planNote" class="font-mono text-[11px]" :class="planNote.tone">{{ planNote.text }}</span>
             </div>
           </div>
-          <Button v-if="isPaid" type="button" variant="outline" size="sm" class="font-mono text-xs" :disabled="!!billingPending" @click="openPortal">
+          <Button v-if="isPaid && isOwner" type="button" variant="outline" size="sm" class="font-mono text-xs" :disabled="!!billingPending" @click="openPortal">
             <CreditCard class="size-3.5" />
             {{ billingPending === 'portal' ? 'Opening…' : 'Manage' }}
           </Button>
@@ -230,7 +233,7 @@ function fmtDate(d: Date | string | null | undefined): string {
           </p>
         </div>
 
-        <div v-if="upgradeOptions.length" class="flex flex-wrap gap-2">
+        <div v-if="upgradeOptions.length && isOwner" class="flex flex-wrap gap-2">
           <Button
             v-for="opt in upgradeOptions"
             :key="opt.slug"
@@ -247,7 +250,7 @@ function fmtDate(d: Date | string | null | undefined): string {
         </div>
 
         <Button
-          v-if="billing.tier !== 'enterprise'"
+          v-if="billing.tier !== 'enterprise' && isOwner"
           as-child
           variant="link"
           size="sm"
@@ -258,8 +261,15 @@ function fmtDate(d: Date | string | null | undefined): string {
             Need more? Contact us about Enterprise
           </a>
         </Button>
+
+        <p v-if="!isOwner" class="font-mono text-[11px] text-muted-foreground">
+          Only the workspace owner can change the plan.
+        </p>
       </CardContent>
     </Card>
+
+    <!-- Team -->
+    <TeamCard />
 
     <!-- Appearance -->
     <Card>

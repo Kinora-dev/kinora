@@ -1,11 +1,19 @@
+import { randomUUID } from 'node:crypto'
 import { apiKey } from '@better-auth/api-key'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { lastLoginMethod } from 'better-auth/plugins'
+import { lastLoginMethod, organization } from 'better-auth/plugins'
+import { eq } from 'drizzle-orm'
 import { polarAuthPlugin } from '../billing/polar'
 import { db } from '../db'
+import { member, organization as organizationTable } from '../db/schemas/index'
 import { env } from './env'
+import { logger } from './logger'
 import { getTrustedOrigins } from './utils'
+
+function slugify(input: string): string {
+  return input.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 32) || 'team'
+}
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: 'pg' }),
@@ -24,6 +32,40 @@ export const auth = betterAuth({
   },
   // No SMTP yet: emails stay unverified, so apply the new address directly instead of mailing a verification link.
   user: { changeEmail: { enabled: true, updateEmailWithoutVerification: true } },
+  databaseHooks: {
+    user: {
+      create: {
+        // Every account owns one personal organization; projects + billing live on it.
+        after: async (createdUser) => {
+          const orgId = randomUUID()
+          const base = slugify(createdUser.name || createdUser.email.split('@')[0] || 'team')
+          await db.insert(organizationTable).values({
+            id: orgId,
+            name: createdUser.name ? `${createdUser.name}'s workspace` : 'My workspace',
+            slug: `${base}-${randomUUID().slice(0, 8)}`,
+          })
+          await db.insert(member).values({
+            id: randomUUID(),
+            organizationId: orgId,
+            userId: createdUser.id,
+            role: 'owner',
+          })
+        },
+      },
+    },
+    session: {
+      create: {
+        // Default the session to the org the user owns.
+        before: async (session) => {
+          const owned = await db.query.member.findFirst({
+            where: eq(member.userId, session.userId),
+            columns: { organizationId: true },
+          })
+          return { data: { ...session, activeOrganizationId: owned?.organizationId ?? null } }
+        },
+      },
+    },
+  },
   // Prod: share the session cookie across app.kinora.dev <-> api.kinora.dev
   advanced: {
     crossSubDomainCookies: {
@@ -32,9 +74,19 @@ export const auth = betterAuth({
     },
   },
   secret: env.AUTH_SECRET,
-  plugins: [apiKey(), lastLoginMethod(), polarAuthPlugin()].filter(
-    (plugin): plugin is NonNullable<typeof plugin> => plugin !== null,
-  ),
+  plugins: [
+    apiKey(),
+    lastLoginMethod(),
+    organization({
+      // Only the auto-created personal org exists; members can't spin up extra orgs.
+      allowUserToCreateOrganization: false,
+      sendInvitationEmail: async (data) => {
+        // No SMTP yet: the UI surfaces the accept link from the invite response; log it as a fallback.
+        logger.info({ invitationId: data.id, email: data.email, org: data.organization.name }, 'org invitation created')
+      },
+    }),
+    polarAuthPlugin(),
+  ].filter((plugin): plugin is NonNullable<typeof plugin> => plugin !== null),
 })
 
 export interface AuthType {

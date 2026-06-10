@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { Avatar, AvatarFallback, AvatarImage } from '@kinora/ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@kinora/ui/dropdown-menu'
-import { LogOut, Settings } from 'lucide-vue-next'
+import { Check, LogOut, Settings } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
+import { useOrg } from '@/composables/useOrg'
 import { authClient } from '@/lib/auth'
 import { session } from '@/lib/session'
 
 const router = useRouter()
 const user = session.user
+
+const { orgs, org, setActive } = useOrg()
+const activeOrgId = computed(() => org.value?.id)
 
 const initial = computed(() => (user.value?.name || user.value?.email || '?').charAt(0).toUpperCase())
 
@@ -59,6 +63,16 @@ async function signOut(): Promise<void> {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <template v-if="orgs.length > 1">
+              <DropdownMenuLabel class="font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
+                Workspaces
+              </DropdownMenuLabel>
+              <DropdownMenuItem v-for="o in orgs" :key="o.id" @click="setActive(o.id)">
+                <Check class="size-4" :class="o.id === activeOrgId ? 'opacity-100' : 'opacity-0'" />
+                <span class="truncate">{{ o.name }}</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </template>
             <DropdownMenuItem as-child>
               <RouterLink :to="{ name: 'settings' }">
                 <Settings class="size-4" />

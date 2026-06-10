@@ -6,32 +6,32 @@ import { getEntitlements } from '../billing/entitlements'
 import { db } from '../db'
 import { slackIntegration } from '../db/schemas/index'
 import { slackApp } from '../lib/env'
-import { authProcedure, router } from '../trpc/index'
+import { orgProcedure, router } from '../trpc/index'
 import { ownedProject } from './dashboard'
 
 const policySchema = z.enum(['always', 'on-failure', 'on-regression'])
 
-async function requireAlerts(userId: string): Promise<void> {
-  const entitlements = await getEntitlements(userId)
+async function requireAlerts(organizationId: string): Promise<void> {
+  const entitlements = await getEntitlements(organizationId)
   if (!entitlements.alerts)
     throw new TRPCError({ code: 'FORBIDDEN', message: 'Slack alerts require a paid plan' })
 }
 
 export const alertsRouter = router({
   // True when the server has a Slack OAuth app: front shows "Add to Slack" vs manual paste.
-  oauthEnabled: authProcedure.query(() => ({ enabled: slackApp !== null })),
+  oauthEnabled: orgProcedure.query(() => ({ enabled: slackApp !== null })),
 
-  get: authProcedure
+  get: orgProcedure
     .input(z.object({ projectId: z.string() }))
     .query(async ({ ctx, input }) => {
-      const project = await ownedProject(ctx.user.id, input.projectId)
+      const project = await ownedProject(ctx.organizationId, input.projectId)
       const channel = await db.query.slackIntegration.findFirst({
         where: eq(slackIntegration.projectId, project.id),
       })
       return channel ?? null
     }),
 
-  upsert: authProcedure
+  upsert: orgProcedure
     .input(z.object({
       projectId: z.string(),
       webhookUrl: z.string().url(),
@@ -39,8 +39,8 @@ export const alertsRouter = router({
       enabled: z.boolean(),
     }))
     .mutation(async ({ ctx, input }) => {
-      await requireAlerts(ctx.user.id)
-      const project = await ownedProject(ctx.user.id, input.projectId)
+      await requireAlerts(ctx.organizationId)
+      const project = await ownedProject(ctx.organizationId, input.projectId)
       const values = { webhookUrl: input.webhookUrl, policy: input.policy, enabled: input.enabled }
       await db
         .insert(slackIntegration)
@@ -50,15 +50,15 @@ export const alertsRouter = router({
     }),
 
   // OAuth path: webhook comes from the install flow, so only policy/enabled are edited here.
-  updateSettings: authProcedure
+  updateSettings: orgProcedure
     .input(z.object({
       projectId: z.string(),
       policy: policySchema,
       enabled: z.boolean(),
     }))
     .mutation(async ({ ctx, input }) => {
-      await requireAlerts(ctx.user.id)
-      const project = await ownedProject(ctx.user.id, input.projectId)
+      await requireAlerts(ctx.organizationId)
+      const project = await ownedProject(ctx.organizationId, input.projectId)
       const updated = await db
         .update(slackIntegration)
         .set({ policy: input.policy, enabled: input.enabled })
@@ -69,19 +69,19 @@ export const alertsRouter = router({
       return { ok: true }
     }),
 
-  disconnect: authProcedure
+  disconnect: orgProcedure
     .input(z.object({ projectId: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const project = await ownedProject(ctx.user.id, input.projectId)
+      const project = await ownedProject(ctx.organizationId, input.projectId)
       await db.delete(slackIntegration).where(eq(slackIntegration.projectId, project.id))
       return { ok: true }
     }),
 
-  test: authProcedure
+  test: orgProcedure
     .input(z.object({ projectId: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      await requireAlerts(ctx.user.id)
-      const project = await ownedProject(ctx.user.id, input.projectId)
+      await requireAlerts(ctx.organizationId)
+      const project = await ownedProject(ctx.organizationId, input.projectId)
       const channel = await db.query.slackIntegration.findFirst({
         where: eq(slackIntegration.projectId, project.id),
       })

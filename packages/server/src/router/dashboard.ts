@@ -6,14 +6,14 @@ import { z } from 'zod'
 import { db } from '../db'
 import { artifact, project, run, test } from '../db/schemas/index'
 import { storage } from '../lib/storage'
-import { authProcedure, router } from '../trpc/index'
+import { orgProcedure, router } from '../trpc/index'
 
 type RunRow = typeof run.$inferSelect
 type TestRow = typeof test.$inferSelect
 
-export async function ownedProject(userId: string, slug: string) {
+export async function ownedProject(organizationId: string, slug: string) {
   const p = await db.query.project.findFirst({
-    where: and(eq(project.slug, slug), eq(project.userId, userId)),
+    where: and(eq(project.slug, slug), eq(project.organizationId, organizationId)),
   })
   if (!p)
     throw new TRPCError({ code: 'NOT_FOUND', message: 'Project not found' })
@@ -70,9 +70,9 @@ function runReport(slug: string, r: RunRow, tests: TestRow[], urlsByTest?: Map<s
 }
 
 export const dashboardRouter = router({
-  manifest: authProcedure.query(async ({ ctx }): Promise<Manifest> => {
+  manifest: orgProcedure.query(async ({ ctx }): Promise<Manifest> => {
     const projects = await db.query.project.findMany({
-      where: eq(project.userId, ctx.user.id),
+      where: eq(project.organizationId, ctx.organizationId),
       orderBy: desc(project.updatedAt),
     })
     const entries: ProjectEntry[] = []
@@ -83,10 +83,10 @@ export const dashboardRouter = router({
     return { schemaVersion: SCHEMA_VERSION, generatedAt: new Date().toISOString(), projects: entries }
   }),
 
-  run: authProcedure
+  run: orgProcedure
     .input(z.object({ projectId: z.string().min(1), runId: z.string().min(1) }))
     .query(async ({ ctx, input }): Promise<RunReport> => {
-      const p = await ownedProject(ctx.user.id, input.projectId)
+      const p = await ownedProject(ctx.organizationId, input.projectId)
       const r = await db.query.run.findFirst({ where: and(eq(run.id, input.runId), eq(run.projectId, p.id)) })
       if (!r)
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Run not found' })
@@ -106,10 +106,10 @@ export const dashboardRouter = router({
       return runReport(input.projectId, r, tests, urlsByTest)
     }),
 
-  projectHistory: authProcedure
+  projectHistory: orgProcedure
     .input(z.object({ projectId: z.string().min(1) }))
     .query(async ({ ctx, input }): Promise<ProjectHistory> => {
-      const p = await ownedProject(ctx.user.id, input.projectId)
+      const p = await ownedProject(ctx.organizationId, input.projectId)
       const runs = await db.query.run.findMany({ where: eq(run.projectId, p.id), orderBy: desc(run.startedAt) })
       const allTests = await db.query.test.findMany({ where: eq(test.projectId, p.id) })
 
@@ -125,10 +125,10 @@ export const dashboardRouter = router({
       return { project: entry, histories: buildTestHistories(reports) }
     }),
 
-  compareRuns: authProcedure
+  compareRuns: orgProcedure
     .input(z.object({ projectId: z.string().min(1), baseRunId: z.string().min(1), headRunId: z.string().min(1) }))
     .query(async ({ ctx, input }): Promise<RunComparison> => {
-      const p = await ownedProject(ctx.user.id, input.projectId)
+      const p = await ownedProject(ctx.organizationId, input.projectId)
       const [base, head] = await Promise.all([
         db.query.run.findFirst({ where: and(eq(run.id, input.baseRunId), eq(run.projectId, p.id)) }),
         db.query.run.findFirst({ where: and(eq(run.id, input.headRunId), eq(run.projectId, p.id)) }),
