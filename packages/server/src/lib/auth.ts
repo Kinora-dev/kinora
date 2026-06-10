@@ -3,7 +3,7 @@ import { apiKey } from '@better-auth/api-key'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { lastLoginMethod, organization } from 'better-auth/plugins'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { polarAuthPlugin } from '../billing/polar'
 import { db } from '../db'
 import { member, organization as organizationTable } from '../db/schemas/index'
@@ -55,10 +55,10 @@ export const auth = betterAuth({
     },
     session: {
       create: {
-        // Default the session to the org the user owns.
+        // Default the session to the org the user owns (a user may also be a member of others).
         before: async (session) => {
           const owned = await db.query.member.findFirst({
-            where: eq(member.userId, session.userId),
+            where: and(eq(member.userId, session.userId), eq(member.role, 'owner')),
             columns: { organizationId: true },
           })
           return { data: { ...session, activeOrganizationId: owned?.organizationId ?? null } }
