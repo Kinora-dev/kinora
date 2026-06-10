@@ -34,9 +34,9 @@ export async function createApiKey(userId: string): Promise<string> {
   return res.key
 }
 
-export async function caller(user: { id: string }) {
-  const organizationId = await ownedOrgId(user.id)
-  return appRouter.createCaller({ user: user as AuthType['user'], organizationId, req: new Request('http://test') })
+export async function caller(user: { id: string }, organizationId?: string) {
+  const orgId = organizationId ?? await ownedOrgId(user.id)
+  return appRouter.createCaller({ user: user as AuthType['user'], organizationId: orgId, req: new Request('http://test') })
 }
 
 export async function ingest(key: string | null, payload: IngestRun = runPayload()) {
