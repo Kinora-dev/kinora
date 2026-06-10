@@ -23,6 +23,7 @@
     "db:push": "drizzle-kit push",
     "db:seed": "tsx scripts/seed.ts",
     "db:seed:market": "tsx scripts/seed-market.ts",
+    "migrate": "tsx scripts/migrate.ts",
     "purge-expired-runs": "tsx scripts/purge-expired-runs.ts"
   },
   "dependencies": {
@@ -38,6 +39,7 @@
     "dotenv": "^17.3.1",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.12.23",
+    "knex": "^3.2.10",
     "pg": "^8.20.0",
     "pino": "^10.3.1",
     "pino-pretty": "^13.1.3",
