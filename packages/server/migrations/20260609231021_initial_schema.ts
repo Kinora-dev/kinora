@@ -150,6 +150,8 @@ export async function up(knex: Knex): Promise<void> {
     .createTable('slack_integration', (t) => {
       t.text('project_id').primary().references('id').inTable('project').onDelete('CASCADE')
       t.text('webhook_url').notNullable()
+      t.text('channel')
+      t.text('team_name')
       t.text('policy').notNullable().defaultTo('on-failure')
       t.boolean('enabled').notNullable().defaultTo(true)
       t.timestamp('created_at', { useTz: false }).notNullable().defaultTo(knex.fn.now())

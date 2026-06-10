@@ -26,4 +26,6 @@ export const TEST_ENV: Record<keyof Env, string> = {
   S3_BUCKET: '',
   S3_ACCESS_KEY_ID: '',
   S3_SECRET_ACCESS_KEY: '',
+  SLACK_CLIENT_ID: '',
+  SLACK_CLIENT_SECRET: '',
 }

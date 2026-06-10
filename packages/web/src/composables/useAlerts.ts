@@ -1,5 +1,5 @@
 import { useAsyncState } from '@vueuse/core'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import { trpc } from '@/lib/trpc'
 
@@ -11,6 +11,13 @@ export function useAlerts(projectId: string) {
     null,
     { immediate: true },
   )
+
+  const { state: oauth } = useAsyncState(
+    () => trpc.alerts.oauthEnabled.query(),
+    null,
+    { immediate: true },
+  )
+  const oauthEnabled = computed(() => oauth.value?.enabled ?? false)
 
   const saving = ref(false)
   const testing = ref(false)
@@ -30,6 +37,32 @@ export function useAlerts(projectId: string) {
     }
   }
 
+  async function updateSettings(input: { policy: Policy, enabled: boolean }): Promise<void> {
+    saving.value = true
+    try {
+      await trpc.alerts.updateSettings.mutate({ projectId, ...input })
+      await refresh()
+      toast.success('Slack alerts saved')
+    }
+    catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not save Slack alerts')
+    }
+    finally {
+      saving.value = false
+    }
+  }
+
+  async function disconnect(): Promise<void> {
+    try {
+      await trpc.alerts.disconnect.mutate({ projectId })
+      await refresh()
+      toast.success('Slack disconnected')
+    }
+    catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not disconnect Slack')
+    }
+  }
+
   async function sendTest(): Promise<void> {
     testing.value = true
     try {
@@ -44,5 +77,5 @@ export function useAlerts(projectId: string) {
     }
   }
 
-  return { config, isLoading, saving, testing, refresh, save, sendTest }
+  return { config, oauthEnabled, isLoading, saving, testing, refresh, save, updateSettings, disconnect, sendTest }
 }

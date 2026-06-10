@@ -5,6 +5,7 @@ import { sendSlack } from '../alerts/slack'
 import { getEntitlements } from '../billing/entitlements'
 import { db } from '../db'
 import { slackIntegration } from '../db/schemas/index'
+import { slackApp } from '../lib/env'
 import { authProcedure, router } from '../trpc/index'
 import { ownedProject } from './dashboard'
 
@@ -17,6 +18,9 @@ async function requireAlerts(userId: string): Promise<void> {
 }
 
 export const alertsRouter = router({
+  // True when the server has a Slack OAuth app: front shows "Add to Slack" vs manual paste.
+  oauthEnabled: authProcedure.query(() => ({ enabled: slackApp !== null })),
+
   get: authProcedure
     .input(z.object({ projectId: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -42,6 +46,34 @@ export const alertsRouter = router({
         .insert(slackIntegration)
         .values({ projectId: project.id, ...values })
         .onConflictDoUpdate({ target: slackIntegration.projectId, set: values })
+      return { ok: true }
+    }),
+
+  // OAuth path: webhook comes from the install flow, so only policy/enabled are edited here.
+  updateSettings: authProcedure
+    .input(z.object({
+      projectId: z.string(),
+      policy: policySchema,
+      enabled: z.boolean(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      await requireAlerts(ctx.user.id)
+      const project = await ownedProject(ctx.user.id, input.projectId)
+      const updated = await db
+        .update(slackIntegration)
+        .set({ policy: input.policy, enabled: input.enabled })
+        .where(eq(slackIntegration.projectId, project.id))
+        .returning({ projectId: slackIntegration.projectId })
+      if (!updated.length)
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'No Slack integration to update' })
+      return { ok: true }
+    }),
+
+  disconnect: authProcedure
+    .input(z.object({ projectId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const project = await ownedProject(ctx.user.id, input.projectId)
+      await db.delete(slackIntegration).where(eq(slackIntegration.projectId, project.id))
       return { ok: true }
     }),
 
