@@ -1,27 +1,61 @@
 import type { Buffer } from 'node:buffer'
+import type { S3Config } from './env'
 import { mkdir, rm, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
-import { env } from './env'
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { env, s3 } from './env'
 
+// Local FS (dev/self-host) or any S3-compatible store. url() returns a presigned
+// GET so the trace viewer fetches large trace.zip straight from storage (range-capable).
 export interface Storage {
   put: (key: string, body: Buffer | Uint8Array) => Promise<void>
-  url: (key: string) => string
+  url: (key: string) => Promise<string>
   delete: (key: string) => Promise<void>
 }
 
-const root = resolve(env.STORAGE_DIR)
-
-export const storage: Storage = {
-  async put(key, body) {
-    const dest = join(root, key)
-    await mkdir(dirname(dest), { recursive: true })
-    await writeFile(dest, body)
-  },
-  url(key) {
-    return `${env.BASE_URL}/artifacts/${key}`
-  },
-  async delete(key) {
-    // force ignores a missing file, so retention purge stays idempotent.
-    await rm(join(root, key), { force: true })
-  },
+function localStorage(): Storage {
+  const root = resolve(env.STORAGE_DIR)
+  return {
+    async put(key, body) {
+      const dest = join(root, key)
+      await mkdir(dirname(dest), { recursive: true })
+      await writeFile(dest, body)
+    },
+    async url(key) {
+      return `${env.BASE_URL}/artifacts/${key}`
+    },
+    async delete(key) {
+      // force ignores a missing file, so retention purge stays idempotent.
+      await rm(join(root, key), { force: true })
+    },
+  }
 }
+
+function s3Storage(config: S3Config): Storage {
+  const client = new S3Client({
+    endpoint: config.endpoint,
+    region: config.region,
+    credentials: { accessKeyId: config.accessKey, secretAccessKey: config.secretKey },
+    // Most S3-compatible providers (MinIO, Hetzner) need path-style URLs.
+    forcePathStyle: true,
+  })
+  return {
+    async put(key, body) {
+      await client.send(new PutObjectCommand({
+        Bucket: config.bucket,
+        Key: key,
+        Body: body,
+        CacheControl: 'public, max-age=31536000, immutable',
+      }))
+    },
+    async url(key) {
+      return getSignedUrl(client, new GetObjectCommand({ Bucket: config.bucket, Key: key }), { expiresIn: 3600 })
+    },
+    async delete(key) {
+      await client.send(new DeleteObjectCommand({ Bucket: config.bucket, Key: key }))
+    },
+  }
+}
+
+export const storage: Storage = s3 ? s3Storage(s3) : localStorage()

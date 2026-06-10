@@ -21,4 +21,9 @@ export const TEST_ENV: Record<keyof Env, string> = {
   POLAR_WEBHOOK_SECRET: '',
   POLAR_PRODUCT_TEAM_ID: 'prod_team_test',
   POLAR_PRODUCT_PRO_ID: 'prod_pro_test',
+  S3_ENDPOINT: '',
+  S3_REGION: '',
+  S3_BUCKET: '',
+  S3_ACCESS_KEY_ID: '',
+  S3_SECRET_ACCESS_KEY: '',
 }

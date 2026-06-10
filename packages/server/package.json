@@ -24,6 +24,8 @@
     "purge-expired-runs": "tsx scripts/purge-expired-runs.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1065.0",
+    "@aws-sdk/s3-request-presigner": "^3.1065.0",
     "@better-auth/api-key": "^1.5.6",
     "@hono/node-server": "^2.0.4",
     "@hono/trpc-server": "^0.4.2",
