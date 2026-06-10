@@ -27,6 +27,8 @@ const envSchema = z.object({
   S3_BUCKET: z.string().optional(),
   S3_ACCESS_KEY_ID: z.string().optional(),
   S3_SECRET_ACCESS_KEY: z.string().optional(),
+  SLACK_CLIENT_ID: z.string().optional(),
+  SLACK_CLIENT_SECRET: z.string().optional(),
 }).refine(
   e => !e.KINORA_CLOUD || Boolean(e.POLAR_ACCESS_TOKEN && e.POLAR_WEBHOOK_SECRET && e.POLAR_PRODUCT_TEAM_ID && e.POLAR_PRODUCT_PRO_ID),
   { message: 'KINORA_CLOUD=true requires POLAR_ACCESS_TOKEN, POLAR_WEBHOOK_SECRET, POLAR_PRODUCT_TEAM_ID and POLAR_PRODUCT_PRO_ID' },
@@ -83,3 +85,18 @@ function resolveS3(): S3Config | null {
 }
 
 export const s3 = resolveS3()
+
+export interface SlackAppConfig {
+  clientId: string
+  clientSecret: string
+}
+
+// "Add to Slack" OAuth app; null falls back to the manual webhook-URL paste
+function resolveSlackApp(): SlackAppConfig | null {
+  const { SLACK_CLIENT_ID: clientId, SLACK_CLIENT_SECRET: clientSecret } = env
+  if (!clientId || !clientSecret)
+    return null
+  return { clientId, clientSecret }
+}
+
+export const slackApp = resolveSlackApp()

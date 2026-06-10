@@ -4,8 +4,9 @@ import { Button } from '@kinora/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kinora/ui/card'
 import { Input } from '@kinora/ui/input'
 import { ArrowLeft } from 'lucide-vue-next'
-import { computed, ref, watch } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { computed, onMounted, ref, watch } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { toast } from 'vue-sonner'
 import SlackAlertsCard from '@/components/project/SlackAlertsCard.vue'
 import { useManifest } from '@/composables/queries'
 import { useProjectAdmin } from '@/composables/useProjectAdmin'
@@ -13,6 +14,19 @@ import { useProjectAdmin } from '@/composables/useProjectAdmin'
 const props = defineProps<{ projectId: string }>()
 
 const router = useRouter()
+const route = useRoute()
+
+// Slack OAuth callback redirects back here with ?slack=connected|error.
+onMounted(() => {
+  const slack = route.query.slack
+  if (slack === 'connected')
+    toast.success('Slack connected')
+  else if (slack === 'error')
+    toast.error('Could not connect Slack')
+  if (slack)
+    void router.replace({ query: { ...route.query, slack: undefined } })
+})
+
 const { state: manifest, execute: refreshManifest } = useManifest()
 const project = computed(() => manifest.value?.projects.find(p => p.id === props.projectId))
 

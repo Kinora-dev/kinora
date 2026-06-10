@@ -10,6 +10,7 @@ import { env } from './lib/env'
 import { getTrustedOrigins } from './lib/utils'
 import { publicApi } from './public-api/index'
 import { appRouter } from './router/index'
+import { slackOAuth } from './slack/oauth'
 import { createContext } from './trpc/context'
 
 const app = new Hono()
@@ -41,5 +42,6 @@ app.on(['POST', 'GET'], '/api/auth/*', c => auth.handler(c.req.raw))
 app.use('/trpc/*', trpcServer({ router: appRouter, createContext }))
 
 app.route('/api/v1', publicApi)
+app.route('/api/slack', slackOAuth)
 
 export { app }

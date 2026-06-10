@@ -4,8 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kino
 import { Input } from '@kinora/ui/input'
 import { Send } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
+import Icon from '@/components/Icon.vue'
 import { useAlerts } from '@/composables/useAlerts'
 import { useBilling } from '@/composables/useBilling'
+import { env } from '@/lib/env'
 
 const props = defineProps<{ projectId: string }>()
 
@@ -18,7 +20,7 @@ const POLICIES = [
 ] as const
 
 const { summary: billing, pending: billingPending, checkout } = useBilling()
-const { config, saving, testing, save, sendTest } = useAlerts(props.projectId)
+const { config, oauthEnabled, saving, testing, save, updateSettings, disconnect, sendTest } = useAlerts(props.projectId)
 
 const webhookUrl = ref('')
 const policy = ref<typeof POLICIES[number]['value']>('on-failure')
@@ -33,10 +35,16 @@ watch(config, (c) => {
   enabled.value = c.enabled
 }, { immediate: true })
 
-const canSave = computed(() => /^https?:\/\//.test(webhookUrl.value.trim()))
+const connected = computed(() => config.value !== null)
+const installUrl = computed(() => `${env.serverUrl.replace(/\/+$/, '')}/api/slack/install?projectId=${encodeURIComponent(props.projectId)}`)
+// Manual path needs a valid URL; the OAuth path stores its own webhook.
+const canSave = computed(() => oauthEnabled.value ? true : /^https?:\/\//.test(webhookUrl.value.trim()))
 
 function onSave(): void {
-  void save({ webhookUrl: webhookUrl.value.trim(), policy: policy.value, enabled: enabled.value })
+  if (oauthEnabled.value)
+    void updateSettings({ policy: policy.value, enabled: enabled.value })
+  else
+    void save({ webhookUrl: webhookUrl.value.trim(), policy: policy.value, enabled: enabled.value })
 }
 </script>
 
@@ -58,50 +66,74 @@ function onSave(): void {
       </div>
 
       <div v-else-if="billing" class="flex flex-col gap-5">
-        <div class="grid gap-2">
+        <!-- Connection source: OAuth button, OAuth connected header, or manual webhook input. -->
+        <template v-if="oauthEnabled">
+          <a v-if="!connected" :href="installUrl" class="w-fit">
+            <Button type="button" size="sm" class="gap-2 font-mono text-xs">
+              <Icon name="slack" class="size-3.5" />
+              Connect Slack
+            </Button>
+          </a>
+          <div v-else class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2 text-sm">
+              <Icon name="slack" class="size-4 text-signal" />
+              <span class="font-mono text-xs">
+                {{ config?.channel ?? 'Connected' }}<template v-if="config?.teamName"> · {{ config.teamName }}</template>
+              </span>
+            </div>
+            <Button type="button" variant="ghost" size="sm" class="font-mono text-xs text-muted-foreground" @click="disconnect">
+              Disconnect
+            </Button>
+          </div>
+        </template>
+
+        <div v-else class="grid gap-2">
           <label :class="labelClass" for="slack-url">Webhook URL</label>
           <Input id="slack-url" v-model="webhookUrl" placeholder="https://hooks.slack.com/services/..." />
         </div>
 
-        <div class="grid gap-2">
-          <span :class="labelClass">Notify</span>
-          <div class="flex flex-wrap gap-2">
-            <Button
-              v-for="opt in POLICIES"
-              :key="opt.value"
-              type="button"
-              variant="outline"
-              size="sm"
-              class="font-mono text-xs"
-              :class="policy === opt.value ? 'border-signal/60 text-signal' : 'text-muted-foreground'"
-              @click="policy = opt.value"
-            >
-              {{ opt.label }}
+        <!-- Policy/enabled/actions: shown once a destination exists. -->
+        <template v-if="!oauthEnabled || connected">
+          <div class="grid gap-2">
+            <span :class="labelClass">Notify</span>
+            <div class="flex flex-wrap gap-2">
+              <Button
+                v-for="opt in POLICIES"
+                :key="opt.value"
+                type="button"
+                variant="outline"
+                size="sm"
+                class="font-mono text-xs"
+                :class="policy === opt.value ? 'border-signal/60 text-signal' : 'text-muted-foreground'"
+                @click="policy = opt.value"
+              >
+                {{ opt.label }}
+              </Button>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            class="w-fit gap-2 font-mono text-xs"
+            :class="enabled ? 'border-signal/60 text-signal' : 'text-muted-foreground'"
+            @click="enabled = !enabled"
+          >
+            <span class="size-1.5 rounded-full" :class="enabled ? 'bg-signal' : 'bg-muted-foreground'" aria-hidden="true" />
+            {{ enabled ? 'Enabled' : 'Disabled' }}
+          </Button>
+
+          <div class="flex gap-2">
+            <Button type="button" size="sm" class="font-mono text-xs" :disabled="saving || !canSave" @click="onSave">
+              {{ saving ? 'Saving…' : 'Save' }}
+            </Button>
+            <Button type="button" variant="outline" size="sm" class="font-mono text-xs" :disabled="testing || !config" @click="sendTest">
+              <Send class="size-3.5" />
+              {{ testing ? 'Sending…' : 'Send test' }}
             </Button>
           </div>
-        </div>
-
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          class="w-fit gap-2 font-mono text-xs"
-          :class="enabled ? 'border-signal/60 text-signal' : 'text-muted-foreground'"
-          @click="enabled = !enabled"
-        >
-          <span class="size-1.5 rounded-full" :class="enabled ? 'bg-signal' : 'bg-muted-foreground'" aria-hidden="true" />
-          {{ enabled ? 'Enabled' : 'Disabled' }}
-        </Button>
-
-        <div class="flex gap-2">
-          <Button type="button" size="sm" class="font-mono text-xs" :disabled="saving || !canSave" @click="onSave">
-            {{ saving ? 'Saving…' : 'Save' }}
-          </Button>
-          <Button type="button" variant="outline" size="sm" class="font-mono text-xs" :disabled="testing || !config" @click="sendTest">
-            <Send class="size-3.5" />
-            {{ testing ? 'Sending…' : 'Send test' }}
-          </Button>
-        </div>
+        </template>
       </div>
     </CardContent>
   </Card>

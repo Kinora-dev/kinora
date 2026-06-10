@@ -87,6 +87,9 @@ export const subscription = pgTable('subscription', {
 export const slackIntegration = pgTable('slack_integration', {
   projectId: text('project_id').primaryKey().references(() => project.id, { onDelete: 'cascade' }),
   webhookUrl: text('webhook_url').notNull(),
+  // Set when connected via OAuth (incoming_webhook.channel / team_name); null for manual webhook paste.
+  channel: text('channel'),
+  teamName: text('team_name'),
   policy: text('policy').$type<'always' | 'on-failure' | 'on-regression'>().notNull().default('on-failure'),
   enabled: boolean('enabled').notNull().default(true),
   createdAt: timestamp('created_at').defaultNow().notNull(),
