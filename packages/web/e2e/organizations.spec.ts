@@ -66,6 +66,15 @@ test.describe('organizations', () => {
     await expect(page.getByRole('button', { name: /Acme QA's workspace/i })).toHaveCount(0)
   })
 
+  test('an unauthenticated invitee is not bounced to login', async ({ page }) => {
+    // A logged-out invite link must show the join CTA, not redirect to /login (losing the link).
+    await page.goto('/accept-invite/some-invitation-id')
+    await expect(page).toHaveURL(/\/accept-invite\//)
+    await expect(page.getByText(/You've been invited/i)).toBeVisible()
+    await expect(page.getByRole('link', { name: /Create account/i })).toBeVisible()
+    await expect(page.getByRole('link', { name: /Sign in/i })).toBeVisible()
+  })
+
   test('an owner can invite in their own workspace', async ({ page }) => {
     // teammate owns a single workspace -> owner/admin controls available
     await login(page, TEAMMATE)

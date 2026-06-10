@@ -21,6 +21,7 @@ export const router = createRouter({
       name: 'accept-invite',
       component: () => import('@/pages/AcceptInvitePage.vue'),
       props: true,
+      meta: { invite: true },
     },
     {
       path: '/projects/:projectId',
@@ -68,6 +69,9 @@ export const router = createRouter({
 router.beforeEach(async (to) => {
   await session.ensure()
   const authed = !!session.user.value
+  // Invite acceptance handles both guest and authed states itself.
+  if (to.meta.invite)
+    return
   if (!authed && !to.meta.public)
     return { name: 'login' }
   if (authed && to.meta.public)

@@ -6,7 +6,7 @@ import { Input } from '@kinora/ui/input'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { z } from 'zod'
 import AuthLayout from '@/components/auth/AuthLayout.vue'
 import SocialButtons from '@/components/auth/SocialButtons.vue'
@@ -14,8 +14,15 @@ import { authClient } from '@/lib/auth'
 import { session } from '@/lib/session'
 
 const router = useRouter()
+const route = useRoute()
 const serverError = ref('')
 const lastMethod = authClient.getLastUsedLoginMethod()
+
+// Honor ?redirect= (e.g. an invite link); internal paths only.
+function destination(): string | { name: string } {
+  const r = route.query.redirect
+  return typeof r === 'string' && r.startsWith('/') ? r : { name: 'overview' }
+}
 
 const { handleSubmit, isSubmitting } = useForm({
   validationSchema: toTypedSchema(z.object({
@@ -33,7 +40,7 @@ const onSubmit = handleSubmit(async (values) => {
     return
   }
   await session.refresh()
-  router.push({ name: 'overview' })
+  router.push(destination())
 })
 
 const labelClass = 'font-mono text-[11px] tracking-wider text-muted-foreground uppercase'
