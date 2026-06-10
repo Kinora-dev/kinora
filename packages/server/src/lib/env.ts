@@ -12,7 +12,6 @@ const envSchema = z.object({
   POSTGRES_HOST: z.string(),
   POSTGRES_PORT: z.coerce.number(),
   POSTGRES_DB: z.string(),
-  STORAGE_DIR: z.string(),
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
   GITHUB_CLIENT_ID: z.string(),
@@ -22,6 +21,12 @@ const envSchema = z.object({
   POLAR_WEBHOOK_SECRET: z.string().optional(),
   POLAR_PRODUCT_TEAM_ID: z.string().optional(),
   POLAR_PRODUCT_PRO_ID: z.string().optional(),
+  STORAGE_DIR: z.string().default('.data/artifacts'),
+  S3_ENDPOINT: z.string().optional(),
+  S3_REGION: z.string().optional(),
+  S3_BUCKET: z.string().optional(),
+  S3_ACCESS_KEY_ID: z.string().optional(),
+  S3_SECRET_ACCESS_KEY: z.string().optional(),
 }).refine(
   e => !e.KINORA_CLOUD || Boolean(e.POLAR_ACCESS_TOKEN && e.POLAR_WEBHOOK_SECRET && e.POLAR_PRODUCT_TEAM_ID && e.POLAR_PRODUCT_PRO_ID),
   { message: 'KINORA_CLOUD=true requires POLAR_ACCESS_TOKEN, POLAR_WEBHOOK_SECRET, POLAR_PRODUCT_TEAM_ID and POLAR_PRODUCT_PRO_ID' },
@@ -55,3 +60,26 @@ function resolveCloud(): CloudConfig | null {
 }
 
 export const cloud = resolveCloud()
+
+export interface S3Config {
+  endpoint: string
+  region: string
+  bucket: string
+  accessKey: string
+  secretKey: string
+}
+
+function resolveS3(): S3Config | null {
+  const {
+    S3_ENDPOINT: endpoint,
+    S3_REGION: region,
+    S3_BUCKET: bucket,
+    S3_ACCESS_KEY_ID: accessKey,
+    S3_SECRET_ACCESS_KEY: secretKey,
+  } = env
+  if (!endpoint || !region || !bucket || !accessKey || !secretKey)
+    return null
+  return { endpoint, region, bucket, accessKey, secretKey }
+}
+
+export const s3 = resolveS3()

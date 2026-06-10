@@ -208,5 +208,5 @@ publicApi.post('/runs/:runId/artifacts', async (c) => {
     size: buf.length,
   })
 
-  return c.json({ url: storage.url(key) }, 201)
+  return c.json({ url: await storage.url(key) }, 201)
 })

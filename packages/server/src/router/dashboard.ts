@@ -99,7 +99,7 @@ export const dashboardRouter = router({
         if (!a.testId)
           continue
         const m = urlsByTest.get(a.testId) ?? new Map<string, string>()
-        m.set(a.name, storage.url(a.storageKey))
+        m.set(a.name, await storage.url(a.storageKey))
         urlsByTest.set(a.testId, m)
       }
 
