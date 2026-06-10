@@ -1,0 +1,14 @@
+**/node_modules
+**/dist
+**/.astro
+.git
+.github
+**/.env
+**/.env.*
+!**/.env.example
+**/.data
+landing
+docs
+*.png
+.playwright-mcp
+**/*.log

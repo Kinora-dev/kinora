@@ -7,8 +7,9 @@ import { TEST_ENV } from './test-env'
 
 const serverDir = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 
-// Create the dedicated test database (separate from the dev `kinora` DB) and push
-// the Drizzle schema into it once, before any test runs.
+// Recreate the dedicated test DB and run the knex migrations
+// into it once, before any test runs. A fresh DB each run also
+// validates the migrations against the same schema tests exercise.
 export default async function setup(): Promise<void> {
   const admin = new Client({
     user: TEST_ENV.POSTGRES_USER,
@@ -18,13 +19,11 @@ export default async function setup(): Promise<void> {
     database: 'postgres',
   })
   await admin.connect()
-  const { rowCount } = await admin.query('SELECT 1 FROM pg_database WHERE datname = $1', [TEST_ENV.POSTGRES_DB])
-  if (!rowCount)
-    await admin.query(`CREATE DATABASE ${TEST_ENV.POSTGRES_DB}`)
+  await admin.query(`DROP DATABASE IF EXISTS ${TEST_ENV.POSTGRES_DB} WITH (FORCE)`)
+  await admin.query(`CREATE DATABASE ${TEST_ENV.POSTGRES_DB}`)
   await admin.end()
 
-  // Dedicated config targets kinora_test and skips the strict app env (env.ts).
-  execSync('pnpm exec drizzle-kit push --force --config drizzle.test.config.ts', {
+  execSync('pnpm migrate latest', {
     cwd: serverDir,
     stdio: 'inherit',
     env: { ...process.env, ...TEST_ENV },
