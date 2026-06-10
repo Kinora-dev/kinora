@@ -38,7 +38,7 @@ function setTheme(value: ColorMode): void {
 const emailInput = ref(session.user.value?.email ?? '')
 const emailError = ref('')
 const emailSaving = ref(false)
-const emailValid = computed(() => /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/.test(emailInput.value.trim()))
+const emailValid = computed(() => z.email().safeParse(emailInput.value.trim()).success)
 
 async function updateEmail(): Promise<void> {
   emailError.value = ''

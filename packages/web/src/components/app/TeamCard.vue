@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kino
 import { Input } from '@kinora/ui/input'
 import { Check, Copy, Mail, ShieldCheck, Trash2, UserPlus } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
+import { z } from 'zod'
 import { useOrg } from '@/composables/useOrg'
 import { session } from '@/lib/session'
 
@@ -22,7 +23,7 @@ const ROLE_HINTS = {
   member: 'Can view dashboards, runs, and alerts.',
   admin: 'Can also invite teammates and manage the workspace.',
 } as const
-const emailValid = computed(() => /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/.test(inviteEmail.value.trim()))
+const emailValid = computed(() => z.email().safeParse(inviteEmail.value.trim()).success)
 
 async function onInvite(): Promise<void> {
   const id = await invite(inviteEmail.value, inviteRole.value)
