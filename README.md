@@ -88,7 +88,7 @@ pnpm install
 cd packages/server
 cp .env.example .env
 docker compose up -d            # Postgres on :5436
-pnpm migrate lastest            # create tables
+pnpm migrate latest             # create tables
 pnpm db:seed                    # seed a demo account + data, prints login + an API token
 pnpm dev                        # server on :3000
 
