@@ -17,6 +17,11 @@ const inviteEmail = ref('')
 const inviteRole = ref<'member' | 'admin'>('member')
 const inviteLink = ref('')
 const copied = ref(false)
+
+const ROLE_HINTS = {
+  member: 'Can view dashboards, runs, and alerts.',
+  admin: 'Can also invite teammates and manage the workspace.',
+} as const
 const emailValid = computed(() => /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/.test(inviteEmail.value.trim()))
 
 async function onInvite(): Promise<void> {
@@ -125,7 +130,7 @@ function initialOf(m: { user?: { name?: string | null, email?: string | null } }
                   variant="outline"
                   size="sm"
                   class="font-mono text-xs"
-                  :class="inviteRole === r ? 'border-signal/60 text-signal' : 'text-muted-foreground'"
+                  :class="inviteRole === r ? 'border-signal/60 text-signal hover:text-signal' : 'text-muted-foreground'"
                   @click="inviteRole = r"
                 >
                   {{ r }}
@@ -136,6 +141,9 @@ function initialOf(m: { user?: { name?: string | null, email?: string | null } }
                 {{ inviting ? 'Inviting…' : 'Invite' }}
               </Button>
             </div>
+            <p class="font-mono text-[11px] text-muted-foreground">
+              <span class="text-foreground">{{ inviteRole }}</span> · {{ ROLE_HINTS[inviteRole] }}
+            </p>
           </div>
 
           <!-- Pending invitations -->
