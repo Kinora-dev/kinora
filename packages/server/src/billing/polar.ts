@@ -25,7 +25,7 @@ export function polarAuthPlugin() {
           { productId: cloud.teamProductId, slug: 'team' },
           { productId: cloud.proProductId, slug: 'pro' },
         ],
-        successUrl: `${getTrustedOrigins()[0] ?? ''}/settings?checkout=success`,
+        successUrl: `${getTrustedOrigins()[0] ?? ''}/settings/workspace?checkout=success`,
         authenticatedUsersOnly: true,
       }),
       portal(),

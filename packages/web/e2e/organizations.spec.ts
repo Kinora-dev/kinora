@@ -32,7 +32,7 @@ test.describe('organizations', () => {
     await page.getByRole('menuitem', { name: /Acme QA/i }).click()
     await expect(page).toHaveURL('/')
 
-    await page.goto('/settings')
+    await page.goto('/settings/workspace')
     // demo is a member (not admin) of Acme: no invite form, just the notice
     await expect(page.getByText(/Only admins can invite/i)).toBeVisible()
     await expect(page.getByLabel('Invite by email')).toHaveCount(0)
@@ -43,7 +43,7 @@ test.describe('organizations', () => {
     await login(page, TEAMMATE)
     await expect(page.getByRole('button', { name: workspaceButton })).toBeVisible()
 
-    await page.goto('/settings')
+    await page.goto('/settings/workspace')
     await expect(page.getByLabel('Invite by email')).toBeVisible()
   })
 })

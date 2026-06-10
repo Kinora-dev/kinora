@@ -133,8 +133,8 @@ const runSnippet = `KINORA_URL=${env.serverUrl} KINORA_TOKEN=<token> \\
 
       <p class="mt-8 text-xs text-muted-foreground">
         Manage tokens any time in
-        <RouterLink :to="{ name: 'settings' }" class="font-medium text-foreground underline-offset-4 hover:underline">
-          Settings
+        <RouterLink :to="{ name: 'settings-workspace' }" class="font-medium text-foreground underline-offset-4 hover:underline">
+          Workspace settings
         </RouterLink>.
       </p>
     </div>

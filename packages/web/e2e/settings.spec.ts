@@ -15,6 +15,8 @@ test('keeps change password disabled until the form is valid', async ({ page }) 
 })
 
 test('creates and deletes an API token', async ({ page }) => {
+  // Tokens live on the workspace settings page.
+  await page.goto('/settings/workspace')
   const name = `e2e-${Date.now()}`
 
   await page.locator('#token-name').fill(name)

@@ -7,7 +7,15 @@ export const router = createRouter({
     { path: '/login', name: 'login', component: () => import('@/pages/LoginPage.vue'), meta: { public: true } },
     { path: '/signup', name: 'signup', component: () => import('@/pages/SignupPage.vue'), meta: { public: true } },
     { path: '/', name: 'overview', component: () => import('@/pages/OverviewPage.vue') },
-    { path: '/settings', name: 'settings', component: () => import('@/pages/SettingsPage.vue') },
+    {
+      path: '/settings',
+      component: () => import('@/pages/SettingsLayout.vue'),
+      children: [
+        { path: '', redirect: { name: 'settings-account' } },
+        { path: 'account', name: 'settings-account', component: () => import('@/pages/AccountSettingsPage.vue') },
+        { path: 'workspace', name: 'settings-workspace', component: () => import('@/pages/WorkspaceSettingsPage.vue') },
+      ],
+    },
     {
       path: '/accept-invite/:invitationId',
       name: 'accept-invite',

@@ -26,8 +26,10 @@ const ready = session.ready
         <div v-else class="min-h-svh bg-background app-grid">
           <AppHeader />
           <main class="mx-auto max-w-7xl px-5 py-8">
+            <!-- Settings tabs share one layout: collapse their key so switching tabs swaps
+                 the child view instantly instead of re-running the page transition. -->
             <Transition name="page" mode="out-in">
-              <component :is="Component" :key="route.path" />
+              <component :is="Component" :key="route.path.startsWith('/settings/') ? 'settings' : route.path" />
             </Transition>
           </main>
         </div>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Avatar, AvatarFallback, AvatarImage } from '@kinora/ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@kinora/ui/dropdown-menu'
-import { Check, ChevronsUpDown, LogOut, Settings } from 'lucide-vue-next'
+import { Check, ChevronsUpDown, LogOut, Settings, SlidersHorizontal } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useOrg } from '@/composables/useOrg'
@@ -61,6 +61,13 @@ async function signOut(): Promise<void> {
               <Check class="size-4 shrink-0" :class="o.id === activeOrgId ? 'opacity-100 text-signal' : 'opacity-0'" />
               <span class="truncate">{{ o.name }}</span>
             </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem as-child>
+              <RouterLink :to="{ name: 'settings-workspace' }">
+                <SlidersHorizontal class="size-4" />
+                Workspace settings
+              </RouterLink>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -88,7 +95,7 @@ async function signOut(): Promise<void> {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem as-child>
-              <RouterLink :to="{ name: 'settings' }">
+              <RouterLink :to="{ name: 'settings-account' }">
                 <Settings class="size-4" />
                 Settings
               </RouterLink>
