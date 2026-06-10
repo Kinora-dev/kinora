@@ -144,9 +144,6 @@ importers:
       '@types/pg':
         specifier: ^8.20.0
         version: 8.20.0
-      drizzle-kit:
-        specifier: ^0.31.10
-        version: 0.31.10
       tsdown:
         specifier: ^0.22.2
         version: 0.22.2(tsx@4.22.4)(typescript@6.0.3)
@@ -4373,7 +4370,8 @@ snapshots:
   '@colors/colors@1.5.0':
     optional: true
 
-  '@drizzle-team/brocli@0.10.2': {}
+  '@drizzle-team/brocli@0.10.2':
+    optional: true
 
   '@e18e/eslint-plugin@0.4.1(eslint@10.4.1(jiti@2.7.0))':
     dependencies:
@@ -4421,11 +4419,13 @@ snapshots:
     dependencies:
       esbuild: 0.18.20
       source-map-support: 0.5.21
+    optional: true
 
   '@esbuild-kit/esm-loader@2.6.5':
     dependencies:
       '@esbuild-kit/core-utils': 3.3.2
       get-tsconfig: 4.14.0
+    optional: true
 
   '@esbuild/aix-ppc64@0.25.12':
     optional: true
@@ -5628,7 +5628,8 @@ snapshots:
       node-releases: 2.0.47
       update-browserslist-db: 1.2.3(browserslist@4.28.2)
 
-  buffer-from@1.1.2: {}
+  buffer-from@1.1.2:
+    optional: true
 
   builtin-modules@5.2.0: {}
 
@@ -5765,6 +5766,7 @@ snapshots:
       '@esbuild-kit/esm-loader': 2.6.5
       esbuild: 0.25.12
       tsx: 4.22.4
+    optional: true
 
   drizzle-orm@0.45.2(@types/pg@8.20.0)(knex@3.2.10(pg@8.21.0))(kysely@0.29.2)(pg@8.21.0):
     optionalDependencies:
@@ -5822,6 +5824,7 @@ snapshots:
       '@esbuild/win32-arm64': 0.18.20
       '@esbuild/win32-ia32': 0.18.20
       '@esbuild/win32-x64': 0.18.20
+    optional: true
 
   esbuild@0.25.12:
     optionalDependencies:
@@ -5851,6 +5854,7 @@ snapshots:
       '@esbuild/win32-arm64': 0.25.12
       '@esbuild/win32-ia32': 0.25.12
       '@esbuild/win32-x64': 0.25.12
+    optional: true
 
   esbuild@0.28.0:
     optionalDependencies:
@@ -7287,8 +7291,10 @@ snapshots:
     dependencies:
       buffer-from: 1.1.2
       source-map: 0.6.1
+    optional: true
 
-  source-map@0.6.1: {}
+  source-map@0.6.1:
+    optional: true
 
   spdx-exceptions@2.5.0: {}
 

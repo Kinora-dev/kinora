@@ -4,5 +4,5 @@
     "lib": ["ES2023"],
     "types": ["node"]
   },
-  "include": ["src/**/*.ts", "scripts/**/*.ts", "migrations/**/*.ts", "test/**/*.ts", "drizzle.config.ts", "drizzle.test.config.ts", "tsdown.config.ts", "vitest.config.ts"]
+  "include": ["src/**/*.ts", "scripts/**/*.ts", "migrations/**/*.ts", "test/**/*.ts", "tsdown.config.ts", "vitest.config.ts"]
 }

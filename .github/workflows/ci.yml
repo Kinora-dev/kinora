@@ -131,7 +131,7 @@ jobs:
 
       - name: Push schema + seed demo data
         run: |
-          pnpm --filter @kinora/server db:push
+          pnpm --filter @kinora/server migrate latest
           pnpm --filter @kinora/server db:seed
 
       - name: E2E (boots server + web, runs viewer + web suites)
