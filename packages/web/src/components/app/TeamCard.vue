@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@kinora/ui/alert-dialog'
 import { Button } from '@kinora/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kinora/ui/card'
 import { Input } from '@kinora/ui/input'
@@ -90,16 +91,33 @@ function initialOf(m: { user?: { name?: string | null, email?: string | null } }
               >
                 {{ m.role === 'admin' ? 'Make member' : 'Make admin' }}
               </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                class="size-8 text-muted-foreground hover:text-fail"
-                aria-label="Remove member"
-                @click="removeMember(m.id)"
-              >
-                <Trash2 class="size-4" />
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger as-child>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    class="size-8 text-muted-foreground hover:text-fail"
+                    aria-label="Remove member"
+                  >
+                    <Trash2 class="size-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Remove {{ m.user?.name || m.user?.email }}?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      They lose access to this workspace. You can invite them again later.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction class="bg-destructive text-white hover:bg-destructive/90" @click="removeMember(m.id)">
+                      Remove
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </li>
         </ul>
