@@ -2,10 +2,10 @@ import type { CiMeta, Counts, GitMeta, IngestRun, NormTest } from '@kinora/core'
 import type { FullConfig, FullResult, Reporter, Suite, TestCase } from '@playwright/test/reporter'
 import { readFile } from 'node:fs/promises'
 import process from 'node:process'
-import { createIngestClient, IngestError, isTraceAttachment, makeTestKey } from '@kinora/core'
+import { createIngestClient, DEFAULT_KINORA_URL, IngestError, isTraceAttachment, makeTestKey } from '@kinora/core'
 
 export interface KinoraReporterOptions {
-  /** kinora server base URL. Defaults to env KINORA_URL. */
+  /** kinora server base URL. Defaults to env KINORA_URL, then the hosted cloud. Set for self-host. */
   url?: string
   /** Project API token. Defaults to env KINORA_TOKEN (keep it out of the config file). */
   token?: string
@@ -101,10 +101,10 @@ export default class KinoraReporter implements Reporter {
   }
 
   async onEnd(result: FullResult): Promise<void> {
-    const url = this.options.url ?? process.env.KINORA_URL
+    const url = this.options.url ?? process.env.KINORA_URL ?? DEFAULT_KINORA_URL
     const token = this.options.token ?? process.env.KINORA_TOKEN
-    if (!url || !token) {
-      console.warn('[kinora] skipping upload: missing url/token (set KINORA_URL + KINORA_TOKEN)')
+    if (!token) {
+      console.warn('[kinora] skipping upload: missing token (set KINORA_TOKEN)')
       return
     }
 

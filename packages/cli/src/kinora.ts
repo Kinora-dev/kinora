@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import process from 'node:process'
 import { parseArgs } from 'node:util'
-import { IngestError } from '@kinora/core'
+import { DEFAULT_KINORA_URL, IngestError } from '@kinora/core'
 import { importReports } from './import'
 import { uploadReport } from './upload'
 
@@ -18,7 +18,7 @@ Required:
 
 Auth (or via env KINORA_TOKEN / KINORA_URL):
   --token <token>       Project API token
-  --url <url>           kinora server base URL
+  --url <url>           kinora server base URL (default: hosted cloud; set for self-host)
 
 Options:
   --name <name>         Project display name (default: slug)
@@ -62,10 +62,8 @@ async function main(): Promise<void> {
   if (!values.project)
     fail('--project <slug> is required')
 
-  const url = values.url ?? process.env.KINORA_URL
+  const url = values.url ?? process.env.KINORA_URL ?? DEFAULT_KINORA_URL
   const token = values.token ?? process.env.KINORA_TOKEN
-  if (!url)
-    fail('--url or KINORA_URL is required')
   if (!token)
     fail('--token or KINORA_TOKEN is required')
 

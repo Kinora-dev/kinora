@@ -3,6 +3,9 @@ import type { CiMeta, GitMeta } from '../contracts/kinora'
 import { ingestRunResultSchema, uploadArtifactResultSchema } from '../contracts/ingest'
 import { ingestPlaywrightReport } from './normalize'
 
+// Hosted ingest endpoint. Reporter/CLI fall back to this when no url is given; self-host overrides.
+export const DEFAULT_KINORA_URL = 'https://api.kinora.dev'
+
 export interface BuildIngestRunOptions {
   project: { slug: string, name: string }
   git?: GitMeta

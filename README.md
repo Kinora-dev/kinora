@@ -58,11 +58,17 @@ export default defineConfig({
 })
 ```
 
-Set the target + token via env (keep the token out of the config / in CI secrets):
+Set the token via env (keep it out of the config / in CI secrets):
 
 ```bash
+# hosted cloud: token only, the URL defaults to the kinora cloud
+KINORA_TOKEN=<project-token> npx playwright test
+
+# self-host: point at your own server
 KINORA_URL=https://your-kinora-server KINORA_TOKEN=<project-token> npx playwright test
 ```
+
+On GitHub Actions, git and CI metadata are filled in automatically. See [`@kinora/reporter`](packages/reporter) for all options and the CI example.
 
 ### CLI (manual)
 
@@ -70,12 +76,11 @@ For setups without the reporter, or to upload an existing `results.json` from a 
 
 ```bash
 # playwright.config.ts: reporter: [['json', { outputFile: 'results.json' }]]
-npx @kinora/cli upload results.json --project web-app \
-  --url https://your-kinora-server --token <project-token>
-# (or KINORA_URL / KINORA_TOKEN env)
+npx @kinora/cli upload results.json --project web-app --token <project-token>
+# --url defaults to the hosted cloud, add --url https://your-kinora-server to self-host
 ```
 
-Both paths share `@kinora/core` (same normalization + ingest client), so a test keeps a stable identity across runs and ingest methods.
+The CLI can also bulk-import a backlog of historical reports (`kinora import <dir>`). See [`@kinora/cli`](packages/cli) for all flags and the CI example.
 
 ## Development
 

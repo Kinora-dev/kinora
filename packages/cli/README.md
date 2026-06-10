@@ -1,31 +1,62 @@
 # @kinora/cli
 
-CLI that turns a Playwright `json` report into [kinora](https://github.com/joris-gallot/kinora) data files. It strips the heavy base64 attachment bodies, writes a lightweight per-run report, and upserts a manifest - the two documents the kinora dashboard reads.
+CLI that uploads a Playwright `json` report to a [kinora](https://github.com/joris-gallot/kinora) server. Use it when you can't run the [`@kinora/reporter`](https://github.com/joris-gallot/kinora/tree/main/packages/reporter) inline (e.g. results are produced in one CI job and uploaded from another), or to bulk-import a backlog of historical reports.
 
-## Usage
+## Upload a single report
 
-```bash
-npx @kinora/cli results.json --project web-app --name "Web App E2E"
-```
-
-Writes `kinora-data/manifest.json` and `kinora-data/reports/<project>/<run>.json`. Host that directory on any static host and point the dashboard's `baseUrl` at it.
-
-Produce `results.json` with Playwright's built-in reporter:
+Produce `results.json` with Playwright's built-in json reporter:
 
 ```ts
 // playwright.config.ts
 reporter: [['json', { outputFile: 'results.json' }]]
 ```
 
+Then upload it:
+
+```bash
+# hosted cloud: token only, the URL defaults to the kinora cloud
+npx @kinora/cli upload results.json --project web-app --token <project-token>
+
+# self-host: point at your own server
+npx @kinora/cli upload results.json --project web-app \
+  --url https://kinora.example.com --token <project-token>
+```
+
+Create a project API token in the kinora dashboard (Settings → API tokens). Auth can also come from the environment: `KINORA_TOKEN` and `KINORA_URL`.
+
+## Bulk import (historical backfill)
+
+Import every `*.json` report under a directory in one go - useful for seeding history from an existing archive. Imported runs are capped and metered like normal, but skip alerts (no notification spam), and traces are not uploaded.
+
+```bash
+npx @kinora/cli import ./reports --project web-app --token <project-token> --concurrency 8
+```
+
 ## Options
 
 ```
---project <id>        required, stable slug per Playwright project
---name <name>         display name (defaults to id)
---run <id>            run id (defaults to report date, YYYY-MM-DD)
---out <dir>           output root (default: kinora-data)
---git-sha / --git-branch
---ci-provider / --ci-run-url / --ci-run-number
+--project <slug>      required, target project slug
+--token <token>       project API token (or env KINORA_TOKEN)
+--url <url>           server base URL (or env KINORA_URL; default: hosted cloud, set for self-host)
+--name <name>         project display name (default: slug)
+--git-sha <sha>
+--git-branch <branch>
+--ci-provider <name>
+--ci-run-url <url>
+--ci-run-number <n>
+--concurrency <n>     parallel uploads for bulk import (default: 6)
+-h, --help
 ```
 
-Re-running the same `--run` replaces that entry. See the [main README](https://github.com/joris-gallot/kinora#readme) for the full workflow and CI example.
+## CI example (GitHub Actions)
+
+```yaml
+- run: npx playwright test --reporter=json --output=results.json
+- run: npx @kinora/cli upload results.json --project web-app
+  if: always()
+  env:
+    KINORA_TOKEN: ${{ secrets.KINORA_TOKEN }}
+    # KINORA_URL only when self-hosting
+```
+
+See the [main README](https://github.com/joris-gallot/kinora#readme) for the full workflow, the reporter, and self-hosting.
