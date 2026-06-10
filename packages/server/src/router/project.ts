@@ -4,11 +4,11 @@ import { db } from '../db'
 import { artifact, project } from '../db/schemas/index'
 import { logger } from '../lib/logger'
 import { storage } from '../lib/storage'
-import { orgProcedure, router } from '../trpc/index'
+import { adminProcedure, router } from '../trpc/index'
 import { ownedProject } from './dashboard'
 
 export const projectRouter = router({
-  rename: orgProcedure
+  rename: adminProcedure
     .input(z.object({ projectId: z.string(), name: z.string().trim().min(1).max(100) }))
     .mutation(async ({ ctx, input }) => {
       const p = await ownedProject(ctx.organizationId, input.projectId)
@@ -16,7 +16,7 @@ export const projectRouter = router({
       return { ok: true }
     }),
 
-  updateDescription: orgProcedure
+  updateDescription: adminProcedure
     .input(z.object({ projectId: z.string(), description: z.string().max(2000) }))
     .mutation(async ({ ctx, input }) => {
       const p = await ownedProject(ctx.organizationId, input.projectId)
@@ -24,7 +24,7 @@ export const projectRouter = router({
       return { ok: true }
     }),
 
-  delete: orgProcedure
+  delete: adminProcedure
     .input(z.object({ projectId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const p = await ownedProject(ctx.organizationId, input.projectId)

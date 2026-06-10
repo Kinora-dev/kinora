@@ -13,7 +13,7 @@ import { useOrg } from '@/composables/useOrg'
 
 const labelClass = 'font-mono text-[11px] tracking-wider text-muted-foreground uppercase'
 
-const { org, isOwner } = useOrg()
+const { org, isOwner, isAdmin } = useOrg()
 const orgName = computed(() => org.value?.name ?? 'Workspace')
 
 // --- API tokens ---
@@ -218,8 +218,8 @@ function fmtDate(d: Date | string | null | undefined): string {
           </div>
         </div>
 
-        <!-- Create -->
-        <div class="flex items-end gap-2">
+        <!-- Create (admins only) -->
+        <div v-if="isAdmin" class="flex items-end gap-2">
           <div class="flex flex-1 flex-col gap-1.5">
             <label class="font-mono text-[11px] tracking-wider text-muted-foreground uppercase" for="token-name">
               New token name
@@ -231,6 +231,9 @@ function fmtDate(d: Date | string | null | undefined): string {
             {{ creating ? 'Creating…' : 'Create' }}
           </Button>
         </div>
+        <p v-else class="font-mono text-[11px] text-muted-foreground">
+          Only admins can create or revoke tokens.
+        </p>
 
         <!-- List -->
         <div v-if="loadingTokens" class="py-4 text-center font-mono text-xs text-muted-foreground">
@@ -251,6 +254,7 @@ function fmtDate(d: Date | string | null | undefined): string {
               </p>
             </div>
             <Button
+              v-if="isAdmin"
               type="button"
               variant="ghost"
               size="icon"

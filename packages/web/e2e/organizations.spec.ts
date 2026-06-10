@@ -33,9 +33,11 @@ test.describe('organizations', () => {
     await expect(page).toHaveURL('/')
 
     await page.goto('/settings/workspace')
-    // demo is a member (not admin) of Acme: no invite form, just the notice
+    // demo is a member (not admin) of Acme: no invite form, no token controls
     await expect(page.getByText(/Only admins can invite/i)).toBeVisible()
     await expect(page.getByLabel('Invite by email')).toHaveCount(0)
+    await expect(page.locator('#token-name')).toHaveCount(0)
+    await expect(page.getByText(/Only admins can create or revoke tokens/i)).toBeVisible()
   })
 
   test('an owner can invite in their own workspace', async ({ page }) => {

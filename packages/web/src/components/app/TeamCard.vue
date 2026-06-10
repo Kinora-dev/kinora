@@ -20,8 +20,8 @@ const inviteLink = ref('')
 const copied = ref(false)
 
 const ROLE_HINTS = {
-  member: 'Can view dashboards, runs, and alerts.',
-  admin: 'Can also invite teammates and manage the workspace.',
+  member: 'View-only: dashboards, runs, and traces.',
+  admin: 'Can manage projects, alerts, API tokens, and invite teammates.',
 } as const
 const emailValid = computed(() => z.email().safeParse(inviteEmail.value.trim()).success)
 

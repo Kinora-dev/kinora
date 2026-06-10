@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { db } from '../db'
 import { apikey } from '../db/schemas/index'
 import { auth } from '../lib/auth'
-import { orgProcedure, router } from '../trpc/index'
+import { adminProcedure, orgProcedure, router } from '../trpc/index'
 
 // Ingest tokens belong to the active org (referenceId = orgId), not the user who created them.
 export const tokenRouter = router({
@@ -15,7 +15,7 @@ export const tokenRouter = router({
     })
   }),
 
-  create: orgProcedure
+  create: adminProcedure
     .input(z.object({ name: z.string().trim().min(1).max(100) }))
     .mutation(async ({ ctx, input }) => {
       const created = await auth.api.createApiKey({ body: { name: input.name, userId: ctx.user.id } })
@@ -24,7 +24,7 @@ export const tokenRouter = router({
       return { key: created.key }
     }),
 
-  revoke: orgProcedure
+  revoke: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       await db.delete(apikey).where(and(eq(apikey.id, input.id), eq(apikey.referenceId, ctx.organizationId)))

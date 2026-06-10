@@ -6,7 +6,7 @@ import { getEntitlements } from '../billing/entitlements'
 import { db } from '../db'
 import { slackIntegration } from '../db/schemas/index'
 import { slackApp } from '../lib/env'
-import { orgProcedure, router } from '../trpc/index'
+import { adminProcedure, orgProcedure, router } from '../trpc/index'
 import { ownedProject } from './dashboard'
 
 const policySchema = z.enum(['always', 'on-failure', 'on-regression'])
@@ -31,7 +31,7 @@ export const alertsRouter = router({
       return channel ?? null
     }),
 
-  upsert: orgProcedure
+  upsert: adminProcedure
     .input(z.object({
       projectId: z.string(),
       webhookUrl: z.string().url(),
@@ -50,7 +50,7 @@ export const alertsRouter = router({
     }),
 
   // OAuth path: webhook comes from the install flow, so only policy/enabled are edited here.
-  updateSettings: orgProcedure
+  updateSettings: adminProcedure
     .input(z.object({
       projectId: z.string(),
       policy: policySchema,
@@ -69,7 +69,7 @@ export const alertsRouter = router({
       return { ok: true }
     }),
 
-  disconnect: orgProcedure
+  disconnect: adminProcedure
     .input(z.object({ projectId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const project = await ownedProject(ctx.organizationId, input.projectId)
@@ -77,7 +77,7 @@ export const alertsRouter = router({
       return { ok: true }
     }),
 
-  test: orgProcedure
+  test: adminProcedure
     .input(z.object({ projectId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       await requireAlerts(ctx.organizationId)
