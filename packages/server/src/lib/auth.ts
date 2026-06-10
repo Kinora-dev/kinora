@@ -24,6 +24,13 @@ export const auth = betterAuth({
   },
   // No SMTP yet: emails stay unverified, so apply the new address directly instead of mailing a verification link.
   user: { changeEmail: { enabled: true, updateEmailWithoutVerification: true } },
+  // Prod: share the session cookie across app.kinora.dev <-> api.kinora.dev
+  advanced: {
+    crossSubDomainCookies: {
+      enabled: env.NODE_ENV === 'production',
+      domain: '.kinora.dev',
+    },
+  },
   secret: env.AUTH_SECRET,
   plugins: [apiKey(), lastLoginMethod(), polarAuthPlugin()].filter(
     (plugin): plugin is NonNullable<typeof plugin> => plugin !== null,
