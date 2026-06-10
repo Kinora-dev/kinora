@@ -18,7 +18,9 @@ export function polarAuthPlugin() {
 
   return polar({
     client: polarClient,
-    createCustomerOnSignUp: true,
+    // We create the customer ourselves in the signup hook (non-fatal) so a Polar
+    // hiccup never blocks sign-up; the plugin's own create is fatal on failure.
+    createCustomerOnSignUp: false,
     use: [
       checkout({
         products: [

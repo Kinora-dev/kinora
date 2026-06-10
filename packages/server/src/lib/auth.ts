@@ -4,7 +4,7 @@ import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { lastLoginMethod, organization } from 'better-auth/plugins'
 import { and, eq } from 'drizzle-orm'
-import { polarAuthPlugin } from '../billing/polar'
+import { polarAuthPlugin, polarClient } from '../billing/polar'
 import { db } from '../db'
 import { member, organization as organizationTable } from '../db/schemas/index'
 import { env } from './env'
@@ -50,6 +50,15 @@ export const auth = betterAuth({
             userId: createdUser.id,
             role: 'owner',
           })
+
+          if (polarClient) {
+            try {
+              await polarClient.customers.create({ email: createdUser.email, name: createdUser.name, externalId: createdUser.id })
+            }
+            catch (error) {
+              logger.warn({ error, userId: createdUser.id }, 'polar customer creation skipped')
+            }
+          }
         },
       },
     },

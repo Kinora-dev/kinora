@@ -75,6 +75,39 @@ test.describe('organizations', () => {
     await expect(page.getByRole('link', { name: /Sign in/i })).toBeVisible()
   })
 
+  test('a new user signs up through an invite link and joins the workspace', async ({ page }) => {
+    // Owner (demo) generates a real invitation and grabs its link.
+    await login(page)
+    await page.goto('/settings/workspace')
+    const email = `invitee-${Date.now()}@test.dev`
+    await page.getByLabel('Invite by email').fill(email)
+    await page.getByRole('button', { name: 'Invite', exact: true }).click()
+
+    const code = page.locator('code', { hasText: '/accept-invite/' })
+    await expect(code).toBeVisible()
+    const invitePath = new URL(((await code.textContent()) ?? '').trim()).pathname
+
+    // Sign out, then open the invite as a brand-new (unauthenticated) user.
+    await page.locator('button[title="Demo User"]').click()
+    await page.getByRole('menuitem', { name: 'Sign out' }).click()
+    await expect(page).toHaveURL('/login')
+
+    await page.goto(invitePath)
+    await expect(page.getByText(/You've been invited/i)).toBeVisible()
+    await page.getByRole('link', { name: /Create account/i }).click()
+    await expect(page).toHaveURL(/\/signup\?redirect=/)
+
+    // Sign up with the invited email -> bounced back to the invite -> auto-accepted -> overview.
+    await page.locator('input[type="email"]').fill(email)
+    await page.locator('input[type="password"]').nth(0).fill('password123')
+    await page.locator('input[type="password"]').nth(1).fill('password123')
+    await page.locator('button[type="submit"]').click()
+    await expect(page).toHaveURL('/')
+
+    // Joined: the active workspace is the inviter's, shown in the switcher.
+    await expect(page.getByRole('button', { name: /Demo User's workspace/i })).toBeVisible()
+  })
+
   test('an owner can invite in their own workspace', async ({ page }) => {
     // teammate owns a single workspace -> owner/admin controls available
     await login(page, TEAMMATE)

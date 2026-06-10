@@ -18,8 +18,8 @@ const ready = session.ready
          must not sit directly inside <Transition>. -->
     <div v-else>
       <RouterView v-slot="{ Component, route }">
-        <!-- Public pages (login / signup) render standalone, no app chrome. -->
-        <Transition v-if="route.meta.public" name="page" mode="out-in">
+        <!-- Public pages (login / signup) + the invite hand-off render standalone, no app chrome. -->
+        <Transition v-if="route.meta.public || route.meta.invite" name="page" mode="out-in">
           <component :is="Component" :key="route.path" />
         </Transition>
         <!-- App pages get the header + control-room grid shell. -->

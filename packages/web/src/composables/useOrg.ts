@@ -26,6 +26,15 @@ async function load(): Promise<void> {
   ])
   org.value = (full.data as FullOrg | null) ?? null
   orgs.value = (list.data as OrgList | null) ?? []
+
+  // Session has orgs but none active (e.g. fresh sign-up, where the membership lands
+  // after the session is created): activate one and persist it on the session.
+  const first = orgs.value[0]
+  if (!org.value && first) {
+    await authClient.organization.setActive({ organizationId: first.id })
+    org.value = ((await authClient.organization.getFullOrganization()).data as FullOrg | null) ?? null
+  }
+
   loaded = true
   loading.value = false
 }
