@@ -44,6 +44,7 @@ export const router = createRouter({
       component: () => import('@/pages/TestHistoryPage.vue'),
       props: true,
     },
+    { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/pages/NotFoundPage.vue') },
   ],
   scrollBehavior: () => ({ top: 0 }),
 })
