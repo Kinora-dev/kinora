@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { SessionUser } from '@/lib/session'
 import { Button } from '@kinora/ui/button'
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@kinora/ui/form'
 import { Input } from '@kinora/ui/input'
@@ -38,12 +39,13 @@ const { handleSubmit, isSubmitting } = useForm({
 
 const onSubmit = handleSubmit(async (values) => {
   serverError.value = ''
-  const { error } = await authClient.signUp.email({ name: values.email, email: values.email, password: values.password })
-  if (error) {
-    serverError.value = error.message ?? 'Sign up failed'
+  const { data, error } = await authClient.signUp.email({ name: values.email, email: values.email, password: values.password })
+  if (error || !data) {
+    serverError.value = error?.message ?? 'Sign up failed'
     return
   }
-  await session.refresh()
+  // Set the user from the response so the redirect never races the session cookie.
+  session.setUser({ ...data.user, hasPassword: true } as unknown as SessionUser)
   router.push(destination())
 })
 

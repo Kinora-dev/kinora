@@ -66,6 +66,12 @@ test.describe('organizations', () => {
     await expect(page.getByRole('button', { name: /Acme QA's workspace/i })).toHaveCount(0)
   })
 
+  test('shows an error for an invalid invitation', async ({ page }) => {
+    await login(page)
+    await page.goto('/accept-invite/does-not-exist')
+    await expect(page.getByText(/Invitation unavailable/i)).toBeVisible()
+  })
+
   test('an unauthenticated invitee is not bounced to login', async ({ page }) => {
     // A logged-out invite link must show the join CTA, not redirect to /login (losing the link).
     await page.goto('/accept-invite/some-invitation-id')
