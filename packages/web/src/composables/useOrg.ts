@@ -84,8 +84,9 @@ export function useOrg(options?: { autoLoad?: boolean }) {
 
   async function setActive(organizationId: string): Promise<void> {
     await authClient.organization.setActive({ organizationId })
-    // Active org lives on the session; reload so every org-scoped query refetches.
-    window.location.reload()
+    // Land on the overview: the current project/run URL may not exist in the new org.
+    // Full navigation so every org-scoped query refetches fresh.
+    window.location.assign('/')
   }
 
   if ((options?.autoLoad ?? true) && !loaded && !loading.value)
