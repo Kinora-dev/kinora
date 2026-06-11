@@ -8,9 +8,7 @@ const configSnippet = `export default defineConfig({
   use: { trace: 'on-first-retry' },
 })`
 
-const runSnippet = `KINORA_URL=https://your-kinora-server \\
-KINORA_TOKEN=<project-token> \\
-  npx playwright test`
+const runSnippet = `KINORA_TOKEN=<project-token> npx playwright test`
 
 const steps: {
   num: string
@@ -30,8 +28,8 @@ const steps: {
   },
   {
     num: '02',
-    title: 'Point it at your server',
-    body: 'Pass the target and a project token by env, kept out of the config and in CI secrets.',
+    title: 'Add your token',
+    body: 'Pass a project token by env, kept out of the config and in CI secrets. The reporter targets kinora cloud by default; set KINORA_URL when self-hosting.',
     code: runSnippet,
     filename: 'CI',
     lang: null,
