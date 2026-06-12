@@ -86,7 +86,8 @@ export const auth = betterAuth({
   },
   secret: env.AUTH_SECRET,
   plugins: [
-    apiKey(),
+    // Plugin default is 10 req/day per key, which any real CI exceeds, billing quotas already cap ingest volume.
+    apiKey({ rateLimit: { enabled: false } }),
     lastLoginMethod(),
     organization({
       // Only the auto-created personal org exists; members can't spin up extra orgs.

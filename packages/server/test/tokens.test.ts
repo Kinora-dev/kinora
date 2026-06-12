@@ -35,6 +35,16 @@ describe('tokens router', () => {
     expect((await (await caller(a)).dashboard.manifest()).projects).toHaveLength(1)
   })
 
+  it('is not rate limited by the api-key plugin default (10 req/day)', async () => {
+    const a = await createUser()
+    const { key } = await (await caller(a)).tokens.create({ name: 'ci' })
+
+    for (let i = 0; i < 12; i++) {
+      const res = await ingest(key)
+      expect(res.status).toBe(201)
+    }
+  })
+
   it('cannot revoke a token from another org', async () => {
     const a = await createUser('a@test.dev')
     const b = await createUser('b@test.dev')
