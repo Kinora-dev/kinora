@@ -27,6 +27,21 @@ describe('buildSlackMessage', () => {
     expect(msg.text).toContain('🔴')
     expect(msg.text).toContain('Newly failing (1)')
     expect(msg.text).toContain('login spec')
+    expect(msg.text).not.toContain('more')
+  })
+
+  it('truncates long lists with an "and x more" suffix', () => {
+    const msg = buildSlackMessage({
+      projectName: 'web-app',
+      runUrl: 'http://x/r',
+      counts: { total: 14, expected: 0, unexpected: 14, flaky: 0, skipped: 0 },
+      newlyFailing: Array.from({ length: 14 }, (_, i) => `test ${i + 1}`),
+      newlyFlaky: [],
+    })
+    expect(msg.text).toContain('Newly failing (14)')
+    expect(msg.text).toContain('test 10')
+    expect(msg.text).not.toContain('test 11')
+    expect(msg.text).toContain('and 4 more')
   })
 })
 

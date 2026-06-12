@@ -14,6 +14,11 @@ export interface SlackAlertInput {
 
 const MAX_LISTED = 10
 
+function listTests(titles: string[]): string {
+  const rest = titles.length - MAX_LISTED
+  return titles.slice(0, MAX_LISTED).join(', ') + (rest > 0 ? ` and ${rest} more` : '')
+}
+
 export function buildSlackMessage(input: SlackAlertInput): SlackPayload {
   const { counts } = input
   const ok = counts.unexpected === 0
@@ -22,9 +27,9 @@ export function buildSlackMessage(input: SlackAlertInput): SlackPayload {
     `${counts.expected} passed · ${counts.unexpected} failed · ${counts.flaky} flaky · ${counts.skipped} skipped`,
   ]
   if (input.newlyFailing.length)
-    lines.push(`*Newly failing (${input.newlyFailing.length}):* ${input.newlyFailing.slice(0, MAX_LISTED).join(', ')}`)
+    lines.push(`*Newly failing (${input.newlyFailing.length}):* ${listTests(input.newlyFailing)}`)
   if (input.newlyFlaky.length)
-    lines.push(`*Newly flaky (${input.newlyFlaky.length}):* ${input.newlyFlaky.slice(0, MAX_LISTED).join(', ')}`)
+    lines.push(`*Newly flaky (${input.newlyFlaky.length}):* ${listTests(input.newlyFlaky)}`)
   lines.push(`<${input.runUrl}|View run>`)
   return { text: lines.join('\n') }
 }
