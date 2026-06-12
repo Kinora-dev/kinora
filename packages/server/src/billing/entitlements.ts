@@ -1,6 +1,6 @@
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { db } from '../db'
-import { subscription } from '../db/schemas/index'
+import { member, subscription } from '../db/schemas/index'
 import { cloud, env } from '../lib/env'
 
 export type Tier = 'free' | 'team' | 'pro' | 'enterprise' | 'selfhost'
@@ -50,6 +50,14 @@ export async function syncCustomerState(state: CustomerStateInput): Promise<void
   if (!state.userId)
     return
 
+  // Polar customer = the org owner (externalId); the plan applies to the org they own.
+  const owner = await db.query.member.findFirst({
+    where: and(eq(member.userId, state.userId), eq(member.role, 'owner')),
+    columns: { organizationId: true },
+  })
+  if (!owner)
+    return
+
   const sub = state.subscriptions.find(s => tierForProduct(s.productId) !== 'free')
   const tier = tierForProduct(sub?.productId)
 
@@ -64,8 +72,8 @@ export async function syncCustomerState(state: CustomerStateInput): Promise<void
 
   await db
     .insert(subscription)
-    .values({ userId: state.userId, ...values })
-    .onConflictDoUpdate({ target: subscription.userId, set: values })
+    .values({ organizationId: owner.organizationId, ...values })
+    .onConflictDoUpdate({ target: subscription.organizationId, set: values })
 }
 
 export interface SubscriptionState {
@@ -74,25 +82,42 @@ export interface SubscriptionState {
   cancelAtPeriodEnd: boolean
 }
 
-export async function getSubscription(userId: string): Promise<SubscriptionState | null> {
+export async function getSubscription(organizationId: string): Promise<SubscriptionState | null> {
   if (!cloud)
     return null
 
   const row = await db.query.subscription.findFirst({
-    where: eq(subscription.userId, userId),
+    where: eq(subscription.organizationId, organizationId),
     columns: { status: true, currentPeriodEnd: true, cancelAtPeriodEnd: true },
   })
   return row ?? null
 }
 
-export async function getEntitlements(userId: string): Promise<Entitlements> {
+export async function getEntitlements(organizationId: string): Promise<Entitlements> {
   if (!cloud)
     return { tier: 'selfhost', ...LIMITS.selfhost }
 
   const row = await db.query.subscription.findFirst({
-    where: eq(subscription.userId, userId),
+    where: eq(subscription.organizationId, organizationId),
     columns: { tier: true },
   })
   const tier = row?.tier ?? 'free'
   return { tier, ...LIMITS[tier] }
+}
+
+export interface IngestCap {
+  error: string
+  limit: number
+}
+
+// Plan caps enforced at ingest. Pure: caller supplies the current counts. Returns the 402
+// payload to reject with, or null to allow.
+export function ingestCapError(e: Entitlements, usedResults: number, isNewProject: boolean, projectCount: number): IngestCap | null {
+  if (e.tier === 'free' && usedResults >= e.includedResults)
+    return { error: 'Free plan monthly test-result limit reached. Upgrade to keep ingesting.', limit: e.includedResults }
+
+  if (isNewProject && Number.isFinite(e.maxProjects) && projectCount >= e.maxProjects)
+    return { error: 'Plan project limit reached. Upgrade to add more projects.', limit: e.maxProjects }
+
+  return null
 }

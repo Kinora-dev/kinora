@@ -18,16 +18,18 @@ const ready = session.ready
          must not sit directly inside <Transition>. -->
     <div v-else>
       <RouterView v-slot="{ Component, route }">
-        <!-- Public pages (login / signup) render standalone, no app chrome. -->
-        <Transition v-if="route.meta.public" name="page" mode="out-in">
+        <!-- Public pages (login / signup) + the invite hand-off render standalone, no app chrome. -->
+        <Transition v-if="route.meta.public || route.meta.invite" name="page" mode="out-in">
           <component :is="Component" :key="route.path" />
         </Transition>
         <!-- App pages get the header + control-room grid shell. -->
         <div v-else class="min-h-svh bg-background app-grid">
           <AppHeader />
           <main class="mx-auto max-w-7xl px-5 py-8">
+            <!-- Settings tabs share one layout: collapse their key so switching tabs swaps
+                 the child view instantly instead of re-running the page transition. -->
             <Transition name="page" mode="out-in">
-              <component :is="Component" :key="route.path" />
+              <component :is="Component" :key="route.path.startsWith('/settings/') ? 'settings' : route.path" />
             </Transition>
           </main>
         </div>

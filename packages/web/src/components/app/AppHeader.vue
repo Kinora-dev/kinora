@@ -1,19 +1,25 @@
 <script setup lang="ts">
 import { Avatar, AvatarFallback, AvatarImage } from '@kinora/ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@kinora/ui/dropdown-menu'
-import { LogOut, Settings } from 'lucide-vue-next'
+import { Check, ChevronsUpDown, LogOut, Settings, SlidersHorizontal } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
+import { resetOrgState, useOrg } from '@/composables/useOrg'
 import { authClient } from '@/lib/auth'
 import { session } from '@/lib/session'
 
 const router = useRouter()
 const user = session.user
 
+const { orgs, org, setActive } = useOrg()
+const activeOrgId = computed(() => org.value?.id)
+const activeOrgName = computed(() => org.value?.name ?? 'Workspace')
+
 const initial = computed(() => (user.value?.name || user.value?.email || '?').charAt(0).toUpperCase())
 
 async function signOut(): Promise<void> {
   await authClient.signOut()
+  resetOrgState()
   session.setUser(null)
   router.push({ name: 'login' })
 }
@@ -35,7 +41,37 @@ async function signOut(): Promise<void> {
         </span>
       </RouterLink>
 
-      <div class="ml-auto flex items-center gap-1.5">
+      <div class="ml-auto flex items-center gap-2">
+        <!-- Active workspace: always visible so it's clear which org's data is shown. -->
+        <DropdownMenu v-if="org">
+          <DropdownMenuTrigger as-child>
+            <button
+              type="button"
+              class="flex items-center gap-1.5 rounded-md border border-border/70 px-2.5 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:border-border hover:text-foreground"
+            >
+              <span class="size-1.5 rounded-full bg-signal" aria-hidden="true" />
+              <span class="max-w-40 truncate">{{ activeOrgName }}</span>
+              <ChevronsUpDown class="size-3 opacity-60" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" class="w-56">
+            <DropdownMenuLabel class="font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
+              Workspaces
+            </DropdownMenuLabel>
+            <DropdownMenuItem v-for="o in orgs" :key="o.id" class="gap-2" @click="setActive(o.id)">
+              <Check class="size-4 shrink-0" :class="o.id === activeOrgId ? 'opacity-100 text-signal' : 'opacity-0'" />
+              <span class="truncate">{{ o.name }}</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem as-child>
+              <RouterLink :to="{ name: 'settings-workspace' }">
+                <SlidersHorizontal class="size-4" />
+                Workspace settings
+              </RouterLink>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         <DropdownMenu v-if="user">
           <DropdownMenuTrigger as-child>
             <button
@@ -60,7 +96,7 @@ async function signOut(): Promise<void> {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem as-child>
-              <RouterLink :to="{ name: 'settings' }">
+              <RouterLink :to="{ name: 'settings-account' }">
                 <Settings class="size-4" />
                 Settings
               </RouterLink>

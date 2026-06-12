@@ -66,18 +66,22 @@ slackOAuth.get('/install', async (c) => {
   if (!session?.user)
     return c.json({ error: 'Unauthorized' }, 401)
 
+  const orgId = (session.session as { activeOrganizationId?: string | null }).activeOrganizationId
+  if (!orgId)
+    return c.json({ error: 'No active organization' }, 400)
+
   const slug = c.req.query('projectId')
   if (!slug)
     return c.json({ error: 'projectId is required' }, 400)
 
   const p = await db.query.project.findFirst({
-    where: and(eq(project.slug, slug), eq(project.userId, session.user.id)),
+    where: and(eq(project.slug, slug), eq(project.organizationId, orgId)),
     columns: { id: true },
   })
   if (!p)
     return c.json({ error: 'Project not found' }, 404)
 
-  const entitlements = await getEntitlements(session.user.id)
+  const entitlements = await getEntitlements(orgId)
   if (!entitlements.alerts)
     return c.redirect(settingsRedirect(slug, 'error'))
 

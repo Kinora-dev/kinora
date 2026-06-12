@@ -11,7 +11,7 @@ import { buildSlackMessage, sendSlack } from './slack'
 type TestRow = typeof test.$inferSelect
 
 export interface NotifyRunInput {
-  userId: string
+  organizationId: string
   projectId: string
   runId: string
   startedAt: Date
@@ -67,7 +67,7 @@ export async function notifyRun(input: NotifyRunInput): Promise<void> {
     return
 
   // Alerts are a paid feature (self-host is unlimited).
-  const entitlements = await getEntitlements(input.userId)
+  const entitlements = await getEntitlements(input.organizationId)
   if (!entitlements.alerts)
     return
 

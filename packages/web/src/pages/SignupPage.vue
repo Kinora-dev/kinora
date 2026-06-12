@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import type { SessionUser } from '@/lib/session'
 import { Button } from '@kinora/ui/button'
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@kinora/ui/form'
 import { Input } from '@kinora/ui/input'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { z } from 'zod'
 import AuthLayout from '@/components/auth/AuthLayout.vue'
 import SocialButtons from '@/components/auth/SocialButtons.vue'
@@ -13,7 +14,14 @@ import { authClient } from '@/lib/auth'
 import { session } from '@/lib/session'
 
 const router = useRouter()
+const route = useRoute()
 const serverError = ref('')
+
+// Honor ?redirect= (e.g. an invite link); internal paths only.
+function destination(): string | { name: string } {
+  const r = route.query.redirect
+  return typeof r === 'string' && r.startsWith('/') ? r : { name: 'overview' }
+}
 
 const { handleSubmit, isSubmitting } = useForm({
   validationSchema: toTypedSchema(
@@ -31,13 +39,14 @@ const { handleSubmit, isSubmitting } = useForm({
 
 const onSubmit = handleSubmit(async (values) => {
   serverError.value = ''
-  const { error } = await authClient.signUp.email({ name: values.email, email: values.email, password: values.password })
-  if (error) {
-    serverError.value = error.message ?? 'Sign up failed'
+  const { data, error } = await authClient.signUp.email({ name: values.email, email: values.email, password: values.password })
+  if (error || !data) {
+    serverError.value = error?.message ?? 'Sign up failed'
     return
   }
-  await session.refresh()
-  router.push({ name: 'overview' })
+  // Set the user from the response so the redirect never races the session cookie.
+  session.setUser({ ...data.user, hasPassword: true } as unknown as SessionUser)
+  router.push(destination())
 })
 
 const labelClass = 'font-mono text-[11px] tracking-wider text-muted-foreground uppercase'

@@ -18,14 +18,16 @@ export function polarAuthPlugin() {
 
   return polar({
     client: polarClient,
-    createCustomerOnSignUp: true,
+    // We create the customer ourselves in the signup hook (non-fatal) so a Polar
+    // hiccup never blocks sign-up; the plugin's own create is fatal on failure.
+    createCustomerOnSignUp: false,
     use: [
       checkout({
         products: [
           { productId: cloud.teamProductId, slug: 'team' },
           { productId: cloud.proProductId, slug: 'pro' },
         ],
-        successUrl: `${getTrustedOrigins()[0] ?? ''}/settings?checkout=success`,
+        successUrl: `${getTrustedOrigins()[0] ?? ''}/settings/workspace?checkout=success`,
         authenticatedUsersOnly: true,
       }),
       portal(),

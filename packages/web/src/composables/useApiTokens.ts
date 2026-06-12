@@ -1,10 +1,10 @@
 import { onMounted, ref } from 'vue'
 import { toast } from 'vue-sonner'
-import { authClient } from '@/lib/auth'
+import { trpc } from '@/lib/trpc'
 
-export type ApiKey = NonNullable<Awaited<ReturnType<typeof authClient.apiKey.list>>['data']>['apiKeys'][number]
+export type ApiKey = Awaited<ReturnType<typeof trpc.tokens.list.query>>[number]
 
-// Shared API-token logic: list, create (one-time reveal), copy, delete.
+// Shared API-token logic: list, create (one-time reveal), copy, delete. Scoped to the active org.
 export function useApiTokens(options?: { autoLoad?: boolean }) {
   const tokens = ref<ApiKey[]>([])
   const loading = ref(true)
@@ -14,12 +14,15 @@ export function useApiTokens(options?: { autoLoad?: boolean }) {
 
   async function load(): Promise<void> {
     loading.value = true
-    const { data, error } = await authClient.apiKey.list()
-    if (error)
+    try {
+      tokens.value = await trpc.tokens.list.query()
+    }
+    catch {
       toast.error('Could not load tokens')
-    else
-      tokens.value = data?.apiKeys ?? []
-    loading.value = false
+    }
+    finally {
+      loading.value = false
+    }
   }
 
   async function create(name: string): Promise<boolean> {
@@ -27,15 +30,19 @@ export function useApiTokens(options?: { autoLoad?: boolean }) {
     if (!trimmed)
       return false
     creating.value = true
-    const { data, error } = await authClient.apiKey.create({ name: trimmed })
-    creating.value = false
-    if (error || !data) {
-      toast.error(error?.message ?? 'Could not create token')
+    try {
+      const { key } = await trpc.tokens.create.mutate({ name: trimmed })
+      createdKey.value = key
+      await load()
+      return true
+    }
+    catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not create token')
       return false
     }
-    createdKey.value = data.key
-    await load()
-    return true
+    finally {
+      creating.value = false
+    }
   }
 
   async function copyCreatedKey(): Promise<void> {
@@ -45,13 +52,14 @@ export function useApiTokens(options?: { autoLoad?: boolean }) {
   }
 
   async function remove(id: string): Promise<void> {
-    const { error } = await authClient.apiKey.delete({ keyId: id })
-    if (error) {
-      toast.error('Could not delete token')
-      return
+    try {
+      await trpc.tokens.revoke.mutate({ id })
+      toast.success('Token deleted')
+      await load()
     }
-    toast.success('Token deleted')
-    await load()
+    catch {
+      toast.error('Could not delete token')
+    }
   }
 
   if (options?.autoLoad ?? true)

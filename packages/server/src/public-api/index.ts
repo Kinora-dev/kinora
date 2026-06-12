@@ -5,19 +5,20 @@ import { countsByTagFrom, ingestRunSchema } from '@kinora/core'
 import { and, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { notifyRun } from '../alerts/notify'
-import { getEntitlements } from '../billing/entitlements'
+import { getEntitlements, ingestCapError } from '../billing/entitlements'
 import { polarClient } from '../billing/polar'
 import { currentPeriodResults, projectCount } from '../billing/usage'
 import { db } from '../db'
-import { artifact, project, run, test } from '../db/schemas/index'
+import { artifact, member, project, run, test } from '../db/schemas/index'
 import { auth } from '../lib/auth'
 import { logger } from '../lib/logger'
 import { storage } from '../lib/storage'
 
 const BEARER_PREFIX = 'Bearer '
 
-// Public ingest API (api-key authed) - the reporter / cli upload here.
-export const publicApi = new Hono<{ Variables: { userId: string } }>()
+// Public ingest API (api-key authed) - the reporter / cli upload here. The token's
+// referenceId is the owning organization id.
+export const publicApi = new Hono<{ Variables: { orgId: string } }>()
 
 publicApi.use('*', async (c, next) => {
   const header = c.req.header('Authorization')
@@ -29,57 +30,37 @@ publicApi.use('*', async (c, next) => {
   if (!verification.valid || !verification.key)
     return c.json({ error: 'Invalid API key' }, 401)
 
-  c.set('userId', verification.key.referenceId)
+  c.set('orgId', verification.key.referenceId)
   await next()
 })
 
 publicApi.post('/runs', zValidator('json', ingestRunSchema), async (c) => {
-  const userId = c.get('userId')
+  const orgId = c.get('orgId')
   const input = c.req.valid('json')
   // Bulk/historical import: still capped + metered, but no alerts (anti-spam).
   const backfill = c.req.query('backfill') === '1'
 
-  const entitlements = await getEntitlements(userId)
-  if (entitlements.tier === 'free') {
-    // Cap ingested test results: blocks ingesting more if the monthly limit is already reached, but doesn't block if the limit is exceeded after ingesting.
-    const used = await currentPeriodResults(userId)
-    if (used >= entitlements.includedResults) {
-      return c.json({
-        error: 'Free plan monthly test-result limit reached. Upgrade to keep ingesting.',
-        limit: entitlements.includedResults,
-      }, 402)
-    }
-  }
+  const entitlements = await getEntitlements(orgId)
+  const existing = await db.query.project.findFirst({
+    where: and(eq(project.organizationId, orgId), eq(project.slug, input.project.slug)),
+    columns: { id: true },
+  })
+  const isNewProject = !existing
 
-  // Cap distinct projects: only blocks creating a new one beyond the plan limit.
-  if (Number.isFinite(entitlements.maxProjects)) {
-    const existing = await db.query.project.findFirst({
-      where: and(eq(project.userId, userId), eq(project.slug, input.project.slug)),
-      columns: { id: true },
-    })
-    if (!existing) {
-      const projects = await projectCount(userId)
-      if (projects >= entitlements.maxProjects) {
-        return c.json({
-          error: 'Plan project limit reached. Upgrade to add more projects.',
-          limit: entitlements.maxProjects,
-        }, 402)
-      }
-    }
-  }
+  // Result cap is read only for free (the only metered tier); project count only when capped + new.
+  const usedResults = entitlements.tier === 'free' ? await currentPeriodResults(orgId) : 0
+  const projects = isNewProject && Number.isFinite(entitlements.maxProjects) ? await projectCount(orgId) : 0
+  const cap = ingestCapError(entitlements, usedResults, isNewProject, projects)
+  if (cap)
+    return c.json(cap, 402)
 
   const result = await db.transaction(async (tx) => {
-    const existing = await tx.query.project.findFirst({
-      where: and(eq(project.userId, userId), eq(project.slug, input.project.slug)),
-      columns: { id: true },
-    })
-
     let projectId = existing?.id
     if (!projectId) {
       projectId = randomUUID()
       await tx.insert(project).values({
         id: projectId,
-        userId,
+        organizationId: orgId,
         slug: input.project.slug,
         name: input.project.name,
       })
@@ -127,23 +108,30 @@ publicApi.post('/runs', zValidator('json', ingestRunSchema), async (c) => {
 
   if (polarClient && result.tests > 0) {
     try {
-      await polarClient.events.ingest({
-        events: [{
-          name: 'test_results',
-          externalCustomerId: userId,
-          metadata: { results: result.tests },
-        }],
+      // Polar customer = the org owner; meter usage against them.
+      const owner = await db.query.member.findFirst({
+        where: and(eq(member.organizationId, orgId), eq(member.role, 'owner')),
+        columns: { userId: true },
       })
+      if (owner) {
+        await polarClient.events.ingest({
+          events: [{
+            name: 'test_results',
+            externalCustomerId: owner.userId,
+            metadata: { results: result.tests },
+          }],
+        })
+      }
     }
     catch (error) {
-      logger.error({ error, userId, runId: result.runId }, 'polar usage ingest failed')
+      logger.error({ error, orgId, runId: result.runId }, 'polar usage ingest failed')
     }
   }
 
   if (!backfill) {
     try {
       await notifyRun({
-        userId,
+        organizationId: orgId,
         projectId: result.projectId,
         runId: result.runId,
         startedAt: new Date(input.run.startedAt),
@@ -162,7 +150,7 @@ publicApi.post('/runs', zValidator('json', ingestRunSchema), async (c) => {
 
 // Upload a trace.zip (or other binary artifact) for a run, linked to a test.
 publicApi.post('/runs/:runId/artifacts', async (c) => {
-  const userId = c.get('userId')
+  const orgId = c.get('orgId')
   const runId = c.req.param('runId')
 
   const r = await db.query.run.findFirst({
@@ -173,7 +161,7 @@ publicApi.post('/runs/:runId/artifacts', async (c) => {
     return c.json({ error: 'Run not found' }, 404)
 
   const owner = await db.query.project.findFirst({
-    where: and(eq(project.id, r.projectId), eq(project.userId, userId)),
+    where: and(eq(project.id, r.projectId), eq(project.organizationId, orgId)),
     columns: { id: true },
   })
   if (!owner)

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { notifyRun } from '../src/alerts/notify'
 import { db } from '../src/db'
 import { project, run, slackIntegration, test as testRow } from '../src/db/schemas/index'
-import { createUser, resetDb } from './helpers'
+import { createUser, ownedOrgId, resetDb } from './helpers'
 
 const DAY = 24 * 60 * 60 * 1000
 
@@ -39,7 +39,8 @@ function normTest(testKey: string, status: NormTest['status']): NormTest {
 
 async function seedProject(userId: string): Promise<string> {
   const id = randomUUID()
-  await db.insert(project).values({ id, userId, slug: `s-${id}`, name: 'web-app' })
+  const organizationId = await ownedOrgId(userId)
+  await db.insert(project).values({ id, organizationId, slug: `s-${id}`, name: 'web-app' })
   return id
 }
 
@@ -71,7 +72,7 @@ describe('notifyRun', () => {
     await seedPrevRun(projectId, [normTest('t1', 'expected')], new Date(Date.now() - DAY))
 
     const fetchMock = stubFetchOk()
-    await notifyRun({ userId: user.id, projectId, runId: 'r2', startedAt: new Date(), counts: FAIL, tests: [normTest('t1', 'unexpected')] })
+    await notifyRun({ organizationId: await ownedOrgId(user.id), projectId, runId: 'r2', startedAt: new Date(), counts: FAIL, tests: [normTest('t1', 'unexpected')] })
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
     const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))
@@ -86,7 +87,7 @@ describe('notifyRun', () => {
     await seedPrevRun(projectId, [normTest('t1', 'expected')], new Date(Date.now() - DAY))
 
     const fetchMock = stubFetchOk()
-    await notifyRun({ userId: user.id, projectId, runId: 'r2', startedAt: new Date(), counts: PASS, tests: [normTest('t1', 'expected')] })
+    await notifyRun({ organizationId: await ownedOrgId(user.id), projectId, runId: 'r2', startedAt: new Date(), counts: PASS, tests: [normTest('t1', 'expected')] })
 
     expect(fetchMock).not.toHaveBeenCalled()
   })
@@ -97,7 +98,7 @@ describe('notifyRun', () => {
     await setChannel(projectId, 'always')
 
     const fetchMock = stubFetchOk()
-    await notifyRun({ userId: user.id, projectId, runId: 'r1', startedAt: new Date(), counts: PASS, tests: [normTest('t1', 'expected')] })
+    await notifyRun({ organizationId: await ownedOrgId(user.id), projectId, runId: 'r1', startedAt: new Date(), counts: PASS, tests: [normTest('t1', 'expected')] })
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
@@ -108,7 +109,7 @@ describe('notifyRun', () => {
     await setChannel(projectId, 'always', false)
 
     const fetchMock = stubFetchOk()
-    await notifyRun({ userId: user.id, projectId, runId: 'r1', startedAt: new Date(), counts: PASS, tests: [normTest('t1', 'expected')] })
+    await notifyRun({ organizationId: await ownedOrgId(user.id), projectId, runId: 'r1', startedAt: new Date(), counts: PASS, tests: [normTest('t1', 'expected')] })
 
     expect(fetchMock).not.toHaveBeenCalled()
   })

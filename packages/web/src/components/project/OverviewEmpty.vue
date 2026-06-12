@@ -6,7 +6,6 @@ import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import CopyButton from '@/components/app/CopyButton.vue'
 import { useApiTokens } from '@/composables/useApiTokens'
-import { env } from '@/lib/env'
 
 const { creating, createdKey, copied, create, copyCreatedKey } = useApiTokens({ autoLoad: false })
 const tokenName = ref('ci-github-actions')
@@ -22,8 +21,7 @@ const configSnippet = `export default defineConfig({
   use: { trace: 'on-first-retry' },
 })`
 
-const runSnippet = `KINORA_URL=${env.serverUrl} KINORA_TOKEN=<token> \\
-  npx playwright test`
+const runSnippet = 'KINORA_TOKEN=<token> npx playwright test'
 </script>
 
 <template>
@@ -133,8 +131,8 @@ const runSnippet = `KINORA_URL=${env.serverUrl} KINORA_TOKEN=<token> \\
 
       <p class="mt-8 text-xs text-muted-foreground">
         Manage tokens any time in
-        <RouterLink :to="{ name: 'settings' }" class="font-medium text-foreground underline-offset-4 hover:underline">
-          Settings
+        <RouterLink :to="{ name: 'settings-workspace' }" class="font-medium text-foreground underline-offset-4 hover:underline">
+          Workspace settings
         </RouterLink>.
       </p>
     </div>

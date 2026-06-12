@@ -10,8 +10,8 @@ const BATCH = 500
 const DAY_MS = 24 * 60 * 60 * 1000
 
 interface Scope {
-  includeUsers?: string[]
-  excludeUsers?: string[]
+  includeOrgs?: string[]
+  excludeOrgs?: string[]
 }
 
 function cutoff(now: Date, days: number): Date {
@@ -20,17 +20,17 @@ function cutoff(now: Date, days: number): Date {
 
 export async function purgeScope(before: Date, scope: Scope): Promise<number> {
   // A tier with no users on it: nothing to do.
-  if (scope.includeUsers && scope.includeUsers.length === 0)
+  if (scope.includeOrgs && scope.includeOrgs.length === 0)
     return 0
 
   let total = 0
   let fetched = BATCH
   while (fetched === BATCH) {
     const conds = [lt(run.startedAt, before)]
-    if (scope.includeUsers)
-      conds.push(inArray(project.userId, scope.includeUsers))
-    if (scope.excludeUsers && scope.excludeUsers.length > 0)
-      conds.push(notInArray(project.userId, scope.excludeUsers))
+    if (scope.includeOrgs)
+      conds.push(inArray(project.organizationId, scope.includeOrgs))
+    if (scope.excludeOrgs && scope.excludeOrgs.length > 0)
+      conds.push(notInArray(project.organizationId, scope.excludeOrgs))
 
     const batch = await db
       .select({ id: run.id })
@@ -72,20 +72,20 @@ export async function purgeExpiredRuns(now: Date): Promise<{ deleted: number }> 
     return { deleted: 0 } // self-host keeps everything
 
   const subs = await db
-    .select({ userId: subscription.userId, tier: subscription.tier })
+    .select({ organizationId: subscription.organizationId, tier: subscription.tier })
     .from(subscription)
 
-  const teamUsers = subs.filter(s => s.tier === 'team').map(s => s.userId)
-  const proUsers = subs.filter(s => s.tier === 'pro').map(s => s.userId)
-  const paidUsers = subs
+  const teamOrgs = subs.filter(s => s.tier === 'team').map(s => s.organizationId)
+  const proOrgs = subs.filter(s => s.tier === 'pro').map(s => s.organizationId)
+  const paidOrgs = subs
     .filter(s => s.tier === 'team' || s.tier === 'pro' || s.tier === 'enterprise')
-    .map(s => s.userId)
+    .map(s => s.organizationId)
 
   let deleted = 0
   // free = everyone not on a paid plan (covers no subscription + tier 'free').
-  deleted += await purgeScope(cutoff(now, retentionDaysFor('free')), { excludeUsers: paidUsers })
-  deleted += await purgeScope(cutoff(now, retentionDaysFor('team')), { includeUsers: teamUsers })
-  deleted += await purgeScope(cutoff(now, retentionDaysFor('pro')), { includeUsers: proUsers })
+  deleted += await purgeScope(cutoff(now, retentionDaysFor('free')), { excludeOrgs: paidOrgs })
+  deleted += await purgeScope(cutoff(now, retentionDaysFor('team')), { includeOrgs: teamOrgs })
+  deleted += await purgeScope(cutoff(now, retentionDaysFor('pro')), { includeOrgs: proOrgs })
   // enterprise retention is unlimited: never purged.
   return { deleted }
 }

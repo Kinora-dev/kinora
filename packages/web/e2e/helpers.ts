@@ -2,13 +2,15 @@ import type { Page } from '@playwright/test'
 import { expect } from '@playwright/test'
 
 export const DEMO = { email: 'demo@kinora.dev', password: 'password123' }
+// Owns the "Acme QA" workspace; demo is a member of it (set up by the seed).
+export const TEAMMATE = { email: 'teammate@kinora.dev', password: 'password123' }
 
 const SERVER_URL = 'http://localhost:3000'
 
-export async function login(page: Page): Promise<void> {
+export async function login(page: Page, creds = DEMO): Promise<void> {
   await page.goto('/login')
-  await page.locator('input[type="email"]').fill(DEMO.email)
-  await page.locator('input[type="password"]').fill(DEMO.password)
+  await page.locator('input[type="email"]').fill(creds.email)
+  await page.locator('input[type="password"]').fill(creds.password)
   await page.locator('button[type="submit"]').click()
   await expect(page).toHaveURL('/')
 }

@@ -4,7 +4,7 @@ import { syncCustomerState } from '../src/billing/entitlements'
 import { db } from '../src/db'
 import { subscription } from '../src/db/schemas/index'
 import { env } from '../src/lib/env'
-import { createUser, resetDb } from './helpers'
+import { createUser, ownedOrgId, resetDb } from './helpers'
 
 const teamProductId = env.POLAR_PRODUCT_TEAM_ID
 const proProductId = env.POLAR_PRODUCT_PRO_ID
@@ -13,8 +13,8 @@ if (!teamProductId || !proProductId)
 
 beforeEach(resetDb)
 
-function row(userId: string) {
-  return db.query.subscription.findFirst({ where: eq(subscription.userId, userId) })
+function row(organizationId: string) {
+  return db.query.subscription.findFirst({ where: eq(subscription.organizationId, organizationId) })
 }
 
 describe('syncCustomerState', () => {
@@ -26,7 +26,7 @@ describe('syncCustomerState', () => {
       subscriptions: [{ productId: teamProductId, status: 'active', currentPeriodEnd: new Date('2030-01-01'), cancelAtPeriodEnd: false }],
     })
 
-    const sub = await row(user.id)
+    const sub = await row(await ownedOrgId(user.id))
     expect(sub?.tier).toBe('team')
     expect(sub?.status).toBe('active')
     expect(sub?.polarCustomerId).toBe('cus_1')
@@ -41,7 +41,7 @@ describe('syncCustomerState', () => {
       subscriptions: [{ productId: 'unknown-product', status: 'active', currentPeriodEnd: null, cancelAtPeriodEnd: false }],
     })
 
-    expect((await row(user.id))?.tier).toBe('free')
+    expect((await row(await ownedOrgId(user.id)))?.tier).toBe('free')
   })
 
   it('upserts a single row and updates it on the next sync', async () => {
@@ -57,7 +57,7 @@ describe('syncCustomerState', () => {
       subscriptions: [{ productId: proProductId, status: 'active', currentPeriodEnd: null, cancelAtPeriodEnd: true }],
     })
 
-    const all = await db.select().from(subscription).where(eq(subscription.userId, user.id))
+    const all = await db.select().from(subscription).where(eq(subscription.organizationId, await ownedOrgId(user.id)))
     expect(all).toHaveLength(1)
     expect(all[0]?.tier).toBe('pro')
     expect(all[0]?.status).toBe('active')

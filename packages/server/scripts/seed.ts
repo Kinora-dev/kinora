@@ -5,9 +5,9 @@ import { readFile } from 'node:fs/promises'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { countsByTagFrom, makeTestKey } from '@kinora/core'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { db } from '../src/db'
-import { artifact, project, run, test, user as userTable } from '../src/db/schemas/index'
+import { apikey, artifact, member, project, run, test, user as userTable } from '../src/db/schemas/index'
 import { auth } from '../src/lib/auth'
 import { logger } from '../src/lib/logger'
 import { storage } from '../src/lib/storage'
@@ -15,6 +15,10 @@ import { storage } from '../src/lib/storage'
 const EMAIL = 'demo@kinora.dev'
 const PASSWORD = 'password123'
 const NAME = 'Demo User'
+
+// A second workspace the demo user is a member of, so the org switcher has two entries.
+const MATE_EMAIL = 'teammate@kinora.dev'
+const MATE_NAME = 'Acme QA'
 
 const PROJECTS = [
   {
@@ -97,12 +101,31 @@ function countsOf(tests: NormTest[]): Counts {
   return c
 }
 
-async function ensureUser(): Promise<string> {
-  const existing = await db.query.user.findFirst({ where: eq(userTable.email, EMAIL), columns: { id: true } })
+async function ensureUser(email: string, name: string): Promise<string> {
+  const existing = await db.query.user.findFirst({ where: eq(userTable.email, email), columns: { id: true } })
   if (existing)
     return existing.id
-  const res = await auth.api.signUpEmail({ body: { email: EMAIL, password: PASSWORD, name: NAME } })
+  const res = await auth.api.signUpEmail({ body: { email, password: PASSWORD, name } })
   return res.user.id
+}
+
+// Idempotent across reseeds: add the user to an org they don't already belong to.
+async function ensureMembership(organizationId: string, userId: string, role: 'admin' | 'member'): Promise<void> {
+  const existing = await db.query.member.findFirst({
+    where: and(eq(member.organizationId, organizationId), eq(member.userId, userId)),
+    columns: { id: true },
+  })
+  if (existing)
+    return
+  await db.insert(member).values({ id: randomUUID(), organizationId, userId, role })
+}
+
+// The signup hook auto-creates a personal org; resolve the one this user owns.
+async function ownedOrgId(userId: string): Promise<string> {
+  const m = await db.query.member.findFirst({ where: eq(member.userId, userId), columns: { organizationId: true } })
+  if (!m)
+    throw new Error('seeded user has no organization')
+  return m.organizationId
 }
 
 // Failed tests get a real failing trace (carries error-context -> the viewer's "Copy prompt");
@@ -110,19 +133,13 @@ async function ensureUser(): Promise<string> {
 const FAIL_TRACE = fileURLToPath(new URL('../../trace-viewer/public/fixtures/error-trace.zip', import.meta.url))
 const PASS_TRACE = fileURLToPath(new URL('../../trace-viewer/public/fixtures/demo.zip', import.meta.url))
 
-async function main(): Promise<void> {
-  const userId = await ensureUser()
-  const failTrace = await readFile(FAIL_TRACE)
-  const passTrace = await readFile(PASS_TRACE)
-
+async function seedProjects(orgId: string, defs: typeof PROJECTS, failTrace: Buffer, passTrace: Buffer): Promise<void> {
   // Fresh data: cascade-deletes runs/tests/artifacts via FKs.
-  await db.delete(project).where(eq(project.userId, userId))
+  await db.delete(project).where(eq(project.organizationId, orgId))
 
-  const apiKey = await auth.api.createApiKey({ body: { name: 'seed token', userId } })
-
-  for (const pdef of PROJECTS) {
+  for (const pdef of defs) {
     const projectId = randomUUID()
-    await db.insert(project).values({ id: projectId, userId, slug: pdef.slug, name: pdef.name })
+    await db.insert(project).values({ id: projectId, organizationId: orgId, slug: pdef.slug, name: pdef.name })
 
     for (let i = RUNS_PER_PROJECT - 1; i >= 0; i--) {
       const startedAt = new Date(Date.now() - i * DAY - Math.floor(Math.random() * 6 * 3_600_000))
@@ -191,11 +208,33 @@ async function main(): Promise<void> {
     }
     logger.info(`seeded project ${pdef.slug} (${RUNS_PER_PROJECT} runs)`)
   }
+}
 
-  logger.info('—'.repeat(40))
+async function main(): Promise<void> {
+  const failTrace = await readFile(FAIL_TRACE)
+  const passTrace = await readFile(PASS_TRACE)
+
+  // Demo account: owner of its org with the full project set + an ingest token.
+  const userId = await ensureUser(EMAIL, NAME)
+  const orgId = await ownedOrgId(userId)
+  await seedProjects(orgId, PROJECTS, failTrace, passTrace)
+
+  const apiKey = await auth.api.createApiKey({ body: { name: 'seed token', userId } })
+  // Ingest tokens reference the owning org, not the user.
+  await db.update(apikey).set({ referenceId: orgId }).where(eq(apikey.id, apiKey.id))
+
+  // Second workspace with its own project; the demo user joins as a member, so the
+  // workspace switcher has two orgs to flip between.
+  const mateId = await ensureUser(MATE_EMAIL, MATE_NAME)
+  const mateOrgId = await ownedOrgId(mateId)
+  await seedProjects(mateOrgId, PROJECTS.slice(1, 2), failTrace, passTrace)
+  await ensureMembership(mateOrgId, userId, 'member')
+
+  logger.info('-'.repeat(40))
   logger.info(`Login:     ${EMAIL} / ${PASSWORD}`)
   logger.info(`API token: ${apiKey.key}`)
-  logger.info('—'.repeat(40))
+  logger.info(`Switcher:  ${EMAIL} is also a member of ${MATE_NAME}'s workspace`)
+  logger.info('-'.repeat(40))
   process.exit(0)
 }
 
