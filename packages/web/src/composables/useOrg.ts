@@ -1,15 +1,11 @@
-import type { Invitation, Member, Organization } from 'better-auth/plugins'
 import { computed, onMounted, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import { authClient } from '@/lib/auth'
 import { session } from '@/lib/session'
 
-// better-auth's org endpoints assemble responses at runtime, so the client types `.data` as `any`.
-// The schema is stable, so we type it explicitly from the exported shapes (members carry a joined user).
-type OrgMember = Member & { user?: { id: string, name?: string | null, email?: string | null, image?: string | null } }
-type FullOrg = Organization & { members: OrgMember[], invitations: Invitation[] }
-type OrgList = Organization[]
-type Role = 'owner' | 'admin' | 'member'
+type FullOrg = typeof authClient.$Infer.ActiveOrganization
+type OrgList = (typeof authClient.$Infer.Organization)[]
+type Role = (typeof authClient.$Infer.Member)['role']
 
 // Shared across the header switcher, settings, and the team card so org state loads once.
 const org = ref<FullOrg | null>(null)
@@ -25,15 +21,15 @@ async function load(): Promise<void> {
     authClient.organization.getFullOrganization(),
     authClient.organization.list(),
   ])
-  org.value = (full.data as FullOrg | null) ?? null
-  orgs.value = (list.data as OrgList | null) ?? []
+  org.value = full.data
+  orgs.value = list.data ?? []
 
   // Session has orgs but none active (e.g. fresh sign-up, where the membership lands
   // after the session is created): activate one and persist it on the session.
   const first = orgs.value[0]
   if (!org.value && first) {
     await authClient.organization.setActive({ organizationId: first.id })
-    org.value = ((await authClient.organization.getFullOrganization()).data as FullOrg | null) ?? null
+    org.value = (await authClient.organization.getFullOrganization()).data
   }
 
   loaded = true
@@ -53,7 +49,7 @@ export function useOrg(options?: { autoLoad?: boolean }) {
 
   const myRole = computed<Role | null>(() => {
     const uid = session.user.value?.id
-    return (members.value.find(m => m.userId === uid)?.role as Role | undefined) ?? null
+    return members.value.find(m => m.userId === uid)?.role ?? null
   })
   const isAdmin = computed(() => myRole.value === 'owner' || myRole.value === 'admin')
   // Billing maps the Polar customer to the org owner, so only the owner can change the plan.
