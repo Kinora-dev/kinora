@@ -34,14 +34,11 @@ const emailInput = ref(session.user.value?.email ?? '')
 const emailError = ref('')
 const emailSaving = ref(false)
 const emailValid = computed(() => z.email().safeParse(emailInput.value.trim()).success)
+const canSaveEmail = computed(() => emailValid.value && emailInput.value.trim() !== (session.user.value?.email ?? ''))
 
 async function updateEmail(): Promise<void> {
   emailError.value = ''
   const next = emailInput.value.trim()
-  if (next === session.user.value?.email) {
-    emailError.value = 'That is already your email'
-    return
-  }
   emailSaving.value = true
   const { error } = await authClient.changeEmail({ newEmail: next })
   emailSaving.value = false
@@ -125,7 +122,7 @@ const onPassword = submitPassword(async (values) => {
               {{ emailError }}
             </p>
           </div>
-          <Button type="submit" :disabled="emailSaving || !emailValid" size="sm" class="self-start font-mono text-xs">
+          <Button type="submit" :disabled="emailSaving || !canSaveEmail" size="sm" class="self-start font-mono text-xs">
             {{ emailSaving ? 'Saving…' : 'Update email' }}
           </Button>
         </form>

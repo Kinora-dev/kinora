@@ -16,6 +16,7 @@ const org = ref<FullOrg | null>(null)
 const orgs = ref<OrgList>([])
 const loading = ref(false)
 const inviting = ref(false)
+const renaming = ref(false)
 let loaded = false
 
 async function load(): Promise<void> {
@@ -57,6 +58,21 @@ export function useOrg(options?: { autoLoad?: boolean }) {
   const isAdmin = computed(() => myRole.value === 'owner' || myRole.value === 'admin')
   // Billing maps the Polar customer to the org owner, so only the owner can change the plan.
   const isOwner = computed(() => myRole.value === 'owner')
+
+  async function rename(name: string): Promise<void> {
+    const id = org.value?.id
+    if (!id)
+      return
+    renaming.value = true
+    const { error } = await authClient.organization.update({ organizationId: id, data: { name: name.trim() } })
+    renaming.value = false
+    if (error) {
+      toast.error(error.message ?? 'Could not rename workspace')
+      return
+    }
+    await load()
+    toast.success('Workspace renamed')
+  }
 
   async function invite(email: string, role: 'admin' | 'member' = 'member'): Promise<string | null> {
     inviting.value = true
@@ -108,5 +124,5 @@ export function useOrg(options?: { autoLoad?: boolean }) {
   if ((options?.autoLoad ?? true) && !loaded && !loading.value)
     onMounted(load)
 
-  return { org, orgs, members, invitations, loading, inviting, myRole, isAdmin, isOwner, invite, removeMember, updateRole, cancelInvitation, setActive, load }
+  return { org, orgs, members, invitations, loading, inviting, renaming, myRole, isAdmin, isOwner, rename, invite, removeMember, updateRole, cancelInvitation, setActive, load }
 }

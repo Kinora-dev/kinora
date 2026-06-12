@@ -3,7 +3,7 @@ import { Button } from '@kinora/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kinora/ui/card'
 import { Input } from '@kinora/ui/input'
 import { ArrowUpRight, Building2, Check, Copy, CreditCard, KeyRound, Plus, Trash2 } from 'lucide-vue-next'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import TeamCard from '@/components/app/TeamCard.vue'
@@ -13,8 +13,21 @@ import { useOrg } from '@/composables/useOrg'
 
 const labelClass = 'font-mono text-[11px] tracking-wider text-muted-foreground uppercase'
 
-const { org, isOwner, isAdmin } = useOrg()
+const { org, isOwner, isAdmin, rename, renaming } = useOrg()
 const orgName = computed(() => org.value?.name ?? 'Workspace')
+
+const nameInput = ref('')
+watch(org, (o) => {
+  if (o)
+    nameInput.value = o.name
+}, { immediate: true })
+const canRename = computed(() => {
+  const n = nameInput.value.trim()
+  return n.length > 0 && n !== org.value?.name
+})
+function onRename(): void {
+  void rename(nameInput.value)
+}
 
 // --- API tokens ---
 const {
@@ -112,6 +125,25 @@ function fmtDate(d: Date | string | null | undefined): string {
     <p class="font-mono text-xs text-muted-foreground -mt-2">
       Settings for <span class="text-foreground">{{ orgName }}</span>
     </p>
+
+    <!-- Workspace name (admins) -->
+    <Card v-if="isAdmin">
+      <CardHeader>
+        <CardTitle>Workspace</CardTitle>
+        <CardDescription>The name shown in the switcher and to your team.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div class="flex items-end gap-2">
+          <div class="flex flex-1 flex-col gap-1.5">
+            <label :class="labelClass" for="ws-name">Name</label>
+            <Input id="ws-name" v-model="nameInput" @keydown.enter.prevent="onRename" />
+          </div>
+          <Button type="button" size="sm" class="font-mono text-xs" :disabled="renaming || !canRename" @click="onRename">
+            {{ renaming ? 'Saving…' : 'Rename' }}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
 
     <!-- Plan & billing -->
     <Card v-if="billing && billing.tier !== 'selfhost'">

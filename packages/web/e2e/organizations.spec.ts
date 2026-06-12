@@ -114,6 +114,22 @@ test.describe('organizations', () => {
     await expect(page.getByRole('button', { name: /Demo User's workspace/i })).toBeVisible()
   })
 
+  test('an owner can rename their workspace', async ({ page }) => {
+    // Fresh user owns a workspace; renaming it must reflect in the switcher.
+    await page.goto('/signup')
+    const email = `rename-${Date.now()}@test.dev`
+    await page.locator('input[type="email"]').fill(email)
+    await page.locator('input[type="password"]').nth(0).fill('password123')
+    await page.locator('input[type="password"]').nth(1).fill('password123')
+    await page.locator('button[type="submit"]').click()
+    await expect(page).toHaveURL('/')
+
+    await page.goto('/settings/workspace')
+    await page.locator('#ws-name').fill('Renamed QA')
+    await page.getByRole('button', { name: 'Rename', exact: true }).click()
+    await expect(page.getByRole('button', { name: /Renamed QA/i })).toBeVisible()
+  })
+
   test('an owner can invite in their own workspace', async ({ page }) => {
     // teammate owns a single workspace -> owner/admin controls available
     await login(page, TEAMMATE)
