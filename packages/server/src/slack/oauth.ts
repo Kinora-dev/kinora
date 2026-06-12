@@ -4,7 +4,7 @@ import { and, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { getEntitlements } from '../billing/entitlements'
 import { db } from '../db'
-import { project, slackIntegration } from '../db/schemas/index'
+import { member, project, slackIntegration } from '../db/schemas/index'
 import { auth } from '../lib/auth'
 import { env, slackApp } from '../lib/env'
 import { logger } from '../lib/logger'
@@ -17,6 +17,15 @@ interface StatePayload {
   projectId: string
   userId: string
   slug: string
+}
+
+// Same gate as adminProcedure: connecting Slack rebinds where alerts are delivered.
+async function isOrgAdmin(userId: string, organizationId: string): Promise<boolean> {
+  const row = await db.query.member.findFirst({
+    where: and(eq(member.userId, userId), eq(member.organizationId, organizationId)),
+    columns: { role: true },
+  })
+  return row?.role === 'owner' || row?.role === 'admin'
 }
 
 function callbackUrl(): string {
@@ -81,6 +90,9 @@ slackOAuth.get('/install', async (c) => {
   if (!p)
     return c.json({ error: 'Project not found' }, 404)
 
+  if (!await isOrgAdmin(session.user.id, orgId))
+    return c.json({ error: 'Requires an admin role' }, 403)
+
   const entitlements = await getEntitlements(orgId)
   if (!entitlements.alerts)
     return c.redirect(settingsRedirect(slug, 'error'))
@@ -110,6 +122,14 @@ slackOAuth.get('/callback', async (c) => {
   const session = await auth.api.getSession({ headers: c.req.raw.headers })
   if (session?.user?.id !== decoded.userId)
     return c.json({ error: 'Unauthorized' }, 401)
+
+  // Re-check the role: it may have been revoked since the flow started.
+  const owner = await db.query.project.findFirst({
+    where: eq(project.id, decoded.projectId),
+    columns: { organizationId: true },
+  })
+  if (!owner || !await isOrgAdmin(decoded.userId, owner.organizationId))
+    return c.json({ error: 'Requires an admin role' }, 403)
 
   try {
     const res = await fetch('https://slack.com/api/oauth.v2.access', {

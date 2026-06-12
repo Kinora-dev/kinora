@@ -9,9 +9,12 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import SlackAlertsCard from '@/components/project/SlackAlertsCard.vue'
 import { useManifest } from '@/composables/queries'
+import { useOrg } from '@/composables/useOrg'
 import { useProjectAdmin } from '@/composables/useProjectAdmin'
 
 const props = defineProps<{ projectId: string }>()
+
+const { isAdmin } = useOrg()
 
 const router = useRouter()
 const route = useRoute()
@@ -77,8 +80,12 @@ async function onDelete(): Promise<void> {
       </p>
     </div>
 
+    <p v-if="!isAdmin" class="font-mono text-xs text-muted-foreground">
+      Only admins can change project settings. Your role is read-only here.
+    </p>
+
     <!-- General -->
-    <Card>
+    <Card v-if="isAdmin">
       <CardHeader>
         <CardTitle>General</CardTitle>
         <CardDescription>Display name and description. The project slug used by CI never changes.</CardDescription>
@@ -100,10 +107,10 @@ async function onDelete(): Promise<void> {
       </CardContent>
     </Card>
 
-    <SlackAlertsCard :project-id="projectId" />
+    <SlackAlertsCard v-if="isAdmin" :project-id="projectId" />
 
     <!-- Danger zone -->
-    <Card class="border-fail/30">
+    <Card v-if="isAdmin" class="border-fail/30">
       <CardHeader>
         <CardTitle class="text-fail">
           Danger zone

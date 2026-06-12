@@ -17,8 +17,10 @@ import HealthBadge from '@/components/viz/HealthBadge.vue'
 import Sparkline from '@/components/viz/Sparkline.vue'
 import StatBlock from '@/components/viz/StatBlock.vue'
 import { useManifest } from '@/composables/queries'
+import { useOrg } from '@/composables/useOrg'
 
 const props = defineProps<{ projectId: string }>()
+const { isAdmin } = useOrg()
 const { state: manifest, isLoading, error } = useManifest()
 
 const project = computed(() =>
@@ -77,6 +79,7 @@ const toneText = computed(() =>
               Per-test history
             </RouterLink>
             <RouterLink
+              v-if="isAdmin"
               :to="{ name: 'project-settings', params: { projectId: project.id } }"
               class="flex items-center gap-1 font-mono text-xs text-muted-foreground hover:text-foreground"
             >
