@@ -2,7 +2,7 @@
 import { Button } from '@kinora/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kinora/ui/card'
 import { Input } from '@kinora/ui/input'
-import { ArrowUpRight, Building2, Check, Copy, CreditCard, KeyRound, Plus, Trash2 } from 'lucide-vue-next'
+import { ArrowUpRight, Building2, Check, ChevronDown, Copy, CreditCard, KeyRound, Minus, Plus, Trash2 } from 'lucide-vue-next'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -89,6 +89,25 @@ const upgradeOptions = computed(() => {
     return [{ slug: 'pro' as const, label: 'Upgrade to Pro - $149/mo', featured: true }]
   return []
 })
+
+// Mirrors the landing pricing section and server entitlements; keep in sync by hand.
+const PLAN_COLUMNS = [
+  { tier: 'free', name: 'Free', price: '$0/mo' },
+  { tier: 'team', name: 'Team', price: '$49/mo' },
+  { tier: 'pro', name: 'Pro', price: '$149/mo' },
+] as const
+
+const PLAN_ROWS: { label: string, values: [string | boolean, string | boolean, string | boolean] }[] = [
+  { label: 'Test results / mo', values: ['2,500', '10,000', '50,000'] },
+  { label: 'Extra results', values: [false, '$5 / 1k', '$4 / 1k'] },
+  { label: 'Projects', values: ['1', 'Unlimited', 'Unlimited'] },
+  { label: 'History', values: ['7 days', '90 days', '1 year'] },
+  { label: 'Regression alerts', values: [false, true, true] },
+  { label: 'Seats', values: ['Unlimited', 'Unlimited', 'Unlimited'] },
+  { label: 'Support', values: ['Community', 'Email', 'Priority'] },
+]
+
+const showCompare = ref(false)
 
 const planNote = computed<{ text: string, tone: string } | null>(() => {
   const b = billing.value
@@ -202,6 +221,55 @@ function fmtDate(d: Date | string | null | undefined): string {
             <ArrowUpRight class="size-3.5" />
             {{ billingPending === opt.slug ? 'Redirecting…' : opt.label }}
           </Button>
+        </div>
+
+        <!-- Plan comparison -->
+        <div v-if="['free', 'team'].includes(billing.tier)" class="flex flex-col gap-3 -mt-2">
+          <button
+            type="button"
+            class="flex items-center gap-1.5 self-start font-mono text-[11px] tracking-wider text-muted-foreground uppercase transition-colors hover:text-foreground"
+            :aria-expanded="showCompare"
+            @click="showCompare = !showCompare"
+          >
+            <ChevronDown class="size-3.5 transition-transform" :class="showCompare ? 'rotate-180' : ''" />
+            Compare plans
+          </button>
+          <div v-if="showCompare" class="overflow-x-auto rounded-md border border-border/70">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-border/70">
+                  <th class="px-3 py-2.5" />
+                  <th
+                    v-for="col in PLAN_COLUMNS"
+                    :key="col.tier"
+                    class="px-3 py-2.5 text-left"
+                    :class="col.tier === billing.tier ? 'text-signal' : ''"
+                  >
+                    <div class="font-mono text-xs font-semibold uppercase tracking-wider">
+                      {{ col.name }}<span v-if="col.tier === billing.tier" class="ml-1.5 font-normal normal-case text-[10px]">· current</span>
+                    </div>
+                    <div class="font-mono text-[11px] font-normal text-muted-foreground">
+                      {{ col.price }}
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border/40">
+                <tr v-for="row in PLAN_ROWS" :key="row.label">
+                  <td class="px-3 py-2 font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
+                    {{ row.label }}
+                  </td>
+                  <td v-for="(value, i) in row.values" :key="i" class="px-3 py-2 tabular-nums" :class="PLAN_COLUMNS[i].tier === billing.tier ? '' : 'text-muted-foreground'">
+                    <Check v-if="value === true" class="size-4 text-signal" aria-label="Included" />
+                    <Minus v-else-if="value === false" class="size-4 text-muted-foreground/50" aria-label="Not included" />
+                    <template v-else>
+                      {{ value }}
+                    </template>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <Button
