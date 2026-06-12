@@ -37,7 +37,7 @@ async function seedTests(userId: string, count: number, createdAt?: Date): Promi
       line: 1,
       column: 1,
       projectName: 'chromium',
-      status: 'expected',
+      status: 'expected' as const,
       ok: true,
       duration: 0,
       retries: 0,

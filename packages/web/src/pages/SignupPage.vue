@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { SessionUser } from '@/lib/session'
 import { Button } from '@kinora/ui/button'
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@kinora/ui/form'
 import { Input } from '@kinora/ui/input'
@@ -45,7 +44,7 @@ const onSubmit = handleSubmit(async (values) => {
     return
   }
   // Set the user from the response so the redirect never races the session cookie.
-  session.setUser({ ...data.user, hasPassword: true } as unknown as SessionUser)
+  session.setUserFromAuth(data.user, true)
   router.push(destination())
 })
 

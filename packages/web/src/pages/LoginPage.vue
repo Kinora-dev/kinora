@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { SessionUser } from '@/lib/session'
 import { Badge } from '@kinora/ui/badge'
 import { Button } from '@kinora/ui/button'
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@kinora/ui/form'
@@ -42,7 +41,7 @@ const onSubmit = handleSubmit(async (values) => {
   }
   // Set the user from the sign-in response so the redirect never races the session cookie
   // (a re-fetched /me can return null before the cookie settles -> guard bounces to /login).
-  session.setUser({ ...data.user, hasPassword: true } as unknown as SessionUser)
+  session.setUserFromAuth(data.user, true)
   router.push(destination())
 })
 

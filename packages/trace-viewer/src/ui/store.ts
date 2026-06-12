@@ -72,7 +72,7 @@ async function load(uri: string): Promise<void> {
     // snapshot (most representative page state), else the first action.
     const failed = m.failedAction()
     const lastWithPage = [...items.value].reverse().find(
-      i => (i.action as any).pageId && ((i.action as any).afterSnapshot || (i.action as any).beforeSnapshot),
+      i => i.action.pageId && (i.action.afterSnapshot || i.action.beforeSnapshot),
     )
     selectedId.value = (failed?.callId ?? lastWithPage?.id ?? items.value[0]?.id) ?? null
     status.value = 'ready'

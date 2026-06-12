@@ -15,6 +15,8 @@ function slugify(input: string): string {
   return input.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 32) || 'team'
 }
 
+const polarPlugin = polarAuthPlugin()
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: 'pg' }),
   baseURL: env.BASE_URL,
@@ -94,8 +96,8 @@ export const auth = betterAuth({
         logger.info({ invitationId: data.id, email: data.email, org: data.organization.name }, 'org invitation created')
       },
     }),
-    polarAuthPlugin(),
-  ].filter((plugin): plugin is NonNullable<typeof plugin> => plugin !== null),
+    ...(polarPlugin ? [polarPlugin] : []),
+  ],
 })
 
 export interface AuthType {

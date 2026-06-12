@@ -4,10 +4,7 @@ import { useTraceStore } from '../store'
 
 const store = useTraceStore()
 
-const lines = computed(() => {
-  const action = store.selectedAction.value as any
-  return (action?.log ?? []) as { time: number, message: string }[]
-})
+const lines = computed(() => store.selectedAction.value?.log ?? [])
 </script>
 
 <template>

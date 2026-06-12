@@ -30,6 +30,17 @@ function setUser(next: SessionUser): void {
   user.value = next
 }
 
+type AuthUser = Omit<NonNullable<SessionUser>, 'hasPassword' | 'createdAt' | 'updatedAt'> & { createdAt: string | Date, updatedAt: string | Date }
+
+function setUserFromAuth(authUser: AuthUser, hasPassword: boolean): void {
+  user.value = {
+    ...authUser,
+    createdAt: new Date(authUser.createdAt).toISOString(),
+    updatedAt: new Date(authUser.updatedAt).toISOString(),
+    hasPassword,
+  }
+}
+
 async function refresh(): Promise<void> {
   try {
     user.value = await trpc.user.me.query()
@@ -39,4 +50,4 @@ async function refresh(): Promise<void> {
   }
 }
 
-export const session = { user, ready, ensure, setUser, refresh }
+export const session = { user, ready, ensure, setUser, setUserFromAuth, refresh }

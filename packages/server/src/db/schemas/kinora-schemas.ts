@@ -44,7 +44,7 @@ export const test = pgTable('test', {
   line: integer('line').notNull(),
   column: integer('column').notNull(),
   projectName: text('project_name').notNull(),
-  status: text('status').notNull(),
+  status: text('status').$type<NormTest['status']>().notNull(),
   ok: boolean('ok').notNull(),
   duration: integer('duration').notNull(),
   retries: integer('retries').notNull(),

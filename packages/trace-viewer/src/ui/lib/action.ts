@@ -5,10 +5,10 @@ export type ActionStatus = 'ok' | 'error' | 'step'
 
 export function actionTitle(action: ActionTraceEventInContext): string {
   const title = renderTitleForCall({
-    title: (action as any).title,
+    title: action.title,
     type: action.class,
     method: action.method,
-    params: action.params as Record<string, string> | undefined,
+    params: action.params,
   })
   return title || `${action.class}.${action.method}`
 }

@@ -45,7 +45,7 @@ function toNormTest(t: TestRow, urls?: Map<string, string>): NormTest {
     line: t.line,
     column: t.column,
     projectName: t.projectName,
-    status: t.status as NormTest['status'],
+    status: t.status,
     ok: t.ok,
     duration: t.duration,
     retries: t.retries,

@@ -1,5 +1,4 @@
 import type { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch'
-import type { AuthType } from '../lib/auth'
 import { and, eq } from 'drizzle-orm'
 import { db } from '../db'
 import { member } from '../db/schemas/index'
@@ -7,8 +6,8 @@ import { auth } from '../lib/auth'
 
 export async function createContext({ req }: FetchCreateContextFnOptions) {
   const session = await auth.api.getSession({ headers: req.headers })
-  const user = (session?.user as AuthType['user']) ?? null
-  let organizationId = (session?.session as { activeOrganizationId?: string | null } | undefined)?.activeOrganizationId ?? null
+  const user = session?.user ?? null
+  let organizationId = session?.session.activeOrganizationId ?? null
 
   // Self-heal sessions with no active org (e.g. predating the org plugin): fall back to the owned org.
   if (user && !organizationId) {
