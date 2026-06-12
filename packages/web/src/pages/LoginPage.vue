@@ -67,9 +67,14 @@ const labelClass = 'font-mono text-[11px] tracking-wider text-muted-foreground u
 
       <FormField v-slot="{ componentField }" name="password">
         <FormItem>
-          <FormLabel :class="labelClass">
-            Password
-          </FormLabel>
+          <div class="flex items-center justify-between">
+            <FormLabel :class="labelClass">
+              Password
+            </FormLabel>
+            <RouterLink :to="{ name: 'forgot-password' }" class="font-mono text-[11px] text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
+              Forgot password?
+            </RouterLink>
+          </div>
           <FormControl>
             <Input type="password" autocomplete="current-password" placeholder="••••••••" v-bind="componentField" />
           </FormControl>

@@ -30,6 +30,11 @@ const envSchema = z.object({
   S3_SECRET_ACCESS_KEY: z.string().optional(),
   SLACK_CLIENT_ID: z.string().optional(),
   SLACK_CLIENT_SECRET: z.string().optional(),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_FROM: z.string().optional(),
 }).refine(
   e => !e.KINORA_CLOUD || Boolean(e.POLAR_ACCESS_TOKEN && e.POLAR_WEBHOOK_SECRET && e.POLAR_PRODUCT_TEAM_ID && e.POLAR_PRODUCT_PRO_ID),
   { message: 'KINORA_CLOUD=true requires POLAR_ACCESS_TOKEN, POLAR_WEBHOOK_SECRET, POLAR_PRODUCT_TEAM_ID and POLAR_PRODUCT_PRO_ID' },
@@ -101,3 +106,21 @@ function resolveSlackApp(): SlackAppConfig | null {
 }
 
 export const slackApp = resolveSlackApp()
+
+export interface SmtpConfig {
+  host: string
+  port: number
+  user?: string
+  pass?: string
+  from: string
+}
+
+// Generic SMTP so self-hosters can plug any provider; null disables email flows.
+function resolveSmtp(): SmtpConfig | null {
+  const { SMTP_HOST: host, SMTP_PORT: port, SMTP_USER: user, SMTP_PASS: pass, SMTP_FROM: from } = env
+  if (!host || !port || !from)
+    return null
+  return { host, port, user, pass, from }
+}
+
+export const smtp = resolveSmtp()

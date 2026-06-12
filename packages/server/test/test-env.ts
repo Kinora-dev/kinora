@@ -29,4 +29,9 @@ export const TEST_ENV: Record<keyof Env, string> = {
   S3_SECRET_ACCESS_KEY: '',
   SLACK_CLIENT_ID: 'test-slack-client',
   SLACK_CLIENT_SECRET: 'test-slack-secret',
+  SMTP_HOST: '',
+  SMTP_PORT: '',
+  SMTP_USER: '',
+  SMTP_PASS: '',
+  SMTP_FROM: '',
 }
