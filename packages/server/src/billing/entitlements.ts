@@ -104,3 +104,20 @@ export async function getEntitlements(organizationId: string): Promise<Entitleme
   const tier = row?.tier ?? 'free'
   return { tier, ...LIMITS[tier] }
 }
+
+export interface IngestCap {
+  error: string
+  limit: number
+}
+
+// Plan caps enforced at ingest. Pure: caller supplies the current counts. Returns the 402
+// payload to reject with, or null to allow.
+export function ingestCapError(e: Entitlements, usedResults: number, isNewProject: boolean, projectCount: number): IngestCap | null {
+  if (e.tier === 'free' && usedResults >= e.includedResults)
+    return { error: 'Free plan monthly test-result limit reached. Upgrade to keep ingesting.', limit: e.includedResults }
+
+  if (isNewProject && Number.isFinite(e.maxProjects) && projectCount >= e.maxProjects)
+    return { error: 'Plan project limit reached. Upgrade to add more projects.', limit: e.maxProjects }
+
+  return null
+}

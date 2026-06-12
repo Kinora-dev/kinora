@@ -5,7 +5,7 @@ import { countsByTagFrom, ingestRunSchema } from '@kinora/core'
 import { and, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { notifyRun } from '../alerts/notify'
-import { getEntitlements } from '../billing/entitlements'
+import { getEntitlements, ingestCapError } from '../billing/entitlements'
 import { polarClient } from '../billing/polar'
 import { currentPeriodResults, projectCount } from '../billing/usage'
 import { db } from '../db'
@@ -41,40 +41,20 @@ publicApi.post('/runs', zValidator('json', ingestRunSchema), async (c) => {
   const backfill = c.req.query('backfill') === '1'
 
   const entitlements = await getEntitlements(orgId)
-  if (entitlements.tier === 'free') {
-    // Cap ingested test results: blocks ingesting more if the monthly limit is already reached, but doesn't block if the limit is exceeded after ingesting.
-    const used = await currentPeriodResults(orgId)
-    if (used >= entitlements.includedResults) {
-      return c.json({
-        error: 'Free plan monthly test-result limit reached. Upgrade to keep ingesting.',
-        limit: entitlements.includedResults,
-      }, 402)
-    }
-  }
+  const existing = await db.query.project.findFirst({
+    where: and(eq(project.organizationId, orgId), eq(project.slug, input.project.slug)),
+    columns: { id: true },
+  })
+  const isNewProject = !existing
 
-  // Cap distinct projects: only blocks creating a new one beyond the plan limit.
-  if (Number.isFinite(entitlements.maxProjects)) {
-    const existing = await db.query.project.findFirst({
-      where: and(eq(project.organizationId, orgId), eq(project.slug, input.project.slug)),
-      columns: { id: true },
-    })
-    if (!existing) {
-      const projects = await projectCount(orgId)
-      if (projects >= entitlements.maxProjects) {
-        return c.json({
-          error: 'Plan project limit reached. Upgrade to add more projects.',
-          limit: entitlements.maxProjects,
-        }, 402)
-      }
-    }
-  }
+  // Result cap is read only for free (the only metered tier); project count only when capped + new.
+  const usedResults = entitlements.tier === 'free' ? await currentPeriodResults(orgId) : 0
+  const projects = isNewProject && Number.isFinite(entitlements.maxProjects) ? await projectCount(orgId) : 0
+  const cap = ingestCapError(entitlements, usedResults, isNewProject, projects)
+  if (cap)
+    return c.json(cap, 402)
 
   const result = await db.transaction(async (tx) => {
-    const existing = await tx.query.project.findFirst({
-      where: and(eq(project.organizationId, orgId), eq(project.slug, input.project.slug)),
-      columns: { id: true },
-    })
-
     let projectId = existing?.id
     if (!projectId) {
       projectId = randomUUID()
