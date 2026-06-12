@@ -2,6 +2,7 @@ import { serveStatic } from '@hono/node-server/serve-static'
 import { trpcServer } from '@hono/trpc-server'
 import { sql } from 'drizzle-orm'
 import { Hono } from 'hono'
+import { bodyLimit } from 'hono/body-limit'
 import { cors } from 'hono/cors'
 import { secureHeaders } from 'hono/secure-headers'
 import { db } from './db'
@@ -41,6 +42,11 @@ app.on(['POST', 'GET'], '/api/auth/*', c => auth.handler(c.req.raw))
 
 app.use('/trpc/*', trpcServer({ router: appRouter, createContext }))
 
+// Largest legitimate ingest body is a trace.zip artifact; cap before any parsing.
+app.use('/api/v1/*', bodyLimit({
+  maxSize: 100 * 1024 * 1024,
+  onError: c => c.json({ error: 'Payload too large' }, 413),
+}))
 app.route('/api/v1', publicApi)
 app.route('/api/slack', slackOAuth)
 
