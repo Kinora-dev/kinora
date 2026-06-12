@@ -66,7 +66,7 @@ slackOAuth.get('/install', async (c) => {
   if (!session?.user)
     return c.json({ error: 'Unauthorized' }, 401)
 
-  const orgId = (session.session as { activeOrganizationId?: string | null }).activeOrganizationId
+  const orgId = session.session.activeOrganizationId
   if (!orgId)
     return c.json({ error: 'No active organization' }, 400)
 
