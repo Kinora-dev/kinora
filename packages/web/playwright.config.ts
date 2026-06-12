@@ -1,17 +1,40 @@
 import process from 'node:process'
 import { defineConfig, devices } from '@playwright/test'
 
-const PORT = 5173
-const baseURL = `http://localhost:${PORT}`
+const ci = !!process.env.CI
 
-// E2E runs against an already-running stack (web + server + Postgres) seeded via
-// `pnpm --filter @kinora/server db:seed`. The suite logs in as the demo user.
+// Same self-booted, disposable stack in dev and CI: dedicated ports + a kinora_e2e DB,
+// so locally the dev stack (3000/5173, dev DB) keeps running untouched. `db:reset:e2e`
+// (run by the test:e2e script, before playwright) prepares the DB.
+const SERVER_PORT = 3399
+const WEB_PORT = 5399
+const serverUrl = `http://localhost:${SERVER_PORT}`
+const baseURL = `http://localhost:${WEB_PORT}`
+
+// Single source for the server URL; e2e helpers read it for direct tRPC probes.
+process.env.E2E_SERVER_URL = serverUrl
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
+  forbidOnly: ci,
+  retries: ci ? 2 : 0,
+  reporter: ci ? [['github'], ['html', { open: 'never' }]] : 'list',
+  webServer: [
+    {
+      // Inline env so it reliably reaches the spawned process. dotenv (dev) / job env (CI) fills the rest.
+      command: `PORT=${SERVER_PORT} BASE_URL=${serverUrl} WEB_ORIGIN=${baseURL} POSTGRES_DB=kinora_e2e KINORA_CLOUD=false pnpm --filter @kinora/server start`,
+      url: `${serverUrl}/healthcheck`,
+      reuseExistingServer: false,
+      timeout: 120_000,
+    },
+    {
+      command: `VITE_KINORA_SERVER_URL=${serverUrl} pnpm --filter @kinora/web exec vite --port ${WEB_PORT} --strictPort`,
+      url: baseURL,
+      reuseExistingServer: false,
+      timeout: 120_000,
+    },
+  ],
   use: {
     baseURL,
     trace: 'on-first-retry',

@@ -97,17 +97,17 @@ jobs:
           --health-cmd "pg_isready -U kinora"
           --health-interval 5s --health-timeout 5s --health-retries 10
     env:
-      # web e2e drives a real stack; the server reads these (no .env in CI).
-      VITE_KINORA_SERVER_URL: http://localhost:3000
+      VITE_KINORA_SERVER_URL: http://localhost:3399
       NODE_ENV: development
-      PORT: '3000'
-      BASE_URL: http://localhost:3000
+      PORT: '3399'
+      BASE_URL: http://localhost:3399
+      WEB_ORIGIN: http://localhost:5399
       AUTH_SECRET: ci-e2e-secret-not-used-for-anything-real
       POSTGRES_USER: kinora
       POSTGRES_PASSWORD: kinora
       POSTGRES_HOST: localhost
       POSTGRES_PORT: '5436'
-      POSTGRES_DB: kinora
+      POSTGRES_DB: kinora_e2e
       STORAGE_DIR: .data/artifacts
       GOOGLE_CLIENT_ID: ''
       GOOGLE_CLIENT_SECRET: ''
@@ -129,15 +129,6 @@ jobs:
       - name: Install Playwright browser
         run: pnpm --filter @kinora/web exec playwright install --with-deps chromium
 
-      - name: Push schema + seed demo data
-        run: |
-          pnpm --filter @kinora/server migrate latest
-          pnpm --filter @kinora/server db:seed
-
-      - name: E2E (boots server + web, runs viewer + web suites)
-        run: |
-          pnpm --filter @kinora/server start &
-          pnpm dev:web &
-          for i in $(seq 1 60); do curl -sf http://localhost:3000/healthcheck >/dev/null && break; sleep 2; done
-          for i in $(seq 1 60); do curl -sf http://localhost:5173 >/dev/null && break; sleep 2; done
-          pnpm test:e2e
+      # test:e2e resets kinora_e2e + self-boots the stack on dedicated ports (same as local).
+      - name: E2E (viewer + web suites)
+        run: pnpm test:e2e
