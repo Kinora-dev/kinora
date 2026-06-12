@@ -1,11 +1,14 @@
 import type { Page } from '@playwright/test'
+import process from 'node:process'
 import { expect } from '@playwright/test'
 
 export const DEMO = { email: 'demo@kinora.dev', password: 'password123' }
 // Owns the "Acme QA" workspace; demo is a member of it (set up by the seed).
 export const TEAMMATE = { email: 'teammate@kinora.dev', password: 'password123' }
 
-const SERVER_URL = 'http://localhost:3000'
+const SERVER_URL = process.env.E2E_SERVER_URL
+if (!SERVER_URL)
+  throw new Error('E2E_SERVER_URL must be set (configured by playwright.config.ts)')
 
 export async function login(page: Page, creds = DEMO): Promise<void> {
   await page.goto('/login')
