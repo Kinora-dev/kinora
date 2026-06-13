@@ -18,6 +18,29 @@ export async function login(page: Page, creds = DEMO): Promise<void> {
   await expect(page).toHaveURL('/')
 }
 
+// Rewrite the user.me tRPC response so a test drives server-derived flags
+// (mailerEnabled, emailVerified) instead of depending on the server's config.
+export async function stubMe(page: Page, flags: { mailerEnabled?: boolean, emailVerified?: boolean }): Promise<void> {
+  await page.route('**/trpc/**', async (route) => {
+    if (!route.request().url().includes('user.me')) {
+      await route.continue()
+      return
+    }
+    const res = await route.fetch()
+    const body = await res.json() as { result?: { data?: Record<string, unknown> } }[]
+    for (const entry of body) {
+      const data = entry?.result?.data
+      if (data && typeof data === 'object' && 'emailVerified' in data) {
+        if (flags.mailerEnabled !== undefined)
+          data.mailerEnabled = flags.mailerEnabled
+        if (flags.emailVerified !== undefined)
+          data.emailVerified = flags.emailVerified
+      }
+    }
+    await route.fulfill({ response: res, json: body })
+  })
+}
+
 interface Manifest {
   projects: { id: string, runs: { runId: string }[] }[]
 }
