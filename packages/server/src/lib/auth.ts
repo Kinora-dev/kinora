@@ -52,8 +52,19 @@ export const auth = betterAuth({
       clientSecret: env.GITHUB_CLIENT_SECRET,
     },
   },
-  // No SMTP yet: emails stay unverified, so apply the new address directly instead of mailing a verification link.
-  user: { changeEmail: { enabled: true, updateEmailWithoutVerification: true } },
+  user: {
+    changeEmail: {
+      enabled: true,
+      updateEmailWithoutVerification: !mailerEnabled,
+      sendChangeEmailConfirmation: async ({ user, newEmail, url }) => {
+        sendMail({
+          to: user.email,
+          subject: 'Approve your kinora email change',
+          text: `Hi${user.name ? ` ${user.name}` : ''},\n\nApprove changing your kinora email to ${newEmail} by clicking the link below:\n\n${url}\n\nIf you didn't request this, ignore this email and your address stays the same.`,
+        })
+      },
+    },
+  },
   databaseHooks: {
     user: {
       create: {

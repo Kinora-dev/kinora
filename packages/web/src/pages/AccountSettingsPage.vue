@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import type { ColorMode } from '@kinora/ui/theme'
+import { Badge } from '@kinora/ui/badge'
 import { Button } from '@kinora/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kinora/ui/card'
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@kinora/ui/form'
 import { Input } from '@kinora/ui/input'
 import { colorMode } from '@kinora/ui/theme'
 import { toTypedSchema } from '@vee-validate/zod'
-import { Monitor, Moon, Sun } from 'lucide-vue-next'
+import { CircleAlert, CircleCheck, Monitor, Moon, Sun } from 'lucide-vue-next'
 import { useForm } from 'vee-validate'
 import { computed, ref } from 'vue'
 import { toast } from 'vue-sonner'
@@ -48,6 +49,25 @@ async function updateEmail(): Promise<void> {
   }
   await session.refresh()
   toast.success('Email updated')
+}
+
+// No SMTP on the server: hide verification UI entirely (can't verify or resend).
+const mailerEnabled = computed(() => session.user.value?.mailerEnabled ?? false)
+const emailVerified = computed(() => session.user.value?.emailVerified ?? false)
+const resending = ref(false)
+
+async function resendVerification(): Promise<void> {
+  const email = session.user.value?.email
+  if (!email)
+    return
+  resending.value = true
+  const { error } = await authClient.sendVerificationEmail({ email, callbackURL: '/settings/account' })
+  resending.value = false
+  if (error) {
+    toast.error(error.message ?? 'Could not send verification email')
+    return
+  }
+  toast.success('Verification email sent')
 }
 
 // --- Password ---
@@ -110,7 +130,17 @@ const onPassword = submitPassword(async (values) => {
     <!-- Email -->
     <Card v-if="hasPassword">
       <CardHeader>
-        <CardTitle>Email</CardTitle>
+        <div class="flex items-center gap-2.5">
+          <CardTitle>Email</CardTitle>
+          <Badge v-if="mailerEnabled && emailVerified" variant="outline" class="border-pass/40 text-pass">
+            <CircleCheck />
+            Verified
+          </Badge>
+          <Badge v-else-if="mailerEnabled" variant="outline" class="border-flaky/40 text-flaky">
+            <CircleAlert />
+            Not verified
+          </Badge>
+        </div>
         <CardDescription>The address you sign in with.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -126,6 +156,22 @@ const onPassword = submitPassword(async (values) => {
             {{ emailSaving ? 'Saving…' : 'Update email' }}
           </Button>
         </form>
+
+        <div v-if="mailerEnabled && !emailVerified" class="mt-5 flex flex-col gap-2 border-t border-border pt-5">
+          <p class="text-sm text-muted-foreground">
+            Verify your email to secure address and password changes.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            :disabled="resending"
+            class="self-start font-mono text-xs"
+            @click="resendVerification"
+          >
+            {{ resending ? 'Sending…' : 'Resend verification email' }}
+          </Button>
+        </div>
       </CardContent>
     </Card>
 

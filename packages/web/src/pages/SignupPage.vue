@@ -43,8 +43,12 @@ const onSubmit = handleSubmit(async (values) => {
     serverError.value = error?.message ?? 'Sign up failed'
     return
   }
-  // Set the user from the response so the redirect never races the session cookie.
-  session.setUserFromAuth(data.user, true)
+  // Hydrate the full session user (hasPassword, mailerEnabled) before the redirect.
+  await session.refresh()
+  if (!session.user.value) {
+    serverError.value = 'Sign up failed'
+    return
+  }
   router.push(destination())
 })
 

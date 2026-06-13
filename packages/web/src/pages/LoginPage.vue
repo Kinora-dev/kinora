@@ -39,9 +39,13 @@ const onSubmit = handleSubmit(async (values) => {
     serverError.value = error?.message ?? 'Sign in failed'
     return
   }
-  // Set the user from the sign-in response so the redirect never races the session cookie
-  // (a re-fetched /me can return null before the cookie settles -> guard bounces to /login).
-  session.setUserFromAuth(data.user, true)
+  // Hydrate the full session user (hasPassword, mailerEnabled) before the redirect.
+  await session.refresh()
+  if (!session.user.value) {
+    serverError.value = 'Sign in failed'
+    return
+  }
+
   router.push(destination())
 })
 
