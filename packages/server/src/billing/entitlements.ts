@@ -3,7 +3,6 @@ import { db } from '../db'
 import { member, subscription, user } from '../db/schemas/index'
 import { cloud, env } from '../lib/env'
 import { sendMail } from '../lib/mailer'
-import { getTrustedOrigins } from '../lib/utils'
 
 export type Tier = 'free' | 'team' | 'pro' | 'enterprise' | 'selfhost'
 
@@ -112,7 +111,7 @@ export async function syncCustomerState(state: CustomerStateInput): Promise<void
   const reduced = retentionReduced(prev?.tier ?? 'free', tier)
   if (welcome || reduced) {
     const u = await db.query.user.findFirst({ where: eq(user.id, state.userId), columns: { email: true, name: true } })
-    const link = getTrustedOrigins()[0] ?? ''
+    const link = env.WEB_ORIGIN
     if (u && welcome) {
       sendMail({
         to: u.email,

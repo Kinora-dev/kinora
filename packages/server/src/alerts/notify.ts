@@ -4,8 +4,8 @@ import { and, desc, eq, lt, sql } from 'drizzle-orm'
 import { getEntitlements } from '../billing/entitlements'
 import { db } from '../db'
 import { project, run, slackIntegration, test } from '../db/schemas/index'
+import { env } from '../lib/env'
 import { logger } from '../lib/logger'
-import { getTrustedOrigins } from '../lib/utils'
 import { buildSlackMessage, sendSlack } from './slack'
 
 type TestRow = typeof test.$inferSelect
@@ -90,7 +90,7 @@ export async function notifyRun(input: NotifyRunInput): Promise<void> {
 
   const message = buildSlackMessage({
     projectName: projectRow?.name ?? 'project',
-    runUrl: `${getTrustedOrigins()[0] ?? ''}/projects/${slug}/runs/${input.runId}`,
+    runUrl: `${env.WEB_ORIGIN}/projects/${slug}/runs/${input.runId}`,
     counts: input.counts,
     newlyFailing: newlyFailing.map(d => d.title),
     newlyFlaky: newlyFlaky.map(d => d.title),

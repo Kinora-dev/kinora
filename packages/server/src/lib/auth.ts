@@ -130,7 +130,7 @@ export const auth = betterAuth({
         sendMail({
           to: data.email,
           subject: `Join ${data.organization.name} on kinora`,
-          text: `${inviter} invited you to the "${data.organization.name}" workspace on kinora.\n\nAccept the invitation:\n\n${getTrustedOrigins()[0]}/accept-invite/${data.id}\n\nIf you weren't expecting this, you can safely ignore this email.`,
+          text: `${inviter} invited you to the "${data.organization.name}" workspace on kinora.\n\nAccept the invitation:\n\n${env.WEB_ORIGIN}/accept-invite/${data.id}\n\nIf you weren't expecting this, you can safely ignore this email.`,
         })
       },
     }),

@@ -8,7 +8,6 @@ import { member, project, slackIntegration } from '../db/schemas/index'
 import { auth } from '../lib/auth'
 import { env, slackApp } from '../lib/env'
 import { logger } from '../lib/logger'
-import { getTrustedOrigins } from '../lib/utils'
 
 const SCOPE = 'incoming-webhook'
 const STATE_TTL_MS = 10 * 60 * 1000
@@ -33,8 +32,7 @@ function callbackUrl(): string {
 }
 
 function settingsRedirect(slug: string, status: 'connected' | 'error'): string {
-  // First trusted origin is the dashboard (web) origin.
-  return `${getTrustedOrigins()[0]}/projects/${encodeURIComponent(slug)}/settings?slack=${status}`
+  return `${env.WEB_ORIGIN}/projects/${encodeURIComponent(slug)}/settings?slack=${status}`
 }
 
 function sign(body: string): string {
