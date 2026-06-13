@@ -1,7 +1,9 @@
 import { and, eq } from 'drizzle-orm'
 import { db } from '../db'
-import { member, subscription } from '../db/schemas/index'
+import { member, subscription, user } from '../db/schemas/index'
 import { cloud, env } from '../lib/env'
+import { sendMail } from '../lib/mailer'
+import { getTrustedOrigins } from '../lib/utils'
 
 export type Tier = 'free' | 'team' | 'pro' | 'enterprise' | 'selfhost'
 
@@ -33,6 +35,20 @@ function tierForProduct(productId: string | undefined): 'free' | 'team' | 'pro' 
   if (productId === env.POLAR_PRODUCT_PRO_ID)
     return 'pro'
   return 'free'
+}
+
+function isActivePaid(tier: Tier, status: string | null | undefined): boolean {
+  return tier !== 'free' && (status === 'active' || status === 'trialing')
+}
+
+export function becameActivePaid(prev: { tier: Tier, status: string | null } | null | undefined, nextTier: Tier, nextStatus: string | null): boolean {
+  return !isActivePaid(prev?.tier ?? 'free', prev?.status) && isActivePaid(nextTier, nextStatus) && (nextTier === 'team' || nextTier === 'pro')
+}
+
+export function planActivatedText(name: string | null, tier: 'team' | 'pro', link: string): string {
+  const l = LIMITS[tier]
+  const label = tier === 'team' ? 'Team' : 'Pro'
+  return `Hi${name ? ` ${name}` : ''},\n\nYour kinora ${label} plan is active. You now have:\n\n- ${l.includedResults.toLocaleString('en-US')} test results / month\n- ${l.retentionDays}-day history\n- Unlimited projects\n- Regression alerts (Slack, email, webhook)\n\nOpen your dashboard: ${link}\n\nManage billing anytime under Settings -> Workspace.`
 }
 
 interface CustomerStateInput {
@@ -70,10 +86,26 @@ export async function syncCustomerState(state: CustomerStateInput): Promise<void
     cancelAtPeriodEnd: sub?.cancelAtPeriodEnd ?? false,
   }
 
+  const prev = await db.query.subscription.findFirst({
+    where: eq(subscription.organizationId, owner.organizationId),
+    columns: { tier: true, status: true },
+  })
+
   await db
     .insert(subscription)
     .values({ organizationId: owner.organizationId, ...values })
     .onConflictDoUpdate({ target: subscription.organizationId, set: values })
+
+  if (becameActivePaid(prev, tier, values.status) && (tier === 'team' || tier === 'pro')) {
+    const u = await db.query.user.findFirst({ where: eq(user.id, state.userId), columns: { email: true, name: true } })
+    if (u) {
+      sendMail({
+        to: u.email,
+        subject: `Your kinora ${tier === 'team' ? 'Team' : 'Pro'} plan is active`,
+        text: planActivatedText(u.name, tier, getTrustedOrigins()[0] ?? ''),
+      })
+    }
+  }
 }
 
 export interface SubscriptionState {

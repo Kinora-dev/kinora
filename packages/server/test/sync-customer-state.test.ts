@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { syncCustomerState } from '../src/billing/entitlements'
+import { becameActivePaid, planActivatedText, syncCustomerState } from '../src/billing/entitlements'
 import { db } from '../src/db'
 import { subscription } from '../src/db/schemas/index'
 import { env } from '../src/lib/env'
@@ -67,5 +67,38 @@ describe('syncCustomerState', () => {
   it('ignores a customer state with no external user id', async () => {
     await syncCustomerState({ userId: null, polarCustomerId: 'cus_x', subscriptions: [] })
     expect(await db.select().from(subscription)).toHaveLength(0)
+  })
+})
+
+describe('becameActivePaid (welcome-email trigger)', () => {
+  it('fires on the jump from no/free plan to an active paid plan', () => {
+    expect(becameActivePaid(null, 'team', 'active')).toBe(true)
+    expect(becameActivePaid({ tier: 'free', status: null }, 'pro', 'active')).toBe(true)
+    expect(becameActivePaid({ tier: 'free', status: null }, 'team', 'trialing')).toBe(true)
+  })
+
+  it('does not fire when already on an active paid plan', () => {
+    expect(becameActivePaid({ tier: 'team', status: 'active' }, 'team', 'active')).toBe(false)
+    expect(becameActivePaid({ tier: 'team', status: 'active' }, 'pro', 'active')).toBe(false)
+  })
+
+  it('does not fire for free or non-active statuses', () => {
+    expect(becameActivePaid(null, 'free', null)).toBe(false)
+    expect(becameActivePaid(null, 'team', 'incomplete')).toBe(false)
+    expect(becameActivePaid(null, 'team', 'past_due')).toBe(false)
+  })
+})
+
+describe('planActivatedText', () => {
+  it('names the tier and lists its entitlements', () => {
+    const text = planActivatedText('Joris', 'team', 'https://app.kinora.dev')
+    expect(text).toContain('Team plan is active')
+    expect(text).toContain('10,000 test results')
+    expect(text).toContain('90-day history')
+    expect(text).toContain('https://app.kinora.dev')
+  })
+
+  it('omits the name when absent', () => {
+    expect(planActivatedText(null, 'pro', 'x')).toContain('Hi,')
   })
 })
