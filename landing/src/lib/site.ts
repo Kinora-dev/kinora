@@ -1,6 +1,7 @@
 export const SITE = {
   name: 'kinora',
   url: 'https://kinora.dev',
+  app: 'https://app.kinora.dev',
   repo: 'https://github.com/Kinora-dev/kinora',
   tagline: 'Playwright test intelligence',
   description:
