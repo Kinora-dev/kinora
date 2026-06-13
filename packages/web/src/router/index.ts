@@ -6,6 +6,9 @@ export const router = createRouter({
   routes: [
     { path: '/login', name: 'login', component: () => import('@/pages/LoginPage.vue'), meta: { public: true } },
     { path: '/signup', name: 'signup', component: () => import('@/pages/SignupPage.vue'), meta: { public: true } },
+    { path: '/forgot-password', name: 'forgot-password', component: () => import('@/pages/ForgotPasswordPage.vue'), meta: { public: true } },
+    // Uses the invite meta: a reset link must open whatever the session state.
+    { path: '/reset-password', name: 'reset-password', component: () => import('@/pages/ResetPasswordPage.vue'), meta: { invite: true } },
     { path: '/', name: 'overview', component: () => import('@/pages/OverviewPage.vue') },
     {
       path: '/settings',

@@ -9,6 +9,7 @@ import { db } from '../db'
 import { member, organization as organizationTable } from '../db/schemas/index'
 import { env } from './env'
 import { logger } from './logger'
+import { mailerEnabled, sendMail } from './mailer'
 import { getTrustedOrigins } from './utils'
 
 function slugify(input: string): string {
@@ -21,7 +22,26 @@ export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: 'pg' }),
   baseURL: env.BASE_URL,
   trustedOrigins: getTrustedOrigins(),
-  emailAndPassword: { enabled: true },
+  emailAndPassword: {
+    enabled: true,
+    sendResetPassword: async ({ user, url }) => {
+      sendMail({
+        to: user.email,
+        subject: 'Reset your kinora password',
+        text: `Hi${user.name ? ` ${user.name}` : ''},\n\nSomeone requested a password reset for your kinora account. Click the link below to choose a new password:\n\n${url}\n\nThe link expires in 1 hour. If you didn't ask for this, you can safely ignore this email.`,
+      })
+    },
+  },
+  emailVerification: {
+    sendOnSignUp: mailerEnabled,
+    sendVerificationEmail: async ({ user, url }) => {
+      sendMail({
+        to: user.email,
+        subject: 'Verify your kinora email',
+        text: `Hi${user.name ? ` ${user.name}` : ''},\n\nConfirm this address for your kinora account by clicking the link below:\n\n${url}\n\nIf you didn't create a kinora account, you can safely ignore this email.`,
+      })
+    },
+  },
   socialProviders: {
     google: {
       clientId: env.GOOGLE_CLIENT_ID,
@@ -93,8 +113,14 @@ export const auth = betterAuth({
       // Only the auto-created personal org exists; members can't spin up extra orgs.
       allowUserToCreateOrganization: false,
       sendInvitationEmail: async (data) => {
-        // No SMTP yet: the UI surfaces the accept link from the invite response; log it as a fallback.
+        // The UI also surfaces the accept link from the invite response, so no-SMTP setups still work.
         logger.info({ invitationId: data.id, email: data.email, org: data.organization.name }, 'org invitation created')
+        const inviter = data.inviter.user.name || data.inviter.user.email
+        sendMail({
+          to: data.email,
+          subject: `Join ${data.organization.name} on kinora`,
+          text: `${inviter} invited you to the "${data.organization.name}" workspace on kinora.\n\nAccept the invitation:\n\n${getTrustedOrigins()[0]}/accept-invite/${data.id}\n\nIf you weren't expecting this, you can safely ignore this email.`,
+        })
       },
     }),
     ...(polarPlugin ? [polarPlugin] : []),
