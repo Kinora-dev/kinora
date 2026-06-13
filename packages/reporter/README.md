@@ -31,13 +31,13 @@ The token comes from the environment (keep it out of the config file). The serve
 
 ```bash
 # hosted cloud
-KINORA_TOKEN=<project-token> npx playwright test
+KINORA_TOKEN=<token> npx playwright test
 
 # self-host
-KINORA_URL=https://kinora.example.com KINORA_TOKEN=<project-token> npx playwright test
+KINORA_URL=https://kinora.example.com KINORA_TOKEN=<token> npx playwright test
 ```
 
-Create a project API token in the kinora dashboard (Settings → API tokens).
+Create a API token in the kinora dashboard (Settings → API tokens).
 
 ## Options
 
@@ -50,13 +50,13 @@ Create a project API token in the kinora dashboard (Settings → API tokens).
 ]
 ```
 
-| Option    | Type                                 | Default                | Description                                |
-| --------- | ------------------------------------ | ---------------------- | ------------------------------------------ |
-| `project` | `{ slug: string, name?: string }`    | required               | Target project. `name` defaults to `slug`. |
+| Option    | Type                                 | Default                      | Description                                |
+| --------- | ------------------------------------ | ---------------------------- | ------------------------------------------ |
+| `project` | `{ slug: string, name?: string }`    | required                     | Target project. `name` defaults to `slug`. |
 | `url`     | `string`                             | env `KINORA_URL`, then cloud | kinora server base URL. Set for self-host. |
-| `token`   | `string`                             | env `KINORA_TOKEN`     | Project API token. Prefer the env var.     |
-| `git`     | `{ sha?, branch? }`                  | auto on GitHub Actions | Git metadata for the run.                  |
-| `ci`      | `{ provider?, runUrl?, runNumber? }` | auto on GitHub Actions | CI metadata for the run.                   |
+| `token`   | `string`                             | env `KINORA_TOKEN`           | Project API token. Prefer the env var.     |
+| `git`     | `{ sha?, branch? }`                  | auto on GitHub Actions       | Git metadata for the run.                  |
+| `ci`      | `{ provider?, runUrl?, runNumber? }` | auto on GitHub Actions       | CI metadata for the run.                   |
 
 On GitHub Actions, `git` and `ci` are filled from the standard `GITHUB_*` env vars. Pass them explicitly on other CI providers.
 

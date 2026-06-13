@@ -8,7 +8,7 @@ const configSnippet = `export default defineConfig({
   use: { trace: 'on-first-retry' },
 })`
 
-const runSnippet = `KINORA_TOKEN=<project-token> npx playwright test`
+const runSnippet = `KINORA_TOKEN=<token> npx playwright test`
 
 const steps: {
   num: string
@@ -47,7 +47,9 @@ const steps: {
 
 <section id="setup" class="border-b border-border">
   <div class="mx-auto max-w-7xl px-5 py-20 sm:px-8 sm:py-28">
-    <div class="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-20">
+    <div
+      class="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-20"
+    >
       <header class="reveal lg:sticky lg:top-24 lg:self-start">
         <p
           class="font-mono text-xs font-medium uppercase tracking-wider text-signal"

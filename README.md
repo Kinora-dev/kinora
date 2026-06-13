@@ -62,10 +62,10 @@ Set the token via env (keep it out of the config / in CI secrets):
 
 ```bash
 # hosted cloud: token only, the URL defaults to the kinora cloud
-KINORA_TOKEN=<project-token> npx playwright test
+KINORA_TOKEN=<token> npx playwright test
 
 # self-host: point at your own server
-KINORA_URL=https://your-kinora-server KINORA_TOKEN=<project-token> npx playwright test
+KINORA_URL=https://your-kinora-server KINORA_TOKEN=<token> npx playwright test
 ```
 
 On GitHub Actions, git and CI metadata are filled in automatically. See [`@kinora/reporter`](packages/reporter) for all options and the CI example.
