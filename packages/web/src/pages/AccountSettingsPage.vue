@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ColorMode } from '@kinora/ui/theme'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@kinora/ui/alert-dialog'
 import { Badge } from '@kinora/ui/badge'
 import { Button } from '@kinora/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kinora/ui/card'
@@ -10,6 +11,7 @@ import { toTypedSchema } from '@vee-validate/zod'
 import { CircleAlert, CircleCheck, Monitor, Moon, Sun } from 'lucide-vue-next'
 import { useForm } from 'vee-validate'
 import { computed, onUnmounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { z } from 'zod'
 import { authClient } from '@/lib/auth'
@@ -118,6 +120,29 @@ const onPassword = submitPassword(async (values) => {
   resetPw()
   toast.success('Password changed')
 })
+
+// --- Delete account ---
+const router = useRouter()
+const deleting = ref(false)
+const deletePassword = ref('')
+const deleteConfirm = ref('')
+
+// social-only users have none, so confirm by typing their email instead.
+const canDelete = computed(() => hasPassword.value
+  ? deletePassword.value.length > 0
+  : deleteConfirm.value.trim() === (session.user.value?.email ?? ''))
+
+async function deleteAccount(): Promise<void> {
+  deleting.value = true
+  const { error } = await authClient.deleteUser(hasPassword.value ? { password: deletePassword.value } : {})
+  deleting.value = false
+  if (error) {
+    toast.error(error.message ?? 'Could not delete account')
+    return
+  }
+  session.setUser(null)
+  router.push('/login')
+}
 </script>
 
 <template>
@@ -240,6 +265,55 @@ const onPassword = submitPassword(async (values) => {
             {{ pwSubmitting ? 'Saving…' : 'Change password' }}
           </Button>
         </form>
+      </CardContent>
+    </Card>
+
+    <!-- Danger zone -->
+    <Card class="border-fail/30">
+      <CardHeader>
+        <CardTitle class="text-fail">
+          Danger zone
+        </CardTitle>
+        <CardDescription>Deleting your account removes your workspace and all its projects, runs, and traces. This cannot be undone.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <AlertDialog>
+          <AlertDialogTrigger as-child>
+            <Button type="button" variant="destructive" size="sm" class="w-fit font-mono text-xs">
+              Delete account
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This permanently deletes your workspace and every project, run, and trace in it. This cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div class="grid gap-2">
+              <template v-if="hasPassword">
+                <label :class="labelClass" for="delete-password">Enter your password to confirm</label>
+                <Input id="delete-password" v-model="deletePassword" type="password" autocomplete="current-password" />
+              </template>
+              <template v-else>
+                <label :class="labelClass" for="delete-confirm">
+                  Type <span class="text-foreground normal-case">{{ session.user.value?.email }}</span> to confirm
+                </label>
+                <Input id="delete-confirm" v-model="deleteConfirm" :placeholder="session.user.value?.email ?? ''" />
+              </template>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                class="bg-destructive text-white hover:bg-destructive/90"
+                :disabled="!canDelete || deleting"
+                @click="deleteAccount"
+              >
+                {{ deleting ? 'Deleting…' : 'Delete account' }}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   </div>

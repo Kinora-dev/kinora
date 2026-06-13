@@ -7,6 +7,7 @@ import { and, eq } from 'drizzle-orm'
 import { polarAuthPlugin, polarClient } from '../billing/polar'
 import { db } from '../db'
 import { member, organization as organizationTable } from '../db/schemas/index'
+import { purgeUserOwnedData } from './account'
 import { env } from './env'
 import { logger } from './logger'
 import { mailerEnabled, sendMail } from './mailer'
@@ -53,6 +54,21 @@ export const auth = betterAuth({
     },
   },
   user: {
+    deleteUser: {
+      enabled: true,
+      // Fresh session or password required by better-auth; we just clean up owned data first.
+      beforeDelete: async (u) => {
+        await purgeUserOwnedData(u.id)
+        if (polarClient) {
+          try {
+            await polarClient.customers.deleteExternal({ externalId: u.id })
+          }
+          catch (error) {
+            logger.warn({ error, userId: u.id }, 'polar customer deletion skipped')
+          }
+        }
+      },
+    },
     changeEmail: {
       enabled: true,
       updateEmailWithoutVerification: !mailerEnabled,
