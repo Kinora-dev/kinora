@@ -80,7 +80,7 @@ async function resendVerification(): Promise<void> {
   if (!email || resending.value || cooldown.value > 0)
     return
   resending.value = true
-  const { error } = await authClient.sendVerificationEmail({ email, callbackURL: '/settings/account' })
+  const { error } = await authClient.sendVerificationEmail({ email, callbackURL: `${window.location.origin}/settings/account` })
   resending.value = false
   if (error) {
     toast.error(error.message ?? 'Could not send verification email')

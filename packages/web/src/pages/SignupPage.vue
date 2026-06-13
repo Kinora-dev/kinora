@@ -38,7 +38,7 @@ const { handleSubmit, isSubmitting } = useForm({
 
 const onSubmit = handleSubmit(async (values) => {
   serverError.value = ''
-  const { data, error } = await authClient.signUp.email({ name: values.email, email: values.email, password: values.password })
+  const { data, error } = await authClient.signUp.email({ name: values.email, email: values.email, password: values.password, callbackURL: window.location.origin })
   if (error || !data) {
     serverError.value = error?.message ?? 'Sign up failed'
     return
