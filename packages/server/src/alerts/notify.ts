@@ -1,12 +1,17 @@
 import type { Counts, NormTest } from '@kinora/core'
+import type { AlertPayload, AlertPolicy } from './core'
 import { compareRuns } from '@kinora/core'
 import { and, desc, eq, lt, sql } from 'drizzle-orm'
 import { getEntitlements } from '../billing/entitlements'
 import { db } from '../db'
-import { project, run, slackIntegration, test } from '../db/schemas/index'
+import { alertChannel, project, run, slackIntegration, test } from '../db/schemas/index'
 import { env } from '../lib/env'
 import { logger } from '../lib/logger'
+import { sendMail } from '../lib/mailer'
+import { shouldFire } from './core'
+import { buildAlertEmail } from './email'
 import { buildSlackMessage, sendSlack } from './slack'
+import { postWebhook } from './webhook'
 
 type TestRow = typeof test.$inferSelect
 
@@ -60,15 +65,19 @@ async function previousRunTests(projectId: string, before: Date, branch?: string
 }
 
 export async function notifyRun(input: NotifyRunInput): Promise<void> {
-  const channel = await db.query.slackIntegration.findFirst({
-    where: eq(slackIntegration.projectId, input.projectId),
-  })
-  if (!channel?.enabled)
-    return
-
   // Alerts are a paid feature (self-host is unlimited).
   const entitlements = await getEntitlements(input.organizationId)
   if (!entitlements.alerts)
+    return
+
+  const slack = await db.query.slackIntegration.findFirst({
+    where: eq(slackIntegration.projectId, input.projectId),
+  })
+  const channels = await db.select().from(alertChannel).where(eq(alertChannel.projectId, input.projectId))
+  const activeSlack = slack?.enabled ? slack : null
+  const activeChannels = channels.filter(c => c.enabled)
+  // Skip the regression query when nothing is wired up.
+  if (!activeSlack && activeChannels.length === 0)
     return
 
   const prevTests = await previousRunTests(input.projectId, input.startedAt, input.branch)
@@ -76,30 +85,41 @@ export async function notifyRun(input: NotifyRunInput): Promise<void> {
   const newlyFailing = deltas.filter(d => d.change === 'broken')
   const newlyFlaky = deltas.filter(d => d.change === 'newly-flaky')
 
-  const fire = channel.policy === 'always'
-    || (channel.policy === 'on-failure' && input.counts.unexpected > 0)
-    || (channel.policy === 'on-regression' && (newlyFailing.length > 0 || newlyFlaky.length > 0))
-  if (!fire)
-    return
-
   const projectRow = await db.query.project.findFirst({
     where: eq(project.id, input.projectId),
     columns: { name: true, slug: true },
   })
   const slug = projectRow?.slug ?? input.projectId
-
-  const message = buildSlackMessage({
+  const payload: AlertPayload = {
     projectName: projectRow?.name ?? 'project',
     runUrl: `${env.WEB_ORIGIN}/projects/${slug}/runs/${input.runId}`,
     counts: input.counts,
     newlyFailing: newlyFailing.map(d => d.title),
     newlyFlaky: newlyFlaky.map(d => d.title),
-  })
-
-  try {
-    await sendSlack(channel.webhookUrl, message)
   }
-  catch (error) {
-    logger.error({ error, projectId: input.projectId }, 'slack alert failed')
+  const fires = (policy: AlertPolicy): boolean =>
+    shouldFire(policy, payload.counts, payload.newlyFailing.length, payload.newlyFlaky.length)
+
+  if (activeSlack && fires(activeSlack.policy)) {
+    try {
+      await sendSlack(activeSlack.webhookUrl, buildSlackMessage(payload))
+    }
+    catch (error) {
+      logger.error({ error, projectId: input.projectId }, 'slack alert failed')
+    }
+  }
+
+  for (const ch of activeChannels) {
+    if (!fires(ch.policy))
+      continue
+    try {
+      if (ch.kind === 'email')
+        sendMail({ to: ch.target, ...buildAlertEmail(payload) })
+      else
+        await postWebhook(ch.target, payload)
+    }
+    catch (error) {
+      logger.error({ error, projectId: input.projectId, kind: ch.kind }, 'alert delivery failed')
+    }
   }
 }

@@ -7,6 +7,7 @@ import { ArrowLeft } from 'lucide-vue-next'
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
+import AlertChannelsCard from '@/components/project/AlertChannelsCard.vue'
 import SlackAlertsCard from '@/components/project/SlackAlertsCard.vue'
 import { useManifest } from '@/composables/queries'
 import { useOrg } from '@/composables/useOrg'
@@ -108,6 +109,7 @@ async function onDelete(): Promise<void> {
     </Card>
 
     <SlackAlertsCard v-if="isAdmin" :project-id="projectId" />
+    <AlertChannelsCard v-if="isAdmin" :project-id="projectId" />
 
     <!-- Danger zone -->
     <Card v-if="isAdmin" class="border-fail/30">

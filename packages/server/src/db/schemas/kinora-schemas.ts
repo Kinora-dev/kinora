@@ -96,6 +96,19 @@ export const slackIntegration = pgTable('slack_integration', {
   updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
 })
 
+// Email / webhook alert channels. Slack stays separate (it carries OAuth specifics); a project
+// can have many of these. target = email address or webhook URL depending on kind.
+export const alertChannel = pgTable('alert_channel', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id').notNull().references(() => project.id, { onDelete: 'cascade' }),
+  kind: text('kind').$type<'email' | 'webhook'>().notNull(),
+  target: text('target').notNull(),
+  policy: text('policy').$type<'always' | 'on-failure' | 'on-regression'>().notNull().default('on-failure'),
+  enabled: boolean('enabled').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
+}, table => [index('alert_channel_projectId_idx').on(table.projectId)])
+
 export const projectRelations = relations(project, ({ one, many }) => ({
   organization: one(organization, { fields: [project.organizationId], references: [organization.id] }),
   runs: many(run),

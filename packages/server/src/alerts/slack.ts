@@ -1,25 +1,11 @@
-import type { Counts } from '@kinora/core'
+import type { AlertPayload } from './core'
+import { listTests } from './core'
 
 export interface SlackPayload {
   text: string
 }
 
-export interface SlackAlertInput {
-  projectName: string
-  runUrl: string
-  counts: Counts
-  newlyFailing: string[]
-  newlyFlaky: string[]
-}
-
-const MAX_LISTED = 10
-
-function listTests(titles: string[]): string {
-  const rest = titles.length - MAX_LISTED
-  return titles.slice(0, MAX_LISTED).join(', ') + (rest > 0 ? ` and ${rest} more` : '')
-}
-
-export function buildSlackMessage(input: SlackAlertInput): SlackPayload {
+export function buildSlackMessage(input: AlertPayload): SlackPayload {
   const { counts } = input
   const ok = counts.unexpected === 0
   const lines = [
