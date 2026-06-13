@@ -18,9 +18,9 @@ const policySchema = z.enum(['always', 'on-failure', 'on-regression'])
 const kindSchema = z.enum(['email', 'webhook'])
 
 function validateTarget(kind: 'email' | 'webhook', target: string): void {
-  const schema = kind === 'email' ? z.email() : z.url()
+  const schema = kind === 'email' ? z.email() : z.url({ protocol: /^https$/ })
   if (!schema.safeParse(target).success)
-    throw new TRPCError({ code: 'BAD_REQUEST', message: kind === 'email' ? 'Invalid email address' : 'Invalid webhook URL' })
+    throw new TRPCError({ code: 'BAD_REQUEST', message: kind === 'email' ? 'Invalid email address' : 'Webhook URL must be HTTPS' })
 }
 
 // Resolve a channel + its project, asserting the caller owns it. channel.projectId is the

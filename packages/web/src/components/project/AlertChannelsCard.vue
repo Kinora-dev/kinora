@@ -26,9 +26,9 @@ const addTarget = ref('')
 const addPolicy = ref<typeof POLICIES[number]['value']>('on-failure')
 
 const targetPlaceholder = computed(() => addKind.value === 'email' ? 'alerts@team.dev' : 'https://example.com/hook')
-const targetValid = computed(() => (addKind.value === 'email' ? z.email() : z.url()).safeParse(addTarget.value.trim()).success)
+const targetValid = computed(() => (addKind.value === 'email' ? z.email() : z.url({ protocol: /^https$/ })).safeParse(addTarget.value.trim()).success)
 const showTargetError = computed(() => addTarget.value.trim().length > 0 && !targetValid.value)
-const targetError = computed(() => addKind.value === 'email' ? 'Enter a valid email address' : 'Enter a valid URL (https://…)')
+const targetError = computed(() => addKind.value === 'email' ? 'Enter a valid email address' : 'Enter a valid HTTPS URL')
 
 async function onAdd(): Promise<void> {
   if (!targetValid.value)
