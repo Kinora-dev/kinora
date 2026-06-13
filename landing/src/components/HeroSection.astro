@@ -36,7 +36,7 @@ import Screenshot from './Screenshot.astro';
       <span
         class="font-mono text-[11px] font-medium uppercase tracking-wider text-muted-foreground"
       >
-        Open source &middot; self-hosted &middot; pre-release
+        Open source &middot; self-hosted &middot; cloud beta
       </span>
     </div>
 
@@ -62,7 +62,7 @@ import Screenshot from './Screenshot.astro';
       style="--reveal-delay: 240ms"
     >
       <a
-        href="#setup"
+        href={SITE.signup}
         data-umami-event="get-started-hero"
         class="inline-flex h-11 items-center gap-2 rounded-md bg-signal px-6 font-mono text-sm font-semibold text-background transition-opacity hover:opacity-90"
       >

@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,400..800;1,400..600&family=JetBrains+Mono:ital,wght@0,400..700;1,400..600&display=swap');
-
 @import 'tailwindcss';
 
 /* kinora design tokens - mirrored from @kinora/ui theme.css. Follows the system color scheme. */
@@ -90,6 +88,12 @@ kbd {
 
 ::selection {
   background: color-mix(in oklch, var(--signal) 30%, transparent);
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
 }
 
 /* Shiki dual-theme (build-time highlight): transparent bg, follow system scheme. */
