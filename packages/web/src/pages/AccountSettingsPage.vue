@@ -55,7 +55,7 @@ const mailerEnabled = computed(() => session.user.value?.mailerEnabled ?? false)
 const emailVerified = computed(() => session.user.value?.emailVerified ?? false)
 const resending = ref(false)
 
-const COOLDOWN_SECONDS = 60
+const COOLDOWN_SECONDS = 30
 const cooldown = ref(0)
 let cooldownTimer: ReturnType<typeof setInterval> | undefined
 
