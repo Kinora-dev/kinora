@@ -10,7 +10,7 @@ export function useAlertChannels(projectId: string) {
   const { state: channels, isLoading, execute: refresh } = useAsyncState(
     () => trpc.alerts.channels.query({ projectId }),
     [],
-    { immediate: true },
+    { immediate: true, resetOnExecute: false },
   )
 
   const adding = ref(false)

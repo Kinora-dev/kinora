@@ -9,7 +9,7 @@ export function useAlerts(projectId: string) {
   const { state: config, isLoading, execute: refresh } = useAsyncState(
     () => trpc.alerts.get.query({ projectId }),
     null,
-    { immediate: true },
+    { immediate: true, resetOnExecute: false },
   )
 
   const { state: oauth } = useAsyncState(

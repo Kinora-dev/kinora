@@ -8,7 +8,7 @@ export function useBilling() {
   const { state: summary, isLoading, execute: refresh } = useAsyncState(
     () => trpc.billing.summary.query(),
     null,
-    { immediate: true },
+    { immediate: true, resetOnExecute: false },
   )
 
   // Which billing action is mid-flight, so the buttons can disable + show progress.
