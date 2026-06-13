@@ -12,6 +12,16 @@ test('mailer enabled + unverified: shows Not verified badge and resend button', 
   await expect(resendButton(page)).toBeVisible()
 })
 
+test('resend starts a cooldown: button disables and counts down', async ({ page }) => {
+  await stubMe(page, { mailerEnabled: true, emailVerified: false })
+  await login(page)
+  await page.goto('/settings')
+  await resendButton(page).click()
+  const countingDown = page.getByRole('button', { name: /Resend in \d+s/ })
+  await expect(countingDown).toBeVisible()
+  await expect(countingDown).toBeDisabled()
+})
+
 test('mailer enabled + verified: shows Verified badge, no resend button', async ({ page }) => {
   await stubMe(page, { mailerEnabled: true, emailVerified: true })
   await login(page)

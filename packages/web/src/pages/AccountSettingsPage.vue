@@ -9,7 +9,7 @@ import { colorMode } from '@kinora/ui/theme'
 import { toTypedSchema } from '@vee-validate/zod'
 import { CircleAlert, CircleCheck, Monitor, Moon, Sun } from 'lucide-vue-next'
 import { useForm } from 'vee-validate'
-import { computed, ref } from 'vue'
+import { computed, onUnmounted, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import { z } from 'zod'
 import { authClient } from '@/lib/auth'
@@ -30,7 +30,6 @@ function setTheme(value: ColorMode): void {
   colorMode.value = value
 }
 
-// --- Email (plain ref: a single field, sidesteps the vee-validate/Input prefill binding quirk) ---
 const emailInput = ref(session.user.value?.email ?? '')
 const emailError = ref('')
 const emailSaving = ref(false)
@@ -56,9 +55,29 @@ const mailerEnabled = computed(() => session.user.value?.mailerEnabled ?? false)
 const emailVerified = computed(() => session.user.value?.emailVerified ?? false)
 const resending = ref(false)
 
+const COOLDOWN_SECONDS = 60
+const cooldown = ref(0)
+let cooldownTimer: ReturnType<typeof setInterval> | undefined
+
+function startCooldown(): void {
+  cooldown.value = COOLDOWN_SECONDS
+  cooldownTimer = setInterval(() => {
+    cooldown.value -= 1
+    if (cooldown.value <= 0 && cooldownTimer) {
+      clearInterval(cooldownTimer)
+      cooldownTimer = undefined
+    }
+  }, 1000)
+}
+
+onUnmounted(() => {
+  if (cooldownTimer)
+    clearInterval(cooldownTimer)
+})
+
 async function resendVerification(): Promise<void> {
   const email = session.user.value?.email
-  if (!email)
+  if (!email || resending.value || cooldown.value > 0)
     return
   resending.value = true
   const { error } = await authClient.sendVerificationEmail({ email, callbackURL: '/settings/account' })
@@ -67,6 +86,7 @@ async function resendVerification(): Promise<void> {
     toast.error(error.message ?? 'Could not send verification email')
     return
   }
+  startCooldown()
   toast.success('Verification email sent')
 }
 
@@ -165,11 +185,11 @@ const onPassword = submitPassword(async (values) => {
             type="button"
             variant="outline"
             size="sm"
-            :disabled="resending"
+            :disabled="resending || cooldown > 0"
             class="self-start font-mono text-xs"
             @click="resendVerification"
           >
-            {{ resending ? 'Sending…' : 'Resend verification email' }}
+            {{ cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend verification email' }}
           </Button>
         </div>
       </CardContent>
