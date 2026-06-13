@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { becameActivePaid, planActivatedText, syncCustomerState } from '../src/billing/entitlements'
+import { becameActivePaid, planActivatedText, retentionReduced, retentionReducedText, syncCustomerState } from '../src/billing/entitlements'
 import { db } from '../src/db'
 import { subscription } from '../src/db/schemas/index'
 import { env } from '../src/lib/env'
@@ -100,5 +100,33 @@ describe('planActivatedText', () => {
 
   it('omits the name when absent', () => {
     expect(planActivatedText(null, 'pro', 'x')).toContain('Hi,')
+  })
+})
+
+describe('retentionReduced (downgrade-warning trigger)', () => {
+  it('fires when the retention window shrinks', () => {
+    expect(retentionReduced('pro', 'free')).toBe(true)
+    expect(retentionReduced('pro', 'team')).toBe(true)
+    expect(retentionReduced('team', 'free')).toBe(true)
+  })
+
+  it('does not fire on upgrade or same tier', () => {
+    expect(retentionReduced('free', 'team')).toBe(false)
+    expect(retentionReduced('team', 'pro')).toBe(false)
+    expect(retentionReduced('team', 'team')).toBe(false)
+    expect(retentionReduced('free', 'free')).toBe(false)
+  })
+})
+
+describe('retentionReducedText', () => {
+  it('states the new plan and its window', () => {
+    const text = retentionReducedText('Joris', 'free', 'https://app.kinora.dev')
+    expect(text).toContain('Free plan')
+    expect(text).toContain('older than 7 days')
+    expect(text).toContain('https://app.kinora.dev')
+  })
+
+  it('omits the name when absent', () => {
+    expect(retentionReducedText(null, 'team', 'x')).toContain('Hi,')
   })
 })

@@ -51,6 +51,17 @@ export function planActivatedText(name: string | null, tier: 'team' | 'pro', lin
   return `Hi${name ? ` ${name}` : ''},\n\nYour kinora ${label} plan is active. You now have:\n\n- ${l.includedResults.toLocaleString('en-US')} test results / month\n- ${l.retentionDays}-day history\n- Unlimited projects\n- Regression alerts (Slack, email, webhook)\n\nOpen your dashboard: ${link}\n\nManage billing anytime under Settings -> Workspace.`
 }
 
+// Retention window shrank (downgrade): data past the new window becomes purge-eligible
+export function retentionReduced(prevTier: Tier, nextTier: Tier): boolean {
+  return retentionDaysFor(prevTier) > retentionDaysFor(nextTier)
+}
+
+export function retentionReducedText(name: string | null, tier: 'free' | 'team' | 'pro', link: string): string {
+  const days = retentionDaysFor(tier)
+  const label = tier === 'team' ? 'Team' : tier === 'pro' ? 'Pro' : 'Free'
+  return `Hi${name ? ` ${name}` : ''},\n\nYour kinora workspace is now on the ${label} plan. Test history older than ${days} days will be removed at the next cleanup.\n\nUpgrade again to keep a longer history, or export what you need first: ${link}`
+}
+
 interface CustomerStateInput {
   userId: string | null | undefined
   polarCustomerId: string
@@ -96,13 +107,24 @@ export async function syncCustomerState(state: CustomerStateInput): Promise<void
     .values({ organizationId: owner.organizationId, ...values })
     .onConflictDoUpdate({ target: subscription.organizationId, set: values })
 
-  if (becameActivePaid(prev, tier, values.status) && (tier === 'team' || tier === 'pro')) {
+  // Welcome and retention-drop are opposite transitions, so at most one fires; one user fetch covers both.
+  const welcome = becameActivePaid(prev, tier, values.status) && (tier === 'team' || tier === 'pro')
+  const reduced = retentionReduced(prev?.tier ?? 'free', tier)
+  if (welcome || reduced) {
     const u = await db.query.user.findFirst({ where: eq(user.id, state.userId), columns: { email: true, name: true } })
-    if (u) {
+    const link = getTrustedOrigins()[0] ?? ''
+    if (u && welcome) {
       sendMail({
         to: u.email,
         subject: `Your kinora ${tier === 'team' ? 'Team' : 'Pro'} plan is active`,
-        text: planActivatedText(u.name, tier, getTrustedOrigins()[0] ?? ''),
+        text: planActivatedText(u.name, tier, link),
+      })
+    }
+    else if (u && reduced) {
+      sendMail({
+        to: u.email,
+        subject: 'Your kinora history retention was reduced',
+        text: retentionReducedText(u.name, tier, link),
       })
     }
   }
@@ -135,6 +157,25 @@ export async function getEntitlements(organizationId: string): Promise<Entitleme
   })
   const tier = row?.tier ?? 'free'
   return { tier, ...LIMITS[tier] }
+}
+
+// The single ingest that crosses a usage threshold. Usage is monotonic within a month and resets
+// monthly, so before/after the insert is enough to fire once per threshold - no persisted "warned" flag.
+export function quotaCrossing(before: number, after: number, limit: number): 'reached' | 'near' | null {
+  if (before < limit && after >= limit)
+    return 'reached'
+  const near = Math.floor(limit * 0.8)
+  if (before < near && after >= near)
+    return 'near'
+  return null
+}
+
+export function quotaWarningText(name: string | null, kind: 'reached' | 'near', used: number, limit: number, link: string): string {
+  const greeting = `Hi${name ? ` ${name}` : ''},`
+  const l = limit.toLocaleString('en-US')
+  if (kind === 'reached')
+    return `${greeting}\n\nYour kinora workspace hit its monthly free limit of ${l} test results. New results are rejected until the monthly reset.\n\nUpgrade to keep ingesting: ${link}`
+  return `${greeting}\n\nYour kinora workspace has used ${used.toLocaleString('en-US')} of its ${l} monthly free test results. Upgrade to avoid hitting the cap and dropping results: ${link}`
 }
 
 export interface IngestCap {

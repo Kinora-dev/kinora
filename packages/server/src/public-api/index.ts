@@ -5,14 +5,16 @@ import { countsByTagFrom, ingestRunSchema } from '@kinora/core'
 import { and, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { notifyRun } from '../alerts/notify'
-import { getEntitlements, ingestCapError } from '../billing/entitlements'
+import { getEntitlements, ingestCapError, quotaCrossing, quotaWarningText } from '../billing/entitlements'
 import { polarClient } from '../billing/polar'
 import { currentPeriodResults, projectCount } from '../billing/usage'
 import { db } from '../db'
-import { artifact, member, project, run, test } from '../db/schemas/index'
+import { artifact, member, project, run, test, user } from '../db/schemas/index'
 import { auth } from '../lib/auth'
 import { logger } from '../lib/logger'
+import { sendMail } from '../lib/mailer'
 import { storage } from '../lib/storage'
+import { getTrustedOrigins } from '../lib/utils'
 
 const BEARER_PREFIX = 'Bearer '
 
@@ -142,6 +144,32 @@ publicApi.post('/runs', zValidator('json', ingestRunSchema), async (c) => {
     }
     catch (error) {
       logger.error({ error, runId: result.runId }, 'alert notify failed')
+    }
+  }
+
+  // Free-tier usage warning, fired on the ingest that crosses 80% / 100% of the monthly cap.
+  if (!backfill && entitlements.tier === 'free' && result.tests > 0) {
+    const kind = quotaCrossing(usedResults, usedResults + result.tests, entitlements.includedResults)
+    if (kind) {
+      try {
+        const owner = await db.query.member.findFirst({
+          where: and(eq(member.organizationId, orgId), eq(member.role, 'owner')),
+          columns: { userId: true },
+        })
+        const u = owner
+          ? await db.query.user.findFirst({ where: eq(user.id, owner.userId), columns: { email: true, name: true } })
+          : null
+        if (u) {
+          sendMail({
+            to: u.email,
+            subject: kind === 'reached' ? 'You\'ve hit your kinora free limit' : 'You\'re nearing your kinora free limit',
+            text: quotaWarningText(u.name, kind, usedResults + result.tests, entitlements.includedResults, getTrustedOrigins()[0] ?? ''),
+          })
+        }
+      }
+      catch (error) {
+        logger.error({ error, orgId }, 'quota warning email failed')
+      }
     }
   }
 
