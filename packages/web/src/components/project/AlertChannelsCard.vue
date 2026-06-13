@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kino
 import { Input } from '@kinora/ui/input'
 import { Mail, Send, Trash2, Webhook } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
+import { z } from 'zod'
 import { useAlertChannels } from '@/composables/useAlertChannels'
 import { useBilling } from '@/composables/useBilling'
 
@@ -25,9 +26,13 @@ const addTarget = ref('')
 const addPolicy = ref<typeof POLICIES[number]['value']>('on-failure')
 
 const targetPlaceholder = computed(() => addKind.value === 'email' ? 'alerts@team.dev' : 'https://example.com/hook')
-const canAdd = computed(() => addTarget.value.trim().length > 0)
+const targetValid = computed(() => (addKind.value === 'email' ? z.email() : z.url()).safeParse(addTarget.value.trim()).success)
+const showTargetError = computed(() => addTarget.value.trim().length > 0 && !targetValid.value)
+const targetError = computed(() => addKind.value === 'email' ? 'Enter a valid email address' : 'Enter a valid URL (https://…)')
 
 async function onAdd(): Promise<void> {
+  if (!targetValid.value)
+    return
   if (await add({ kind: addKind.value, target: addTarget.value.trim(), policy: addPolicy.value }))
     addTarget.value = ''
 }
@@ -102,7 +107,7 @@ async function onAdd(): Promise<void> {
         </ul>
 
         <!-- Add a channel -->
-        <div class="flex flex-col gap-3 border-t border-border pt-5">
+        <form class="flex flex-col gap-3 border-t border-border pt-5" @submit.prevent="onAdd">
           <span :class="labelClass">Add a channel</span>
           <div class="flex gap-2">
             <Button
@@ -119,7 +124,12 @@ async function onAdd(): Promise<void> {
               {{ k }}
             </Button>
           </div>
-          <Input v-model="addTarget" :placeholder="targetPlaceholder" :type="addKind === 'email' ? 'email' : 'url'" />
+          <div class="grid gap-2">
+            <Input v-model="addTarget" :placeholder="targetPlaceholder" :type="addKind === 'email' ? 'email' : 'url'" />
+            <p v-if="showTargetError" class="text-sm text-destructive">
+              {{ targetError }}
+            </p>
+          </div>
           <div class="flex flex-wrap gap-2">
             <Button
               v-for="opt in POLICIES"
@@ -134,10 +144,10 @@ async function onAdd(): Promise<void> {
               {{ opt.label }}
             </Button>
           </div>
-          <Button type="button" size="sm" class="w-fit font-mono text-xs" :disabled="adding || !canAdd" @click="onAdd">
+          <Button type="submit" size="sm" class="w-fit font-mono text-xs" :disabled="adding || !targetValid">
             {{ adding ? 'Adding…' : 'Add channel' }}
           </Button>
-        </div>
+        </form>
       </div>
     </CardContent>
   </Card>
