@@ -1,0 +1,146 @@
+---
+import SiteFooter from '../components/SiteFooter.astro'
+import SiteHeader from '../components/SiteHeader.astro'
+import Layout from '../layouts/Layout.astro'
+import { SITE } from '../lib/site'
+
+const updated = 'June 14, 2026'
+const contactEmail = 'contact@kinora.dev'
+---
+
+<Layout
+  title="Privacy - kinora"
+  description="How kinora collects, uses, and protects your data."
+  pathname="/privacy"
+>
+  <SiteHeader />
+  <main class="mx-auto max-w-3xl px-5 py-16 sm:px-8 sm:py-24">
+    <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Privacy Policy</h1>
+    <p class="mt-3 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+      Last updated: {updated}
+    </p>
+
+    <div class="prose-kinora mt-10 flex flex-col gap-8">
+      <section class="flex flex-col gap-3">
+        <p class="leading-relaxed text-muted-foreground">
+          This policy explains what data {SITE.name} collects, why, and your rights over it.
+          {SITE.name} is a dashboard for Playwright test reports. The data controller is
+          <span class="text-foreground">Joris Gallot</span>, and the service is hosted in the European
+          Union (Hetzner). Questions:
+          <a href={`mailto:${contactEmail}`} class="text-signal underline-offset-4 hover:underline">{contactEmail}</a>.
+        </p>
+        <p class="leading-relaxed text-muted-foreground">
+          {SITE.name} is in beta. This policy may evolve as the product does; material changes will be
+          reflected by the date above.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="text-xl font-semibold tracking-tight">Data we collect</h2>
+        <ul class="flex flex-col gap-2 text-muted-foreground">
+          <li><span class="text-foreground">Account.</span> Email, name, a hashed password, and (if you sign in with Google or GitHub) the basic profile they return (id, email, avatar). Plus session and email-verification state.</li>
+          <li><span class="text-foreground">Test data you upload.</span> Project and run metadata (timing, pass/fail counts), git info (commit SHA, branch), CI details, and per-test results (title, file, status, errors, retries, tags, annotations), along with any trace, screenshot, or video artifacts you push.</li>
+          <li><span class="text-foreground">API keys.</span> Stored hashed; used to authenticate uploads from your CI.</li>
+          <li><span class="text-foreground">Workspace.</span> Workspace name, members, and pending invitation emails.</li>
+          <li><span class="text-foreground">Billing.</span> Handled by our payment provider (Polar). We store only your plan, status, and a customer reference, never card details.</li>
+          <li><span class="text-foreground">Usage analytics.</span> Aggregate, cookie-less page and event analytics (Umami).</li>
+          <li><span class="text-foreground">Diagnostics.</span> Error reports to help us fix bugs (Sentry), configured to exclude personal data by default.</li>
+        </ul>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="text-xl font-semibold tracking-tight">Your test artifacts</h2>
+        <p class="leading-relaxed text-muted-foreground">
+          Playwright traces can capture your application's DOM, network traffic, console output, and
+          screenshots. These may contain data from your own users or secrets from your app. {SITE.name}
+          stores exactly what you upload and never inspects it. You are responsible for what you send -
+          mask sensitive values in Playwright or avoid uploading them. When {SITE.name} processes test
+          data on your behalf, we act as a data processor; enterprise customers can request a Data
+          Processing Agreement.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="text-xl font-semibold tracking-tight">How we use your data</h2>
+        <ul class="flex flex-col gap-2 text-muted-foreground">
+          <li>Run the service: store and display your test history, traces, trends, and alerts.</li>
+          <li>Authenticate you and secure your account.</li>
+          <li>Send transactional email (verification, password reset, invitations, billing and usage notices, regression alerts).</li>
+          <li>Process subscriptions and billing.</li>
+          <li>Understand aggregate usage and fix errors to improve the product.</li>
+        </ul>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="text-xl font-semibold tracking-tight">Service providers</h2>
+        <p class="leading-relaxed text-muted-foreground">
+          We share data only with the providers needed to run {SITE.name}:
+        </p>
+        <ul class="flex flex-col gap-2 text-muted-foreground">
+          <li><span class="text-foreground">Hetzner</span> (EU): hosting and artifact storage.</li>
+          <li><span class="text-foreground">Polar</span>: billing and payments (merchant of record).</li>
+          <li><span class="text-foreground">Resend</span>: transactional email delivery.</li>
+          <li><span class="text-foreground">Sentry</span> (US): error monitoring (no personal data by default).</li>
+          <li><span class="text-foreground">Umami</span>: self-hosted, cookie-less analytics (EU).</li>
+          <li><span class="text-foreground">Google / GitHub</span>: only if you choose social sign-in.</li>
+        </ul>
+        <p class="leading-relaxed text-muted-foreground">
+          Your data is stored in the EU. The exception is Sentry, which ingests crash reports on US
+          infrastructure; we send it no personal data by default.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="text-xl font-semibold tracking-tight">Cookies</h2>
+        <p class="leading-relaxed text-muted-foreground">
+          We use a single essential cookie to keep you signed in. Our analytics (Umami) is cookie-less
+          and does not track you across sites. We do not use advertising or third-party tracking cookies.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="text-xl font-semibold tracking-tight">Data retention</h2>
+        <p class="leading-relaxed text-muted-foreground">
+          Test history is kept according to your plan's retention window (7 days on Free, longer on paid
+          plans); older runs and their artifacts are deleted automatically. Deleting your account removes
+          your workspace and all of its projects, runs, and stored artifacts.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="text-xl font-semibold tracking-tight">Your rights</h2>
+        <p class="leading-relaxed text-muted-foreground">
+          You can access, correct, export, or delete your data. Most of this is self-service in your
+          account settings (including account deletion). For anything else, email
+          <a href={`mailto:${contactEmail}`} class="text-signal underline-offset-4 hover:underline">{contactEmail}</a>.
+          If you are in the EU/UK, you have rights under the GDPR, including the right to lodge a
+          complaint with your local data protection authority.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="text-xl font-semibold tracking-tight">Security</h2>
+        <p class="leading-relaxed text-muted-foreground">
+          Data is encrypted in transit (TLS). Passwords and API keys are stored hashed. Outbound
+          webhooks are HTTPS-only. No system is perfectly secure, but we work to protect your data.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="text-xl font-semibold tracking-tight">Children</h2>
+        <p class="leading-relaxed text-muted-foreground">
+          {SITE.name} is not intended for anyone under 16, and we do not knowingly collect their data.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="text-xl font-semibold tracking-tight">Contact</h2>
+        <p class="leading-relaxed text-muted-foreground">
+          Questions about this policy or your data:
+          <a href={`mailto:${contactEmail}`} class="text-signal underline-offset-4 hover:underline">{contactEmail}</a>.
+        </p>
+      </section>
+    </div>
+  </main>
+  <SiteFooter />
+</Layout>
