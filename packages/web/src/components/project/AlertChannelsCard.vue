@@ -2,6 +2,7 @@
 import { Button } from '@kinora/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kinora/ui/card'
 import { Input } from '@kinora/ui/input'
+import { SegmentedControl } from '@kinora/ui/segmented-control'
 import { Mail, Send, Trash2, Webhook } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { z } from 'zod'
@@ -16,6 +17,11 @@ const POLICIES = [
   { value: 'always', label: 'Every run' },
   { value: 'on-failure', label: 'On failure' },
   { value: 'on-regression', label: 'On regression' },
+] as const
+
+const KINDS = [
+  { value: 'email', label: 'Email', icon: Mail },
+  { value: 'webhook', label: 'Webhook', icon: Webhook },
 ] as const
 
 const { summary: billing, pending: billingPending, checkout } = useBilling()
@@ -79,24 +85,17 @@ async function onAdd(): Promise<void> {
               </div>
             </div>
             <div class="flex flex-wrap items-center gap-2">
-              <Button
-                v-for="opt in POLICIES"
-                :key="opt.value"
-                type="button"
-                variant="outline"
-                size="sm"
-                class="font-mono text-xs"
-                :class="ch.policy === opt.value ? 'border-signal/60 text-signal' : 'text-muted-foreground'"
-                @click="update(ch.id, { policy: opt.value, enabled: ch.enabled })"
-              >
-                {{ opt.label }}
-              </Button>
+              <SegmentedControl
+                :model-value="ch.policy"
+                :options="POLICIES"
+                @update:model-value="(v) => update(ch.id, { policy: v as typeof POLICIES[number]['value'], enabled: ch.enabled })"
+              />
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 class="gap-2 font-mono text-xs"
-                :class="ch.enabled ? 'border-signal/60 text-signal' : 'text-muted-foreground'"
+                :class="ch.enabled ? 'border-signal/60 text-signal hover:text-signal' : 'text-muted-foreground'"
                 @click="update(ch.id, { policy: ch.policy, enabled: !ch.enabled })"
               >
                 <span class="size-1.5 rounded-full" :class="ch.enabled ? 'bg-signal' : 'bg-muted-foreground'" aria-hidden="true" />
@@ -109,41 +108,22 @@ async function onAdd(): Promise<void> {
         <!-- Add a channel -->
         <form class="flex flex-col gap-3 border-t border-border pt-5" @submit.prevent="onAdd">
           <span :class="labelClass">Add a channel</span>
-          <div class="flex gap-2">
-            <Button
-              v-for="k in (['email', 'webhook'] as const)"
-              :key="k"
-              type="button"
-              variant="outline"
-              size="sm"
-              class="gap-2 font-mono text-xs capitalize"
-              :class="addKind === k ? 'border-signal/60 text-signal' : 'text-muted-foreground'"
-              @click="addKind = k"
-            >
-              <component :is="k === 'email' ? Mail : Webhook" class="size-3.5" />
-              {{ k }}
-            </Button>
-          </div>
+          <SegmentedControl
+            :model-value="addKind"
+            :options="KINDS"
+            @update:model-value="(v) => addKind = v as 'email' | 'webhook'"
+          />
           <div class="grid gap-2">
             <Input v-model="addTarget" :placeholder="targetPlaceholder" :type="addKind === 'email' ? 'email' : 'url'" />
             <p v-if="showTargetError" class="text-sm text-destructive">
               {{ targetError }}
             </p>
           </div>
-          <div class="flex flex-wrap gap-2">
-            <Button
-              v-for="opt in POLICIES"
-              :key="opt.value"
-              type="button"
-              variant="outline"
-              size="sm"
-              class="font-mono text-xs"
-              :class="addPolicy === opt.value ? 'border-signal/60 text-signal' : 'text-muted-foreground'"
-              @click="addPolicy = opt.value"
-            >
-              {{ opt.label }}
-            </Button>
-          </div>
+          <SegmentedControl
+            :model-value="addPolicy"
+            :options="POLICIES"
+            @update:model-value="(v) => addPolicy = v as typeof POLICIES[number]['value']"
+          />
           <Button type="submit" size="sm" class="w-fit font-mono text-xs" :disabled="adding || !targetValid">
             {{ adding ? 'Adding…' : 'Add channel' }}
           </Button>

@@ -3,6 +3,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from '@kinora/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kinora/ui/card'
 import { Input } from '@kinora/ui/input'
+import { SegmentedControl } from '@kinora/ui/segmented-control'
 import { Check, Copy, Mail, ShieldCheck, Trash2, UserPlus } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { z } from 'zod'
@@ -10,6 +11,11 @@ import { useOrg } from '@/composables/useOrg'
 import { session } from '@/lib/session'
 
 const labelClass = 'font-mono text-[11px] tracking-wider text-muted-foreground uppercase'
+
+const ROLES = [
+  { value: 'member', label: 'Member' },
+  { value: 'admin', label: 'Admin' },
+] as const
 
 const { members, invitations, loading, inviting, myRole, isAdmin, invite, removeMember, updateRole, cancelInvitation } = useOrg()
 
@@ -141,20 +147,11 @@ function initialOf(m: { user?: { name?: string | null, email?: string | null } }
             <label :class="labelClass" for="invite-email">Invite by email</label>
             <div class="flex flex-wrap items-center gap-2">
               <Input id="invite-email" v-model="inviteEmail" type="email" placeholder="teammate@company.com" class="min-w-48 flex-1" @keydown.enter.prevent="onInvite" />
-              <div class="flex gap-1">
-                <Button
-                  v-for="r in (['member', 'admin'] as const)"
-                  :key="r"
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  class="font-mono text-xs"
-                  :class="inviteRole === r ? 'border-signal/60 text-signal hover:text-signal' : 'text-muted-foreground'"
-                  @click="inviteRole = r"
-                >
-                  {{ r }}
-                </Button>
-              </div>
+              <SegmentedControl
+                :model-value="inviteRole"
+                :options="ROLES"
+                @update:model-value="(v) => inviteRole = v as 'member' | 'admin'"
+              />
               <Button type="button" size="sm" class="font-mono text-xs" :disabled="inviting || !emailValid" @click="onInvite">
                 <UserPlus class="size-3.5" />
                 {{ inviting ? 'Inviting…' : 'Invite' }}

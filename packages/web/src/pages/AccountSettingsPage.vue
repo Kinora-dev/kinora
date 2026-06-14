@@ -6,6 +6,7 @@ import { Button } from '@kinora/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kinora/ui/card'
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@kinora/ui/form'
 import { Input } from '@kinora/ui/input'
+import { SegmentedControl } from '@kinora/ui/segmented-control'
 import { colorMode } from '@kinora/ui/theme'
 import { toTypedSchema } from '@vee-validate/zod'
 import { CircleAlert, CircleCheck, Monitor, Moon, Sun } from 'lucide-vue-next'
@@ -154,21 +155,11 @@ async function deleteAccount(): Promise<void> {
         <CardDescription>Light, dark, or match your system.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div class="flex gap-2">
-          <Button
-            v-for="opt in themeOptions"
-            :key="opt.value"
-            type="button"
-            variant="outline"
-            size="sm"
-            class="font-mono text-xs"
-            :class="colorMode === opt.value ? 'border-signal/60 text-signal' : 'text-muted-foreground'"
-            @click="setTheme(opt.value)"
-          >
-            <component :is="opt.icon" class="size-3.5" />
-            {{ opt.label }}
-          </Button>
-        </div>
+        <SegmentedControl
+          :model-value="colorMode"
+          :options="themeOptions"
+          @update:model-value="(v) => setTheme(v as ColorMode)"
+        />
       </CardContent>
     </Card>
 

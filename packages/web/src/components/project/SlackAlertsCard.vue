@@ -2,6 +2,7 @@
 import { Button } from '@kinora/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kinora/ui/card'
 import { Input } from '@kinora/ui/input'
+import { SegmentedControl } from '@kinora/ui/segmented-control'
 import { Send } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 import Icon from '@/components/Icon.vue'
@@ -96,20 +97,11 @@ function onSave(): void {
         <template v-if="!oauthEnabled || connected">
           <div class="grid gap-2">
             <span :class="labelClass">Notify</span>
-            <div class="flex flex-wrap gap-2">
-              <Button
-                v-for="opt in POLICIES"
-                :key="opt.value"
-                type="button"
-                variant="outline"
-                size="sm"
-                class="font-mono text-xs"
-                :class="policy === opt.value ? 'border-signal/60 text-signal' : 'text-muted-foreground'"
-                @click="policy = opt.value"
-              >
-                {{ opt.label }}
-              </Button>
-            </div>
+            <SegmentedControl
+              :model-value="policy"
+              :options="POLICIES"
+              @update:model-value="(v) => policy = v as typeof POLICIES[number]['value']"
+            />
           </div>
 
           <Button
