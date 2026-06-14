@@ -1,0 +1,126 @@
+---
+import SiteFooter from '../components/SiteFooter.astro'
+import SiteHeader from '../components/SiteHeader.astro'
+import Layout from '../layouts/Layout.astro'
+import { SITE } from '../lib/site'
+
+const updated = 'June 14, 2026'
+const contactEmail = 'contact@kinora.dev'
+---
+
+<Layout
+  title="Terms - kinora"
+  description="Terms of service for kinora."
+  pathname="/terms"
+>
+  <SiteHeader />
+  <main class="mx-auto max-w-3xl px-5 py-16 sm:px-8 sm:py-24">
+    <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Terms of Service</h1>
+    <p class="mt-3 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+      Last updated: {updated}
+    </p>
+
+    <div class="mt-10 flex flex-col gap-8">
+      <section class="flex flex-col gap-3">
+        <p class="leading-relaxed text-muted-foreground">
+          These terms govern your use of the hosted {SITE.name} service. By accessing or using it, you
+          agree to them. The service is operated by <span class="text-foreground">Joris Gallot</span>.
+          Self-hosting {SITE.name} is governed by its open-source licenses (FSL-1.1-MIT for the server
+          and dashboard, MIT for the client libraries), not these terms.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="text-xl font-semibold tracking-tight">The service</h2>
+        <p class="leading-relaxed text-muted-foreground">
+          {SITE.name} is a dashboard for Playwright test reports across projects and over time, with an
+          embedded trace viewer. It offers a Free plan and paid plans. Features and limits per plan are
+          described on the pricing page and may change as the product evolves.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="text-xl font-semibold tracking-tight">Subscriptions and billing</h2>
+        <ul class="flex flex-col gap-2 text-muted-foreground">
+          <li>Plan prices are shown on the pricing page and at checkout.</li>
+          <li>Paid subscriptions auto-renew each billing period until you cancel.</li>
+          <li>Cancellation takes effect at the end of the current billing period; you keep access until then.</li>
+          <li>Billing is handled by our payment provider, Polar, acting as merchant of record.</li>
+          <li>Payments are non-refundable, except where a refund is required by mandatory applicable law.</li>
+        </ul>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="text-xl font-semibold tracking-tight">Your content</h2>
+        <p class="leading-relaxed text-muted-foreground">
+          You keep ownership of the test data and artifacts you upload. You grant {SITE.name} the rights
+          needed to store and display them to you and your workspace. You are responsible for what you
+          upload, including not sending secrets or data you are not allowed to share. We handle your data
+          as described in our
+          <a href="/privacy" class="text-signal underline-offset-4 hover:underline">Privacy Policy</a>.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="text-xl font-semibold tracking-tight">Acceptable use</h2>
+        <p class="leading-relaxed text-muted-foreground">
+          Do not misuse the service, attempt to disrupt or gain unauthorized access to it, exceed plan
+          limits through circumvention, or use {SITE.name} in violation of applicable law.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="text-xl font-semibold tracking-tight">Third-party services</h2>
+        <p class="leading-relaxed text-muted-foreground">
+          {SITE.name} relies on third-party infrastructure and providers, including Polar (billing),
+          Hetzner (hosting and storage), Resend (email), Sentry (error monitoring), and Google or GitHub
+          if you choose social sign-in. Availability and behavior may depend on those services.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="text-xl font-semibold tracking-tight">Disclaimer and liability</h2>
+        <p class="leading-relaxed text-muted-foreground">
+          {SITE.name} is provided on an "as is" and "as available" basis, without warranties of any kind.
+          {SITE.name} is in beta and may change, break, or lose data. To the maximum extent permitted by
+          law, we disclaim all warranties and are not liable for any indirect, incidental, special, or
+          consequential damages, or for loss of data, revenue, or profits. Keep your own copies of
+          anything you cannot afford to lose.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="text-xl font-semibold tracking-tight">Termination</h2>
+        <p class="leading-relaxed text-muted-foreground">
+          You can stop using the service and delete your account at any time. We may suspend or terminate
+          access for serious or repeated violations of these terms or applicable law.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="text-xl font-semibold tracking-tight">Governing law</h2>
+        <p class="leading-relaxed text-muted-foreground">
+          These terms are governed by French law. Any dispute falls under the jurisdiction of the courts
+          of Lyon, France, unless mandatory law provides otherwise.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="text-xl font-semibold tracking-tight">Changes</h2>
+        <p class="leading-relaxed text-muted-foreground">
+          We may update these terms as the service evolves. Material changes will be reflected by the date
+          above; continued use after a change means you accept the updated terms.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="text-xl font-semibold tracking-tight">Contact</h2>
+        <p class="leading-relaxed text-muted-foreground">
+          Questions about these terms:
+          <a href={`mailto:${contactEmail}`} class="text-signal underline-offset-4 hover:underline">{contactEmail}</a>.
+        </p>
+      </section>
+    </div>
+  </main>
+  <SiteFooter />
+</Layout>
