@@ -1,8 +1,8 @@
 # @kinora/core
 
-Contracts (zod schemas) and helpers for [kinora](https://github.com/joris-gallot/kinora), a dashboard for Playwright reports across projects and over time.
+Shared contract layer and helpers for [kinora](https://github.com/joris-gallot/kinora), a dashboard for Playwright test reports across projects and over time.
 
-Install this to build a `rest` data source the dashboard can read, or to consume kinora data with types. It also backs the [`@kinora/cli`](https://www.npmjs.com/package/@kinora/cli) ingest and the frontend.
+This is the package every other part of kinora depends on, so a test keeps a stable identity no matter how it was uploaded: the [`reporter`](https://www.npmjs.com/package/@kinora/reporter) and [`cli`](https://www.npmjs.com/package/@kinora/cli) use it to normalize Playwright output and POST it, and the server and dashboard use it to validate and shape that data. It is MIT so the libraries you embed in your own test suite can depend on it.
 
 ## Install
 
@@ -12,38 +12,28 @@ npm i @kinora/core
 
 ## What's inside
 
-**Contract** - one zod schema per dashboard request, plus inferred types:
+**Contracts** (zod schemas + inferred types):
 
-| schema | type | endpoint it shapes |
-|--------|------|--------------------|
-| `manifestSchema` | `Manifest` | `GET /api/manifest` |
-| `runReportSchema` | `RunReport` | `GET /api/projects/:id/runs/:runId` |
-| `projectHistorySchema` | `ProjectHistory` | `GET /api/projects/:id/tests` |
+- `contracts/ingest` - the wire payload uploaded to `POST /api/v1/runs` (`ingestRunSchema`, `IngestRun`).
+- `contracts/kinora` - the stored / dashboard shapes (`manifestSchema`, `runReportSchema`, `projectHistorySchema`, `runComparisonSchema`, ...) and `SCHEMA_VERSION`, stamped on every run so the stored shape stays in sync.
+- `contracts/playwright` - the raw Playwright JSON report shape (`playwrightReportSchema`).
 
-**Helpers**
+**Ingest client** - what the reporter and CLI build on:
 
-- `buildTestHistories(reports)` - fold `RunReport[]` into per-test timelines (the `/tests` response).
-- `ingestPlaywrightReport(json)` - turn raw Playwright JSON into a normalized `RunReport` (what the CLI does).
-- Aggregation: `passRate`, `runHealth`, `denom`, `trend`, `collectBranches`, `collectTags`, `filterRuns`, `formatDuration`, `formatPct`.
+- `ingestPlaywrightReport(json)` - turn a raw Playwright JSON report into a normalized `IngestRun`.
+- `buildIngestRun(...)` / `createIngestClient(...)` - assemble a run payload and POST it (plus trace artifacts).
 
-## Build a rest endpoint
+**Helpers** (pure):
 
-Validate every response against the contract so the dashboard always gets what it expects:
+- `makeTestKey(file, titlePath, projectName)` - the cross-run identity of a test. The reporter and CLI must produce the same key or history breaks.
+- `buildTestHistories(reports)` - fold `RunReport[]` into per-test timelines.
+- `compareRuns(base, head)` - diff two runs (newly failing, fixed, newly flaky, still failing).
+- Aggregation: `passRate`, `runHealth`, `trend`, `denom`, `collectBranches`, `collectTags`, `filterRuns`, `formatDuration`, `formatPct`.
+- Status: `isUnstable`, `pwStatusMeta`, ...
 
-```ts
-import { buildTestHistories, manifestSchema, runReportSchema } from '@kinora/core'
+## Stable test identity
 
-// GET /api/manifest
-app.get('/api/manifest', () => manifestSchema.parse(loadManifest()))
-
-// GET /api/projects/:id/tests  ->  fold run reports into per-test history
-app.get('/api/projects/:id/tests', (id) => {
-  const reports = loadRuns(id).map(r => runReportSchema.parse(r))
-  return { project, histories: buildTestHistories(reports) }
-})
-```
-
-Full reference server: [`examples/rest-server.ts`](https://github.com/joris-gallot/kinora/blob/main/examples/rest-server.ts). Data source modes: [README](https://github.com/joris-gallot/kinora#data-source-modes).
+`makeTestKey` is the cross-run key. The reporter rebuilds it from the Playwright suite tree; the CLI derives it from `results.json` via `ingestPlaywrightReport`. Both must produce the same key, so a test's history stays continuous regardless of the upload path.
 
 ## License
 

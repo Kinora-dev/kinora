@@ -2,7 +2,7 @@
   "name": "@kinora/core",
   "type": "module",
   "version": "0.1.0",
-  "description": "Contracts (zod schemas) and helpers for kinora - build a rest data source for the Playwright report dashboard",
+  "description": "Shared contracts (zod schemas), helpers, and ingest client for kinora, the Playwright report dashboard",
   "author": "Joris Gallot",
   "license": "MIT",
   "homepage": "https://github.com/joris-gallot/kinora#readme",

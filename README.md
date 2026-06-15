@@ -29,6 +29,10 @@ Diff any two runs: newly failing, fixed, newly flaky, and still failing, grouped
   <img alt="Run-to-run comparison" src="docs/screenshots/compare-dark.png">
 </picture>
 
+## Alerts
+
+Get notified when a run brings new failures or regressions. Each project can post to Slack, an email address, or a custom webhook, with an every-run / on-failure / on-regression policy.
+
 ## Packages
 
 Monorepo, fair source: the deployable surface is FSL-1.1-MIT, the client libraries you embed are MIT.
@@ -36,7 +40,7 @@ Monorepo, fair source: the deployable surface is FSL-1.1-MIT, the client librari
 | Package                                         | Role                                                                     | License     |
 | ----------------------------------------------- | ------------------------------------------------------------------------ | ----------- |
 | [`@kinora/server`](packages/server)             | Hono + tRPC API, better-auth, Drizzle/Postgres - ingest + dashboard data | FSL-1.1-MIT |
-| [`@kinora/web`](packages/web)                   | Vue 3 dashboard (auth, runs, history, flakiness)                         | FSL-1.1-MIT |
+| [`@kinora/web`](packages/web)                   | Vue 3 dashboard (runs, history, flakiness, compare, alerts, billing)     | FSL-1.1-MIT |
 | [`@kinora/trace-viewer`](packages/trace-viewer) | Vendored Playwright trace engine (Apache-2.0) + our Vue UI               | MIT         |
 | [`@kinora/reporter`](packages/reporter)         | Playwright reporter - auto-uploads on `onEnd`                            | MIT         |
 | [`@kinora/cli`](packages/cli)                   | Manual upload of a `results.json`                                        | MIT         |
@@ -120,7 +124,7 @@ pnpm test:e2e     # trace-viewer and web e2e (Playwright)
 
 ## Self-hosting
 
-A single `docker compose` bundle (web + server + Postgres + S3-compatible storage) is planned. For now, the development setup above is the way to run it end to end.
+Each deployable (`server`, `web`, `landing`) ships a `Dockerfile`, built from the repo root. A single `docker compose` bundle (web + server + Postgres + S3-compatible storage) is still planned; for now, build those images or use the development setup above to run it end to end.
 
 ## Licensing
 

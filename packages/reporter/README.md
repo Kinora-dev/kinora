@@ -37,7 +37,7 @@ KINORA_TOKEN=<token> npx playwright test
 KINORA_URL=https://kinora.example.com KINORA_TOKEN=<token> npx playwright test
 ```
 
-Create a API token in the kinora dashboard (Settings → API tokens).
+Create an API token in the kinora dashboard (Settings → Workspace).
 
 ## Options
 

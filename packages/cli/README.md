@@ -22,7 +22,7 @@ npx @kinora/cli upload results.json --project web-app \
   --url https://kinora.example.com --token <project-token>
 ```
 
-Create a project API token in the kinora dashboard (Settings → API tokens). Auth can also come from the environment: `KINORA_TOKEN` and `KINORA_URL`.
+Create a project API token in the kinora dashboard (Settings → Workspace). Auth can also come from the environment: `KINORA_TOKEN` and `KINORA_URL`.
 
 ## Bulk import (historical backfill)
 
