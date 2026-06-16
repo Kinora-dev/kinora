@@ -41,6 +41,7 @@ Monorepo, fair source: the deployable surface is FSL-1.1-MIT, the client librari
 | ----------------------------------------------- | ------------------------------------------------------------------------ | ----------- |
 | [`@kinora/server`](packages/server)             | Hono + tRPC API, better-auth, Drizzle/Postgres - ingest + dashboard data | FSL-1.1-MIT |
 | [`@kinora/web`](packages/web)                   | Vue 3 dashboard (runs, history, flakiness, compare, alerts, billing)     | FSL-1.1-MIT |
+| [`@kinora/desktop`](packages/desktop)           | Electron app: cloud failures dashboard + local trace viewer              | FSL-1.1-MIT |
 | [`@kinora/trace-viewer`](packages/trace-viewer) | Vendored Playwright trace engine (Apache-2.0) + our Vue UI               | MIT         |
 | [`@kinora/reporter`](packages/reporter)         | Playwright reporter - auto-uploads on `onEnd`                            | MIT         |
 | [`@kinora/cli`](packages/cli)                   | Manual upload of a `results.json`                                        | MIT         |
