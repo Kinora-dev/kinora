@@ -77,8 +77,11 @@ router.beforeEach(async (to) => {
   // Invite acceptance handles both guest and authed states itself.
   if (to.meta.invite)
     return
-  if (!authed && !to.meta.public)
-    return { name: 'login', query: { redirect: to.fullPath } }
+  if (!authed && !to.meta.public) {
+    // Preserve deep-links (e.g. /device?user_code=…) as ?redirect; the root needs none
+    // since overview is the default post-login landing.
+    return to.fullPath === '/' ? { name: 'login' } : { name: 'login', query: { redirect: to.fullPath } }
+  }
   if (authed && to.meta.public)
     return { name: 'overview' }
 })
