@@ -136,6 +136,21 @@ function registerIpc(): void {
     return trpc.dashboard.run.query(input)
   })
 
+  ipcMain.handle('kinora:project-history', async (_e, input: { projectId: string }) => {
+    if (!config.token)
+      return []
+    const trpc = makeTrpc(config.serverUrl, config.token, config.webOrigin)
+    const history = await trpc.dashboard.projectHistory.query(input)
+    return history.histories
+  })
+
+  ipcMain.handle('kinora:compare-runs', async (_e, input: { projectId: string, baseRunId: string, headRunId: string }) => {
+    if (!config.token)
+      throw new Error('Not signed in')
+    const trpc = makeTrpc(config.serverUrl, config.token, config.webOrigin)
+    return trpc.dashboard.compareRuns.query(input)
+  })
+
   ipcMain.handle('kinora:open-trace-url', (_e, traceUrl: string) => openViewerUrl(traceUrl))
 
   ipcMain.handle('kinora:open-local-trace', async () => {
@@ -212,19 +227,24 @@ async function probeHome(): Promise<void> {
     setTimeout(resolve, 5000)
   })
   const v = await homeWin!.webContents.executeJavaScript(`(() => {
-    return { projects: document.querySelectorAll('[data-project]').length, body: (document.body.innerText || '').slice(0, 160).replace(/\\s+/g, ' ').trim() }
-  })()`) as { projects: number, body: string }
+    const text = document.body.innerText || ''
+    return { failuresView: text.includes('latest run'), body: text.slice(0, 160).replace(/\\s+/g, ' ').trim() }
+  })()`) as { failuresView: boolean, body: string }
   if (process.env.KINORA_SHOT) {
-    // Drill into the first project so the screenshot shows the run detail.
-    await homeWin!.webContents.executeJavaScript(`document.querySelector('[data-project]')?.click()`)
-    await new Promise<void>((resolve) => {
-      setTimeout(resolve, 2500)
-    })
+    if (process.env.KINORA_SHOT_PROJECT) {
+      await homeWin!.webContents.executeJavaScript(`localStorage.setItem('kinora-desktop-project', ${JSON.stringify(process.env.KINORA_SHOT_PROJECT)})`)
+      await homeWin!.webContents.reload()
+      await new Promise<void>(resolve => setTimeout(resolve, 4000))
+    }
+    if (process.env.KINORA_SHOT_FILTER) {
+      await homeWin!.webContents.executeJavaScript(`[...document.querySelectorAll('button')].find(b => b.textContent.trim() === ${JSON.stringify(process.env.KINORA_SHOT_FILTER)})?.click()`)
+      await new Promise<void>(resolve => setTimeout(resolve, 600))
+    }
     const img = await homeWin!.webContents.capturePage()
     const { writeFileSync } = await import('node:fs')
     writeFileSync(process.env.KINORA_SHOT, img.toPNG())
   }
-  const ok = v.projects > 0
+  const ok = v.failuresView
   console.log(`[probe] home ${JSON.stringify(v)}`)
   console.log(`[probe] ${ok ? 'PASS' : 'FAIL'}`)
   app.exit(ok ? 0 : 1)

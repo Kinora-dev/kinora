@@ -10,6 +10,8 @@ const bridge: KinoraBridge = {
   logout: () => ipcRenderer.invoke('kinora:logout'),
   projects: () => ipcRenderer.invoke('kinora:projects'),
   run: input => ipcRenderer.invoke('kinora:run', input),
+  projectHistory: input => ipcRenderer.invoke('kinora:project-history', input),
+  compareRuns: input => ipcRenderer.invoke('kinora:compare-runs', input),
   openLocalTrace: () => ipcRenderer.invoke('kinora:open-local-trace'),
   openTraceUrl: traceUrl => ipcRenderer.invoke('kinora:open-trace-url', traceUrl),
 }

@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import type { Project, RunReport } from '../../src/bridge'
-import { denom, formatPct, latestRun, runHealth } from '@kinora/core'
+import type { Project, RunComparison, RunReport, TestHistory } from '../../src/bridge'
+import { latestRun } from '@kinora/core'
 import { Button } from '@kinora/ui/button'
 import { Card, CardContent } from '@kinora/ui/card'
-import { Separator } from '@kinora/ui/separator'
-import { StatBlock } from '@kinora/ui/stat-block'
 import { computed, onMounted, ref } from 'vue'
 import AppHeader from './components/AppHeader.vue'
-import ProjectCard from './components/ProjectCard.vue'
-import ProjectDetail from './components/ProjectDetail.vue'
+import Failures from './components/Failures.vue'
+
+const STORE_KEY = 'kinora-desktop-project'
 
 const view = ref<'loading' | 'login' | 'projects'>('loading')
 const serverUrl = ref('http://localhost:3000')
@@ -16,43 +15,56 @@ const error = ref('')
 const devicePending = ref(false)
 const deviceCode = ref('')
 const projects = ref<Project[]>([])
-const selected = ref<Project | null>(null)
+const activeId = ref<string | null>(null)
 const report = ref<RunReport | null>(null)
+const histories = ref<TestHistory[]>([])
+const comparison = ref<RunComparison | null>(null)
 const reportLoading = ref(false)
 
-const stats = computed(() => {
-  const latest = projects.value.map(latestRun).filter(r => r != null)
-  let pass = 0
-  let total = 0
-  let tests = 0
-  let failing = 0
-  for (const r of latest) {
-    pass += r.counts.expected + r.counts.flaky
-    total += denom(r.counts)
-    tests += r.counts.total
-    if (runHealth(r.counts) === 'failing')
-      failing++
+const activeProject = computed(() => projects.value.find(p => p.id === activeId.value) ?? null)
+
+// Load the active project's latest run (the failures inbox renders from it).
+async function loadActive(): Promise<void> {
+  report.value = null
+  histories.value = []
+  comparison.value = null
+  const p = activeProject.value
+  if (!p)
+    return
+  const latest = latestRun(p)
+  if (!latest)
+    return
+  // Most recent earlier run with no hard failures = the "last green" baseline.
+  const green = p.runs.find(r => r.runId !== latest.runId && r.counts.unexpected === 0)
+  const latestHasFails = latest.counts.unexpected > 0 || latest.counts.flaky > 0
+  reportLoading.value = true
+  try {
+    const [run, hist] = await Promise.all([
+      window.kinora.run({ projectId: p.id, runId: latest.runId }),
+      window.kinora.projectHistory({ projectId: p.id }),
+    ])
+    report.value = run
+    histories.value = hist
+    if (green && latestHasFails)
+      comparison.value = await window.kinora.compareRuns({ projectId: p.id, baseRunId: green.runId, headRunId: latest.runId })
   }
-  const runs = projects.value.reduce((sum, p) => sum + p.runs.length, 0)
-  return {
-    projects: projects.value.length,
-    runs,
-    tests,
-    failing,
-    passRate: total === 0 ? 1 : pass / total,
+  finally {
+    reportLoading.value = false
   }
-})
+}
 
 async function refresh(): Promise<void> {
   const s = await window.kinora.session()
   serverUrl.value = s.serverUrl
-  if (s.loggedIn) {
-    projects.value = await window.kinora.projects()
-    view.value = 'projects'
-  }
-  else {
+  if (!s.loggedIn) {
     view.value = 'login'
+    return
   }
+  projects.value = await window.kinora.projects()
+  const stored = localStorage.getItem(STORE_KEY)
+  activeId.value = projects.value.find(p => p.id === stored)?.id ?? projects.value[0]?.id ?? null
+  view.value = 'projects'
+  await loadActive()
 }
 
 onMounted(refresh)
@@ -60,6 +72,12 @@ onMounted(refresh)
 window.kinora.onDevicePending((info) => {
   deviceCode.value = info.userCode
 })
+
+function selectProject(id: string): void {
+  activeId.value = id
+  localStorage.setItem(STORE_KEY, id)
+  void loadActive()
+}
 
 async function onDeviceLogin(): Promise<void> {
   error.value = ''
@@ -76,28 +94,13 @@ async function onDeviceLogin(): Promise<void> {
 async function onLogout(): Promise<void> {
   await window.kinora.logout()
   projects.value = []
-  selected.value = null
+  activeId.value = null
   report.value = null
   view.value = 'login'
 }
 
 function openTrace(): void {
   void window.kinora.openLocalTrace()
-}
-
-async function openProject(p: Project): Promise<void> {
-  selected.value = p
-  report.value = null
-  const latest = latestRun(p)
-  if (!latest)
-    return
-  reportLoading.value = true
-  try {
-    report.value = await window.kinora.run({ projectId: p.id, runId: latest.runId })
-  }
-  finally {
-    reportLoading.value = false
-  }
 }
 
 function onViewTrace(traceUrl: string): void {
@@ -147,57 +150,31 @@ function onViewTrace(traceUrl: string): void {
     Loading…
   </div>
 
-  <!-- dashboard -->
+  <!-- dashboard: failures of the active project's latest run -->
   <div v-else class="app-grid flex h-full flex-col bg-background text-foreground">
-    <AppHeader :server-url="serverUrl" @open-trace="openTrace" @logout="onLogout" />
+    <AppHeader
+      :server-url="serverUrl"
+      :projects="projects"
+      :active-id="activeId"
+      @select="selectProject"
+      @open-trace="openTrace"
+      @logout="onLogout"
+    />
 
-    <main class="mx-auto w-full max-w-7xl flex-1 overflow-auto px-5 py-8">
-      <ProjectDetail
-        v-if="selected"
-        :project="selected"
+    <main class="mx-auto w-full max-w-4xl flex-1 overflow-auto px-5 py-8">
+      <p v-if="projects.length === 0" class="py-16 text-center font-mono text-sm text-muted-foreground">
+        No projects yet. Push a run from the reporter or CLI.
+      </p>
+      <Failures
+        v-else-if="activeProject"
+        :key="activeProject.id"
+        :project="activeProject"
         :report="report"
+        :histories="histories"
+        :comparison="comparison"
         :loading="reportLoading"
-        @back="selected = null"
         @view-trace="onViewTrace"
       />
-      <div v-else class="flex flex-col gap-8">
-        <div class="flex flex-col gap-6">
-          <div>
-            <h1 class="text-2xl font-semibold tracking-tight">
-              Test runs overview
-            </h1>
-            <p class="mt-1 text-sm text-muted-foreground">
-              Playwright report history across every project, one strip per run.
-            </p>
-          </div>
-
-          <div
-            v-if="projects.length"
-            class="flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg border border-border/70 bg-card/80 px-6 py-5"
-          >
-            <StatBlock label="Projects" :value="stats.projects" />
-            <Separator orientation="vertical" class="h-10" />
-            <StatBlock
-              label="Global pass rate"
-              :value="formatPct(stats.passRate)"
-              :tone="stats.passRate >= 0.99 ? 'pass' : stats.passRate >= 0.9 ? 'flaky' : 'fail'"
-            />
-            <Separator orientation="vertical" class="h-10" />
-            <StatBlock label="Tests / latest" :value="stats.tests" />
-            <Separator orientation="vertical" class="h-10" />
-            <StatBlock label="Total runs" :value="stats.runs" />
-            <Separator orientation="vertical" class="h-10" />
-            <StatBlock label="Failing now" :value="stats.failing" :tone="stats.failing > 0 ? 'fail' : 'pass'" />
-          </div>
-        </div>
-
-        <p v-if="projects.length === 0" class="py-16 text-center font-mono text-sm text-muted-foreground">
-          No projects yet. Push a run from the reporter or CLI.
-        </p>
-        <div v-else class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          <ProjectCard v-for="p in projects" :key="p.id" :project="p" @open="openProject(p)" />
-        </div>
-      </div>
     </main>
   </div>
 </template>
