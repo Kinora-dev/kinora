@@ -2,9 +2,9 @@
   "name": "@kinora/desktop",
   "version": "0.0.0",
   "private": true,
-  "description": "kinora desktop: local Playwright trace viewer (no account). Electron shell around @kinora/trace-viewer.",
+  "description": "kinora desktop: cloud dashboard + local Playwright trace viewer (Electron).",
   "author": "Joris Gallot",
-  "license": "MIT",
+  "license": "FSL-1.1-MIT",
   "main": "dist/main.cjs",
   "scripts": {
     "build": "tsdown && vite build -c home/vite.config.ts",
