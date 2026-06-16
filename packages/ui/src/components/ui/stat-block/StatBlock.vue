@@ -16,7 +16,7 @@ const toneClass: Record<string, string> = {
 
 <template>
   <div class="flex flex-col gap-1">
-    <span class="font-mono text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+    <span class="font-mono text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
       {{ label }}
     </span>
     <span

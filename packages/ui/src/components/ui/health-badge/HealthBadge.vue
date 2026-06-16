@@ -15,7 +15,7 @@ const s = computed(() => map[props.health])
 
 <template>
   <span
-    class="inline-flex items-center gap-1.5 rounded-full bg-background px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider ring-1"
+    class="inline-flex items-center gap-1.5 rounded-full bg-background px-2 py-0.5 font-mono text-[10px] font-medium tracking-wider uppercase ring-1"
     :class="[s.text, s.ring]"
   >
     <span class="size-1.5 rounded-full" :class="s.dot" />

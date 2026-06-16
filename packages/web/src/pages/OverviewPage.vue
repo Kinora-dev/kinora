@@ -18,11 +18,11 @@ import {
 } from '@kinora/ui/select'
 import { Separator } from '@kinora/ui/separator'
 import { Skeleton } from '@kinora/ui/skeleton'
+import { StatBlock } from '@kinora/ui/stat-block'
 import { useRouteQuery } from '@vueuse/router'
 import { computed } from 'vue'
 import OverviewEmpty from '@/components/project/OverviewEmpty.vue'
 import ProjectCard from '@/components/project/ProjectCard.vue'
-import StatBlock from '@/components/viz/StatBlock.vue'
 import { useManifest } from '@/composables/queries'
 
 const { state: manifest, isLoading, error } = useManifest()

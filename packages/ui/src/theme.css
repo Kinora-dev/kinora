@@ -1,6 +1,11 @@
 /* Shared design tokens + theme for all kinora frontends.
    Import this AFTER `@import 'tailwindcss'` in each app's entry stylesheet. */
 
+/* Self-hosted fonts (bundled, no CDN) so the desktop trace viewer works offline. */
+@import '@fontsource-variable/hanken-grotesk';
+@import '@fontsource-variable/jetbrains-mono';
+@import '@fontsource-variable/jetbrains-mono/wght-italic.css';
+
 /* Emit Tailwind classes used inside this package's components. */
 @source './components';
 
@@ -86,8 +91,8 @@
 }
 
 @theme inline {
-  --font-sans: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+  --font-sans: 'Hanken Grotesk Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', monospace;
   --color-pass: var(--pass);
   --color-flaky: var(--flaky);
   --color-fail: var(--fail);

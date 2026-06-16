@@ -1,0 +1,40 @@
+appId: dev.kinora.desktop
+productName: kinora
+directories:
+  output: release
+  buildResources: build
+
+# Compiled main/preload + the package manifest. The renderer (trace viewer) is
+# shipped as a resource, not packed into the asar.
+files:
+  - dist/**
+  - package.json
+
+# Static renderers served by the loopback server at runtime (resolve*Dir() ->
+# resourcesPath/<name> when packaged): the trace viewer and the home UI.
+extraResources:
+  - from: ../trace-viewer/dist
+    to: viewer
+  - from: home/dist
+    to: home
+
+mac:
+  category: public.app-category.developer-tools
+  target:
+    - dmg
+    - zip
+  # TODO signing/notarization: set identity + APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD
+  # / APPLE_TEAM_ID in the env. Unsigned builds run locally but Gatekeeper blocks
+  # distribution.
+  hardenedRuntime: true
+
+win:
+  target:
+    - nsis
+
+linux:
+  target:
+    - AppImage
+
+# TODO auto-update: add a `publish` provider (generic/github/s3) + electron-updater
+# wiring in main.ts before shipping releases.

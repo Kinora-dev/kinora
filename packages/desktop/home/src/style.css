@@ -1,0 +1,32 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import '@kinora/ui/theme.css';
+
+/* Scan this app's own source for Tailwind classes. */
+@source './';
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--background);
+  color: var(--foreground);
+}
+
+@keyframes rec-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.app-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in oklch, var(--border) 40%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklch, var(--border) 40%, transparent) 1px, transparent 1px);
+  background-size: 56px 56px;
+  background-position: center top;
+}

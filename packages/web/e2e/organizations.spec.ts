@@ -30,7 +30,9 @@ test.describe('organizations', () => {
     await login(page)
     await page.getByRole('button', { name: workspaceButton }).click()
     await page.getByRole('menuitem', { name: /Acme QA/i }).click()
-    await expect(page).toHaveURL('/')
+    // Switching does a full reload to '/'; wait for it to settle (Acme active) before
+    // navigating, else page.goto races the in-flight reload and gets aborted.
+    await expect(page.getByRole('button', { name: /Acme QA's workspace/i })).toBeVisible()
 
     await page.goto('/settings/workspace')
     // demo is a member (not admin) of Acme: no invite form, no token controls
