@@ -46,15 +46,7 @@ function resolveHomeDir(): string {
   return path.join(__dirname, '../home/dist')
 }
 
-function viewerUrl(absPath: string | null): string {
-  if (!absPath)
-    return `http://127.0.0.1:${port}/trace/index.html`
-  const inner = `http://127.0.0.1:${port}/file?path=${encodeURIComponent(absPath)}`
-  return `http://127.0.0.1:${port}/trace/index.html?trace=${encodeURIComponent(inner)}`
-}
-
-function openViewer(absPath: string | null): void {
-  const url = viewerUrl(absPath)
+function ensureViewerWindow(): BrowserWindow {
   if (!viewerWin || viewerWin.isDestroyed()) {
     viewerWin = new BrowserWindow({
       width: 1280,
@@ -70,7 +62,23 @@ function openViewer(absPath: string | null): void {
   else {
     viewerWin.focus()
   }
-  void viewerWin.loadURL(url)
+  return viewerWin
+}
+
+function loadViewer(traceParam: string | null): void {
+  const base = `http://127.0.0.1:${port}/trace/index.html`
+  const url = traceParam ? `${base}?trace=${encodeURIComponent(traceParam)}` : base
+  void ensureViewerWindow().loadURL(url)
+}
+
+// Local file: served through the loopback /file route.
+function openViewer(absPath: string | null): void {
+  loadViewer(absPath ? `http://127.0.0.1:${port}/file?path=${encodeURIComponent(absPath)}` : null)
+}
+
+// Hosted artifact: the absolute URL is passed straight to the viewer's zip reader.
+function openViewerUrl(traceUrl: string): void {
+  loadViewer(traceUrl)
 }
 
 function createHomeWindow(): BrowserWindow {
@@ -112,6 +120,15 @@ function registerIpc(): void {
     const manifest = await trpc.dashboard.manifest.query()
     return manifest.projects
   })
+
+  ipcMain.handle('kinora:run', async (_e, input: { projectId: string, runId: string }) => {
+    if (!config.token)
+      throw new Error('Not signed in')
+    const trpc = makeTrpc(config.serverUrl, config.token, config.webOrigin)
+    return trpc.dashboard.run.query(input)
+  })
+
+  ipcMain.handle('kinora:open-trace-url', (_e, traceUrl: string) => openViewerUrl(traceUrl))
 
   ipcMain.handle('kinora:open-local-trace', async () => {
     const res = await dialog.showOpenDialog(homeWin ?? undefined as never, {
@@ -180,6 +197,11 @@ async function probeHome(): Promise<void> {
     return { projects: document.querySelectorAll('[data-project]').length, body: (document.body.innerText || '').slice(0, 160).replace(/\\s+/g, ' ').trim() }
   })()`) as { projects: number, body: string }
   if (process.env.KINORA_SHOT) {
+    // Drill into the first project so the screenshot shows the run detail.
+    await homeWin!.webContents.executeJavaScript(`document.querySelector('[data-project]')?.click()`)
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 2500)
+    })
     const img = await homeWin!.webContents.capturePage()
     const { writeFileSync } = await import('node:fs')
     writeFileSync(process.env.KINORA_SHOT, img.toPNG())

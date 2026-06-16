@@ -1,7 +1,7 @@
-import type { Manifest, ProjectEntry } from '@kinora/core'
+import type { Manifest, ProjectEntry, RunReport } from '@kinora/core'
 
 // Dashboard payload types come from the shared contract layer (what the server returns).
-export type { Manifest }
+export type { Manifest, RunReport }
 export type Project = ProjectEntry
 
 export interface SessionInfo {
@@ -22,7 +22,10 @@ export interface KinoraBridge {
   login: (input: LoginInput) => Promise<{ ok: boolean, error?: string }>
   logout: () => Promise<void>
   projects: () => Promise<Project[]>
+  run: (input: { projectId: string, runId: string }) => Promise<RunReport>
   openLocalTrace: () => Promise<void>
+  // Open a hosted trace.zip (absolute artifact URL) in the embedded viewer.
+  openTraceUrl: (traceUrl: string) => Promise<void>
 }
 
 declare global {

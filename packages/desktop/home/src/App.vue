@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Project } from '../../src/bridge'
+import type { Project, RunReport } from '../../src/bridge'
 import { denom, formatPct, latestRun, runHealth } from '@kinora/core'
 import { Button } from '@kinora/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@kinora/ui/card'
@@ -8,6 +8,7 @@ import { Separator } from '@kinora/ui/separator'
 import { computed, onMounted, ref } from 'vue'
 import AppHeader from './components/AppHeader.vue'
 import ProjectCard from './components/ProjectCard.vue'
+import ProjectDetail from './components/ProjectDetail.vue'
 import StatBlock from './components/StatBlock.vue'
 
 const view = ref<'loading' | 'login' | 'projects'>('loading')
@@ -17,6 +18,9 @@ const password = ref('')
 const error = ref('')
 const submitting = ref(false)
 const projects = ref<Project[]>([])
+const selected = ref<Project | null>(null)
+const report = ref<RunReport | null>(null)
+const reportLoading = ref(false)
 
 const labelClass = 'font-mono text-[11px] tracking-wider text-muted-foreground uppercase'
 
@@ -73,11 +77,32 @@ async function onLogin(): Promise<void> {
 async function onLogout(): Promise<void> {
   await window.kinora.logout()
   projects.value = []
+  selected.value = null
+  report.value = null
   view.value = 'login'
 }
 
 function openTrace(): void {
   void window.kinora.openLocalTrace()
+}
+
+async function openProject(p: Project): Promise<void> {
+  selected.value = p
+  report.value = null
+  const latest = latestRun(p)
+  if (!latest)
+    return
+  reportLoading.value = true
+  try {
+    report.value = await window.kinora.run({ projectId: p.id, runId: latest.runId })
+  }
+  finally {
+    reportLoading.value = false
+  }
+}
+
+function onViewTrace(traceUrl: string): void {
+  void window.kinora.openTraceUrl(traceUrl)
 }
 </script>
 
@@ -125,7 +150,15 @@ function openTrace(): void {
     <AppHeader :server-url="serverUrl" @open-trace="openTrace" @logout="onLogout" />
 
     <main class="mx-auto w-full max-w-7xl flex-1 overflow-auto px-5 py-8">
-      <div class="flex flex-col gap-8">
+      <ProjectDetail
+        v-if="selected"
+        :project="selected"
+        :report="report"
+        :loading="reportLoading"
+        @back="selected = null"
+        @view-trace="onViewTrace"
+      />
+      <div v-else class="flex flex-col gap-8">
         <div class="flex flex-col gap-6">
           <div>
             <h1 class="text-2xl font-semibold tracking-tight">
@@ -160,7 +193,7 @@ function openTrace(): void {
           No projects yet. Push a run from the reporter or CLI.
         </p>
         <div v-else class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          <ProjectCard v-for="p in projects" :key="p.id" :project="p" />
+          <ProjectCard v-for="p in projects" :key="p.id" :project="p" @open="openProject(p)" />
         </div>
       </div>
     </main>

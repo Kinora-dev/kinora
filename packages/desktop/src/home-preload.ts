@@ -8,7 +8,9 @@ const bridge: KinoraBridge = {
   login: input => ipcRenderer.invoke('kinora:login', input),
   logout: () => ipcRenderer.invoke('kinora:logout'),
   projects: () => ipcRenderer.invoke('kinora:projects'),
+  run: input => ipcRenderer.invoke('kinora:run', input),
   openLocalTrace: () => ipcRenderer.invoke('kinora:open-local-trace'),
+  openTraceUrl: traceUrl => ipcRenderer.invoke('kinora:open-trace-url', traceUrl),
 }
 
 contextBridge.exposeInMainWorld('kinora', bridge)

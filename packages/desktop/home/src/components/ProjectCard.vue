@@ -9,6 +9,7 @@ import RunStrip from './RunStrip.vue'
 import Sparkline from './Sparkline.vue'
 
 const props = defineProps<{ project: ProjectEntry }>()
+defineEmits<{ open: [] }>()
 
 const runs = computed(() => sortedRuns(props.project))
 const latest = computed(() => latestRun(props.project))
@@ -45,7 +46,7 @@ const rel = computed(() => {
 </script>
 
 <template>
-  <Card data-project class="group flex flex-col gap-0 overflow-hidden p-0 transition-colors hover:border-border">
+  <Card data-project class="group flex cursor-pointer flex-col gap-0 overflow-hidden p-0 transition-colors hover:border-border" @click="$emit('open')">
     <!-- Header -->
     <div class="flex items-start justify-between gap-3 p-5 pb-4">
       <div class="min-w-0">
