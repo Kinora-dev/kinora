@@ -20,6 +20,8 @@ let port = 0
 let homeWin: BrowserWindow | null = null
 let viewerWin: BrowserWindow | null = null
 let config = loadConfig()
+// Aborts the in-flight device-flow poll when the user cancels.
+let deviceAbort: AbortController | null = null
 
 // macOS open-file (file association) and argv both hand us a local trace to view.
 let pendingOpen: string | null = null
@@ -114,11 +116,15 @@ function registerIpc(): void {
   // Device flow: open the system browser to approve (no embedded webview, so all providers
   // work), then poll for the access token. The user code is surfaced to the renderer.
   ipcMain.handle('kinora:login-device', async () => {
+    const abort = new AbortController()
+    deviceAbort = abort
     try {
       const code = await requestDeviceCode(config.serverUrl)
       homeWin?.webContents.send('kinora:device-pending', { userCode: code.user_code, verificationUri: code.verification_uri })
       await shell.openExternal(code.verification_uri_complete)
-      const token = await pollDeviceToken(config.serverUrl, code.device_code, code.interval ?? 5)
+      const token = await pollDeviceToken(config.serverUrl, code.device_code, code.interval ?? 5, abort.signal)
+      if (abort.signal.aborted)
+        return { ok: false, error: 'cancelled' }
       if (!token)
         return { ok: false, error: 'Device authorization failed or timed out' }
       config = { ...config, token }
@@ -128,7 +134,13 @@ function registerIpc(): void {
     catch (err) {
       return { ok: false, error: err instanceof Error ? err.message : 'Device login failed' }
     }
+    finally {
+      if (deviceAbort === abort)
+        deviceAbort = null
+    }
   })
+
+  ipcMain.handle('kinora:cancel-device-login', () => deviceAbort?.abort())
 
   ipcMain.handle('kinora:logout', () => {
     config = { ...config, token: null }

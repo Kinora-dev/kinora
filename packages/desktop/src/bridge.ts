@@ -23,6 +23,8 @@ export interface KinoraBridge {
   loginWithDevice: () => Promise<{ ok: boolean, error?: string }>
   // Notifies the renderer of the user code to display while the device flow is pending.
   onDevicePending: (cb: (info: { userCode: string, verificationUri: string }) => void) => void
+  // Abort a pending device flow (user gave up instead of approving in the browser).
+  cancelDeviceLogin: () => Promise<void>
   logout: () => Promise<void>
   projects: () => Promise<Project[]>
   run: (input: { projectId: string, runId: string }) => Promise<RunReport>

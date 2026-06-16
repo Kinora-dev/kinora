@@ -22,12 +22,23 @@ export async function requestDeviceCode(serverUrl: string): Promise<DeviceCode> 
   return res.json() as Promise<DeviceCode>
 }
 
-// Poll until the user approves (access_token) or a terminal error/timeout. Returns the bearer token.
-export async function pollDeviceToken(serverUrl: string, deviceCode: string, intervalSec: number): Promise<string | null> {
+// Poll until the user approves (access_token), a terminal error/timeout, or `signal` aborts.
+// Returns the bearer token, or null (cancelled/timed out/denied).
+export async function pollDeviceToken(serverUrl: string, deviceCode: string, intervalSec: number, signal?: AbortSignal): Promise<string | null> {
   let interval = Math.max(1, intervalSec)
   const deadline = Date.now() + 5 * 60_000
   while (Date.now() < deadline) {
-    await new Promise<void>(resolve => setTimeout(resolve, interval * 1000))
+    if (signal?.aborted)
+      return null
+    await new Promise<void>((resolve) => {
+      const t = setTimeout(resolve, interval * 1000)
+      signal?.addEventListener('abort', () => {
+        clearTimeout(t)
+        resolve()
+      }, { once: true })
+    })
+    if (signal?.aborted)
+      return null
     const res = await fetch(`${serverUrl}/api/auth/device/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

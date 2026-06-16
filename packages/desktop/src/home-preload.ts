@@ -7,6 +7,7 @@ const bridge: KinoraBridge = {
   session: () => ipcRenderer.invoke('kinora:session'),
   loginWithDevice: () => ipcRenderer.invoke('kinora:login-device'),
   onDevicePending: cb => ipcRenderer.on('kinora:device-pending', (_e, info) => cb(info)),
+  cancelDeviceLogin: () => ipcRenderer.invoke('kinora:cancel-device-login'),
   logout: () => ipcRenderer.invoke('kinora:logout'),
   projects: () => ipcRenderer.invoke('kinora:projects'),
   run: input => ipcRenderer.invoke('kinora:run', input),

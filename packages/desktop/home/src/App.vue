@@ -91,6 +91,12 @@ async function onDeviceLogin(): Promise<void> {
     error.value = res.error
 }
 
+function onCancelDevice(): void {
+  void window.kinora.cancelDeviceLogin()
+  devicePending.value = false
+  deviceCode.value = ''
+}
+
 async function onLogout(): Promise<void> {
   await window.kinora.logout()
   projects.value = []
@@ -132,13 +138,16 @@ function onViewTrace(traceUrl: string): void {
         <p class="text-center text-sm text-muted-foreground">
           Sign in to your kinora account.
         </p>
-        <div v-if="devicePending" class="space-y-1.5 text-center">
+        <div v-if="devicePending" class="space-y-2 text-center">
           <p class="text-xs text-muted-foreground">
             Approve in your browser. Confirm this code:
           </p>
           <p class="font-mono text-lg font-semibold tracking-[0.3em]">
             {{ deviceCode || '····' }}
           </p>
+          <Button variant="ghost" size="sm" class="text-xs text-muted-foreground" @click="onCancelDevice">
+            Cancel
+          </Button>
         </div>
         <Button v-else class="w-full bg-signal text-white hover:bg-signal/90" @click="onDeviceLogin">
           Sign in with browser
