@@ -2,11 +2,11 @@
 import type { ProjectEntry } from '@kinora/core'
 import { formatDuration, formatPct, latestRun, passRate, runHealth, sortedRuns, trend } from '@kinora/core'
 import { Card } from '@kinora/ui/card'
+import { HealthBadge } from '@kinora/ui/health-badge'
+import { RunStrip } from '@kinora/ui/run-strip'
+import { Sparkline } from '@kinora/ui/sparkline'
 import { ArrowDownRight, ArrowUpRight } from 'lucide-vue-next'
 import { computed } from 'vue'
-import HealthBadge from './HealthBadge.vue'
-import RunStrip from './RunStrip.vue'
-import Sparkline from './Sparkline.vue'
 
 const props = defineProps<{ project: ProjectEntry }>()
 defineEmits<{ open: [] }>()

@@ -1,18 +1,20 @@
 <script setup lang="ts">
 import type { RunSummary } from '@kinora/core'
 import { formatPct, passRate, runHealth } from '@kinora/core'
+import { computed } from 'vue'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@kinora/ui/tooltip'
-import { computed } from 'vue'
+} from '../tooltip'
 
 const props = withDefaults(
   defineProps<{ runs: RunSummary[], limit?: number, height?: number }>(),
   { limit: 30, height: 38 },
 )
+// Framework-agnostic: callers decide what selecting a run does (navigate, open a trace, ...).
+const emit = defineEmits<{ select: [run: RunSummary] }>()
 
 const dateFmt = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' })
 
@@ -46,13 +48,13 @@ const bars = computed(() =>
     <div class="flex items-end gap-[3px]" :style="{ height: `${height}px` }">
       <Tooltip v-for="b in bars" :key="b.run.runId">
         <TooltipTrigger as-child>
-          <div class="group relative flex h-full flex-1 items-end">
+          <button type="button" class="group relative flex h-full flex-1 items-end" @click="emit('select', b.run)">
             <span
               class="w-full rounded-[2px] opacity-80 transition-all duration-150 group-hover:opacity-100 group-hover:ring-2 group-hover:ring-offset-1 group-hover:ring-offset-background"
               :class="[b.color, b.health === 'passing' ? 'group-hover:ring-pass/40' : b.health === 'flaky' ? 'group-hover:ring-flaky/40' : 'group-hover:ring-fail/40']"
               :style="{ height: `${Math.max(12, b.pct * 100)}%` }"
             />
-          </div>
+          </button>
         </TooltipTrigger>
         <TooltipContent class="font-mono text-xs">
           <div class="font-semibold">

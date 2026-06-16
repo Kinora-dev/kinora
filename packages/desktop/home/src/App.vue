@@ -5,11 +5,11 @@ import { Button } from '@kinora/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@kinora/ui/card'
 import { Input } from '@kinora/ui/input'
 import { Separator } from '@kinora/ui/separator'
+import { StatBlock } from '@kinora/ui/stat-block'
 import { computed, onMounted, ref } from 'vue'
 import AppHeader from './components/AppHeader.vue'
 import ProjectCard from './components/ProjectCard.vue'
 import ProjectDetail from './components/ProjectDetail.vue'
-import StatBlock from './components/StatBlock.vue'
 
 const view = ref<'loading' | 'login' | 'projects'>('loading')
 const serverUrl = ref('http://localhost:3000')

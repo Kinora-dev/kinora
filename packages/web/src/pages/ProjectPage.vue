@@ -7,15 +7,15 @@ import {
   sortedRuns,
   trend,
 } from '@kinora/core'
+import { HealthBadge } from '@kinora/ui/health-badge'
 import { Separator } from '@kinora/ui/separator'
 import { Skeleton } from '@kinora/ui/skeleton'
+import { Sparkline } from '@kinora/ui/sparkline'
+import { StatBlock } from '@kinora/ui/stat-block'
 import { ArrowLeft, History, Settings } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import RunHistoryTable from '@/components/project/RunHistoryTable.vue'
-import HealthBadge from '@/components/viz/HealthBadge.vue'
-import Sparkline from '@/components/viz/Sparkline.vue'
-import StatBlock from '@/components/viz/StatBlock.vue'
 import { useManifest } from '@/composables/queries'
 import { useOrg } from '@/composables/useOrg'
 

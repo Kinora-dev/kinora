@@ -2,6 +2,7 @@
 import type { RunHealth, RunSummary } from '@kinora/core'
 import type { ColumnDef, SortingState } from '@tanstack/vue-table'
 import { formatDuration, formatPct, passRate, runHealth } from '@kinora/core'
+import { HealthBadge } from '@kinora/ui/health-badge'
 import {
   Table,
   TableBody,
@@ -15,7 +16,6 @@ import { getCoreRowModel, getSortedRowModel, useVueTable } from '@tanstack/vue-t
 import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-vue-next'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import HealthBadge from '@/components/viz/HealthBadge.vue'
 
 const props = defineProps<{ runs: RunSummary[], projectId: string }>()
 

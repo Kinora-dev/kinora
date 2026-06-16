@@ -2,14 +2,16 @@
 import type { ProjectEntry } from '@kinora/core'
 import { formatDuration, formatPct, latestRun, passRate, runHealth, sortedRuns, trend } from '@kinora/core'
 import { Card } from '@kinora/ui/card'
+import { HealthBadge } from '@kinora/ui/health-badge'
+import { RunStrip } from '@kinora/ui/run-strip'
+import { Sparkline } from '@kinora/ui/sparkline'
 import { ArrowDownRight, ArrowRight, ArrowUpRight } from 'lucide-vue-next'
 import { computed } from 'vue'
-import { RouterLink } from 'vue-router'
-import HealthBadge from '@/components/viz/HealthBadge.vue'
-import RunStrip from '@/components/viz/RunStrip.vue'
-import Sparkline from '@/components/viz/Sparkline.vue'
+import { RouterLink, useRouter } from 'vue-router'
 
 const props = defineProps<{ project: ProjectEntry }>()
+
+const router = useRouter()
 
 const runs = computed(() => sortedRuns(props.project))
 const latest = computed(() => latestRun(props.project))
@@ -91,7 +93,11 @@ const rel = computed(() => {
 
     <!-- Run strip -->
     <div class="px-5 pt-4">
-      <RunStrip :runs="project.runs" :limit="30" />
+      <RunStrip
+        :runs="project.runs"
+        :limit="30"
+        @select="r => router.push({ name: 'run', params: { projectId: r.projectId, runId: r.runId } })"
+      />
     </div>
 
     <!-- Footer -->
