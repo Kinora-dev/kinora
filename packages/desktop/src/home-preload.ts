@@ -14,6 +14,7 @@ const bridge: KinoraBridge = {
   compareRuns: input => ipcRenderer.invoke('kinora:compare-runs', input),
   openLocalTrace: () => ipcRenderer.invoke('kinora:open-local-trace'),
   openTraceUrl: traceUrl => ipcRenderer.invoke('kinora:open-trace-url', traceUrl),
+  openAccount: () => ipcRenderer.invoke('kinora:open-account'),
 }
 
 contextBridge.exposeInMainWorld('kinora', bridge)

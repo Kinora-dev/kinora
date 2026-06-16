@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Project, RunComparison, RunReport, TestHistory } from '../../src/bridge'
+import type { Project, RunComparison, RunReport, SessionUser, TestHistory } from '../../src/bridge'
 import { latestRun } from '@kinora/core'
 import { Button } from '@kinora/ui/button'
 import { Card, CardContent } from '@kinora/ui/card'
@@ -10,7 +10,7 @@ import Failures from './components/Failures.vue'
 const STORE_KEY = 'kinora-desktop-project'
 
 const view = ref<'loading' | 'login' | 'projects'>('loading')
-const serverUrl = ref('http://localhost:3000')
+const user = ref<SessionUser | null>(null)
 const error = ref('')
 const devicePending = ref(false)
 const deviceCode = ref('')
@@ -55,11 +55,11 @@ async function loadActive(): Promise<void> {
 
 async function refresh(): Promise<void> {
   const s = await window.kinora.session()
-  serverUrl.value = s.serverUrl
   if (!s.loggedIn) {
     view.value = 'login'
     return
   }
+  user.value = s.user
   projects.value = await window.kinora.projects()
   const stored = localStorage.getItem(STORE_KEY)
   activeId.value = projects.value.find(p => p.id === stored)?.id ?? projects.value[0]?.id ?? null
@@ -96,11 +96,16 @@ async function onLogout(): Promise<void> {
   projects.value = []
   activeId.value = null
   report.value = null
+  user.value = null
   view.value = 'login'
 }
 
 function openTrace(): void {
   void window.kinora.openLocalTrace()
+}
+
+function openAccount(): void {
+  void window.kinora.openAccount()
 }
 
 function onViewTrace(traceUrl: string): void {
@@ -153,11 +158,12 @@ function onViewTrace(traceUrl: string): void {
   <!-- dashboard: failures of the active project's latest run -->
   <div v-else class="app-grid flex h-full flex-col bg-background text-foreground">
     <AppHeader
-      :server-url="serverUrl"
       :projects="projects"
       :active-id="activeId"
+      :user="user"
       @select="selectProject"
       @open-trace="openTrace"
+      @open-account="openAccount"
       @logout="onLogout"
     />
 

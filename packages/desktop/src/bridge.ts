@@ -4,9 +4,15 @@ import type { Manifest, ProjectEntry, RunComparison, RunReport, TestHistory } fr
 export type { Manifest, RunComparison, RunReport, TestHistory }
 export type Project = ProjectEntry
 
+export interface SessionUser {
+  name: string
+  email: string
+  image: string | null
+}
+
 export interface SessionInfo {
   loggedIn: boolean
-  serverUrl: string
+  user: SessionUser | null
 }
 
 // Exposed on window.kinora in the home renderer (contextBridge). The renderer never
@@ -27,6 +33,8 @@ export interface KinoraBridge {
   openLocalTrace: () => Promise<void>
   // Open a hosted trace.zip (absolute artifact URL) in the embedded viewer.
   openTraceUrl: (traceUrl: string) => Promise<void>
+  // Open the web account settings in the system browser (account mgmt lives in web).
+  openAccount: () => Promise<void>
 }
 
 declare global {

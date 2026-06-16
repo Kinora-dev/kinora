@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import type { ProjectEntry } from '@kinora/core'
+import type { SessionUser } from '../../src/bridge'
+import { Avatar, AvatarFallback, AvatarImage } from '@kinora/ui/avatar'
 import { Button } from '@kinora/ui/button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@kinora/ui/dropdown-menu'
-import { Check, ChevronsUpDown } from 'lucide-vue-next'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@kinora/ui/dropdown-menu'
+import { Check, ChevronsUpDown, ExternalLink, LogOut, Settings } from 'lucide-vue-next'
 import { computed } from 'vue'
 
-const props = defineProps<{ serverUrl: string, projects: ProjectEntry[], activeId: string | null }>()
-defineEmits<{ select: [id: string], openTrace: [], logout: [] }>()
+const props = defineProps<{ projects: ProjectEntry[], activeId: string | null, user: SessionUser | null }>()
+defineEmits<{ select: [id: string], openTrace: [], logout: [], openAccount: [] }>()
 
 const active = computed(() => props.projects.find(p => p.id === props.activeId))
+const initial = computed(() => (props.user?.name || props.user?.email || '?').charAt(0).toUpperCase())
 </script>
 
 <template>
@@ -48,13 +51,39 @@ const active = computed(() => props.projects.find(p => p.id === props.activeId))
       </DropdownMenu>
 
       <div class="ml-auto flex items-center gap-2">
-        <span class="hidden font-mono text-xs text-muted-foreground sm:inline">{{ serverUrl }}</span>
         <Button variant="outline" size="sm" class="h-8 font-mono text-xs" @click="$emit('openTrace')">
           Open trace
         </Button>
-        <Button variant="ghost" size="sm" class="h-8 font-mono text-xs" @click="$emit('logout')">
-          Sign out
-        </Button>
+        <DropdownMenu v-if="user">
+          <DropdownMenuTrigger as-child>
+            <button type="button" class="rounded-full ring-1 ring-signal/30 transition-shadow hover:ring-signal/60" :title="user.name || user.email">
+              <Avatar class="size-8">
+                <AvatarImage v-if="user.image" :src="user.image" :alt="user.name" />
+                <AvatarFallback v-else class="bg-signal/15 text-xs font-semibold text-signal">
+                  {{ initial }}
+                </AvatarFallback>
+              </Avatar>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" class="w-56">
+            <DropdownMenuLabel>
+              <div class="flex min-w-0 flex-col">
+                <span v-if="user.name && user.name !== user.email" class="truncate text-sm font-medium">{{ user.name }}</span>
+                <span class="truncate text-xs font-normal text-muted-foreground">{{ user.email }}</span>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem @click="$emit('openAccount')">
+              <Settings class="size-4" />
+              Account settings
+              <ExternalLink class="ml-auto size-3 opacity-60" />
+            </DropdownMenuItem>
+            <DropdownMenuItem @click="$emit('logout')">
+              <LogOut class="size-4" />
+              Sign out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   </header>

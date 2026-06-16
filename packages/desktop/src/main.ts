@@ -95,7 +95,21 @@ function createHomeWindow(): BrowserWindow {
 }
 
 function registerIpc(): void {
-  ipcMain.handle('kinora:session', () => ({ loggedIn: !!config.token, serverUrl: config.serverUrl }))
+  ipcMain.handle('kinora:session', async () => {
+    if (!config.token)
+      return { loggedIn: false, user: null }
+    try {
+      const me = await makeTrpc(config.serverUrl, config.token, config.webOrigin).user.me.query()
+      if (!me)
+        return { loggedIn: false, user: null }
+      return { loggedIn: true, user: { name: me.name, email: me.email, image: me.image ?? null } }
+    }
+    catch {
+      return { loggedIn: false, user: null }
+    }
+  })
+
+  ipcMain.handle('kinora:open-account', () => shell.openExternal(`${config.webOrigin}/settings/account`))
 
   // Device flow: open the system browser to approve (no embedded webview, so all providers
   // work), then poll for the access token. The user code is surfaced to the renderer.
