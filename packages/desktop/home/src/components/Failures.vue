@@ -3,7 +3,7 @@ import type { NormTest, ProjectEntry, RunComparison, RunReport, TestHistory } fr
 import { formatPct, passRate } from '@kinora/core'
 import { Button } from '@kinora/ui/button'
 import { Card } from '@kinora/ui/card'
-import { Check, Copy, Play } from 'lucide-vue-next'
+import { Check, Copy, FileCode2, Play } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 
 const props = defineProps<{
@@ -12,8 +12,12 @@ const props = defineProps<{
   histories: TestHistory[]
   comparison: RunComparison | null
   loading: boolean
+  linked: boolean
 }>()
-const emit = defineEmits<{ viewTrace: [traceUrl: string] }>()
+const emit = defineEmits<{
+  viewTrace: [traceUrl: string]
+  openInEditor: [loc: { file: string, line: number, column: number }]
+}>()
 
 type Filter = 'failures' | 'regressions' | 'all'
 const filter = ref<Filter>('failures')
@@ -207,6 +211,16 @@ ${errors || '(no error captured)'}`
               {{ row.label.text }}
             </span>
             <div class="flex gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                class="h-7 gap-1.5 font-mono text-[11px]"
+                :title="linked ? 'Open in editor' : 'Link a local repo, then open in editor'"
+                @click="emit('openInEditor', { file: row.test.file, line: row.test.line, column: row.test.column })"
+              >
+                <FileCode2 class="size-3" />
+                Open
+              </Button>
               <Button
                 variant="outline"
                 size="sm"

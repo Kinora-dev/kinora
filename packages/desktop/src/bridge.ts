@@ -35,6 +35,12 @@ export interface KinoraBridge {
   openLocalTrace: () => Promise<void>
   // Open a hosted trace.zip (absolute artifact URL) in the embedded viewer.
   openTraceUrl: (traceUrl: string) => Promise<void>
+  // Per-project local repo roots (projectId -> absolute path), for open-in-editor / re-run.
+  projectPaths: () => Promise<Record<string, string>>
+  // Folder-pick a local repo root for a project; returns the chosen path (null if cancelled).
+  setProjectPath: (projectId: string) => Promise<string | null>
+  // Open a test's source at file:line:column in the editor (needs the project linked).
+  openInEditor: (input: { projectId: string, file: string, line: number, column: number }) => Promise<{ ok: boolean, error?: string }>
   // Open the web account settings in the system browser (account mgmt lives in web).
   openAccount: () => Promise<void>
 }

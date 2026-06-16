@@ -4,14 +4,15 @@ import type { SessionUser } from '../../src/bridge'
 import { Avatar, AvatarFallback, AvatarImage } from '@kinora/ui/avatar'
 import { Button } from '@kinora/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@kinora/ui/dropdown-menu'
-import { Check, ChevronsUpDown, ExternalLink, FolderOpen, LogOut, Settings } from 'lucide-vue-next'
+import { Check, ChevronsUpDown, ExternalLink, FolderGit2, FolderOpen, LogOut, Settings } from 'lucide-vue-next'
 import { computed } from 'vue'
 
-const props = defineProps<{ projects: ProjectEntry[], activeId: string | null, user: SessionUser | null }>()
-defineEmits<{ select: [id: string], openTrace: [], logout: [], openAccount: [] }>()
+const props = defineProps<{ projects: ProjectEntry[], activeId: string | null, user: SessionUser | null, projectPath: string | null }>()
+defineEmits<{ select: [id: string], openTrace: [], logout: [], openAccount: [], linkFolder: [] }>()
 
 const active = computed(() => props.projects.find(p => p.id === props.activeId))
 const initial = computed(() => (props.user?.name || props.user?.email || '?').charAt(0).toUpperCase())
+const folderName = computed(() => props.projectPath?.replace(/\/$/, '').split('/').pop() ?? '')
 </script>
 
 <template>
@@ -49,6 +50,17 @@ const initial = computed(() => (props.user?.name || props.user?.email || '?').ch
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <button
+        v-if="active"
+        type="button"
+        class="flex items-center gap-1.5 rounded-md border border-border/70 px-2.5 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:border-border hover:text-foreground"
+        :title="projectPath ? `Local repo: ${projectPath}` : 'Link a local repo to open tests in your editor'"
+        @click="$emit('linkFolder')"
+      >
+        <FolderGit2 class="size-3 opacity-60" />
+        <span class="max-w-40 truncate">{{ projectPath ? folderName : 'Link folder' }}</span>
+      </button>
 
       <div class="ml-auto flex items-center gap-4">
         <Button variant="outline" size="sm" class="h-8 gap-1.5 font-mono text-xs" @click="$emit('openTrace')">

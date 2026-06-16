@@ -20,8 +20,10 @@ const report = ref<RunReport | null>(null)
 const histories = ref<TestHistory[]>([])
 const comparison = ref<RunComparison | null>(null)
 const reportLoading = ref(false)
+const projectPaths = ref<Record<string, string>>({})
 
 const activeProject = computed(() => projects.value.find(p => p.id === activeId.value) ?? null)
+const activePath = computed(() => (activeId.value ? projectPaths.value[activeId.value] ?? null : null))
 
 // Load the active project's latest run (the failures inbox renders from it).
 async function loadActive(): Promise<void> {
@@ -61,6 +63,7 @@ async function refresh(): Promise<void> {
   }
   user.value = s.user
   projects.value = await window.kinora.projects()
+  projectPaths.value = await window.kinora.projectPaths()
   const stored = localStorage.getItem(STORE_KEY)
   activeId.value = projects.value.find(p => p.id === stored)?.id ?? projects.value[0]?.id ?? null
   view.value = 'projects'
@@ -117,6 +120,28 @@ function openAccount(): void {
 function onViewTrace(traceUrl: string): void {
   void window.kinora.openTraceUrl(traceUrl)
 }
+
+async function linkActiveProject(): Promise<string | null> {
+  const id = activeId.value
+  if (!id)
+    return null
+  const dir = await window.kinora.setProjectPath(id)
+  if (dir)
+    projectPaths.value = { ...projectPaths.value, [id]: dir }
+  return dir
+}
+
+async function onOpenInEditor(loc: { file: string, line: number, column: number }): Promise<void> {
+  const id = activeId.value
+  if (!id)
+    return
+  // First open prompts to link the local repo; cancel = no-op.
+  if (!projectPaths.value[id] && !(await linkActiveProject()))
+    return
+  const res = await window.kinora.openInEditor({ projectId: id, ...loc })
+  if (!res.ok && res.error && res.error !== 'no-path')
+    error.value = res.error
+}
 </script>
 
 <template>
@@ -170,9 +195,11 @@ function onViewTrace(traceUrl: string): void {
       :projects="projects"
       :active-id="activeId"
       :user="user"
+      :project-path="activePath"
       @select="selectProject"
       @open-trace="openTrace"
       @open-account="openAccount"
+      @link-folder="linkActiveProject"
       @logout="onLogout"
     />
 
@@ -188,7 +215,9 @@ function onViewTrace(traceUrl: string): void {
         :histories="histories"
         :comparison="comparison"
         :loading="reportLoading"
+        :linked="!!activePath"
         @view-trace="onViewTrace"
+        @open-in-editor="onOpenInEditor"
       />
     </main>
   </div>

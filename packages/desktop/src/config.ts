@@ -8,12 +8,15 @@ export interface Config {
   // better-auth rejects auth requests without a trusted Origin; send the server's web origin.
   webOrigin: string
   token: string | null
+  // Maps a cloud project id to its local repo root (for open-in-editor / re-run).
+  projectPaths: Record<string, string>
 }
 
 const DEFAULTS: Config = {
   serverUrl: 'http://localhost:3000',
   webOrigin: 'http://localhost:5173',
   token: null,
+  projectPaths: {},
 }
 
 function configPath(): string {
@@ -22,7 +25,7 @@ function configPath(): string {
 
 export function loadConfig(): Config {
   try {
-    const raw = JSON.parse(readFileSync(configPath(), 'utf8')) as Record<string, string>
+    const raw = JSON.parse(readFileSync(configPath(), 'utf8')) as Partial<{ serverUrl: string, webOrigin: string, token: string, projectPaths: Record<string, string> }>
     const token = raw.token && safeStorage.isEncryptionAvailable()
       ? safeStorage.decryptString(Buffer.from(raw.token, 'base64'))
       : null
@@ -30,10 +33,11 @@ export function loadConfig(): Config {
       serverUrl: raw.serverUrl || DEFAULTS.serverUrl,
       webOrigin: raw.webOrigin || DEFAULTS.webOrigin,
       token,
+      projectPaths: raw.projectPaths ?? {},
     }
   }
   catch {
-    return { ...DEFAULTS }
+    return { ...DEFAULTS, projectPaths: {} }
   }
 }
 
@@ -41,5 +45,5 @@ export function saveConfig(config: Config): void {
   const token = config.token && safeStorage.isEncryptionAvailable()
     ? safeStorage.encryptString(config.token).toString('base64')
     : null
-  writeFileSync(configPath(), JSON.stringify({ serverUrl: config.serverUrl, webOrigin: config.webOrigin, token }))
+  writeFileSync(configPath(), JSON.stringify({ serverUrl: config.serverUrl, webOrigin: config.webOrigin, token, projectPaths: config.projectPaths }))
 }

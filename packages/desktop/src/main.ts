@@ -5,6 +5,7 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { signIn } from './account'
 import { loadConfig, saveConfig } from './config'
 import { pollDeviceToken, requestDeviceCode } from './device'
+import { openInEditor } from './editor'
 import { buildMenu } from './menu'
 import { startServer } from './server'
 import { makeTrpc } from './trpc'
@@ -187,6 +188,34 @@ function registerIpc(): void {
     })
     if (!res.canceled && res.filePaths[0])
       openViewer(res.filePaths[0])
+  })
+
+  ipcMain.handle('kinora:project-paths', () => config.projectPaths)
+
+  ipcMain.handle('kinora:set-project-path', async (_e, projectId: string) => {
+    const res = await dialog.showOpenDialog(homeWin ?? undefined as never, {
+      title: 'Select the local repo for this project',
+      properties: ['openDirectory'],
+    })
+    if (res.canceled || !res.filePaths[0])
+      return null
+    const dir = res.filePaths[0]
+    config = { ...config, projectPaths: { ...config.projectPaths, [projectId]: dir } }
+    saveConfig(config)
+    return dir
+  })
+
+  ipcMain.handle('kinora:open-in-editor', async (_e, input: { projectId: string, file: string, line: number, column: number }) => {
+    const root = config.projectPaths[input.projectId]
+    if (!root)
+      return { ok: false, error: 'no-path' }
+    try {
+      await openInEditor(root, input.file, input.line, input.column)
+      return { ok: true }
+    }
+    catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : 'Could not open editor' }
+    }
   })
 }
 
