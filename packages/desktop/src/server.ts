@@ -97,7 +97,8 @@ export function startServer({ viewerDir, homeDir }: ServeDirs): Promise<StartedS
     const server = http.createServer((req, res) => {
       const u = new URL(req.url ?? '/', `http://${req.headers.host}`)
 
-      // Local file access: serve any absolute path on disk (a trace.zip).
+      // Local trace access. Restricted to .zip so the loopback server can't be used as an
+      // arbitrary local-file read (it only ever serves Playwright trace archives).
       if (u.pathname === '/file') {
         const p = u.searchParams.get('path')
         if (!p) {
@@ -105,7 +106,13 @@ export function startServer({ viewerDir, homeDir }: ServeDirs): Promise<StartedS
           res.end('missing path')
           return
         }
-        sendFile(req, res, path.resolve(p))
+        const abs = path.resolve(p)
+        if (!abs.toLowerCase().endsWith('.zip')) {
+          res.writeHead(403)
+          res.end('forbidden')
+          return
+        }
+        sendFile(req, res, abs)
         return
       }
 

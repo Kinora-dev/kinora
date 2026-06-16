@@ -1,5 +1,5 @@
 import { Buffer } from 'node:buffer'
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { app, safeStorage } from 'electron'
 
@@ -42,8 +42,4 @@ export function saveConfig(config: Config): void {
     ? safeStorage.encryptString(config.token).toString('base64')
     : null
   writeFileSync(configPath(), JSON.stringify({ serverUrl: config.serverUrl, webOrigin: config.webOrigin, token }))
-}
-
-export function hasConfigFile(): boolean {
-  return existsSync(configPath())
 }
