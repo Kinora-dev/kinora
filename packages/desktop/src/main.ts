@@ -179,6 +179,11 @@ async function probeHome(): Promise<void> {
   const v = await homeWin!.webContents.executeJavaScript(`(() => {
     return { projects: document.querySelectorAll('[data-project]').length, body: (document.body.innerText || '').slice(0, 160).replace(/\\s+/g, ' ').trim() }
   })()`) as { projects: number, body: string }
+  if (process.env.KINORA_SHOT) {
+    const img = await homeWin!.webContents.capturePage()
+    const { writeFileSync } = await import('node:fs')
+    writeFileSync(process.env.KINORA_SHOT, img.toPNG())
+  }
   const ok = v.projects > 0
   console.log(`[probe] home ${JSON.stringify(v)}`)
   console.log(`[probe] ${ok ? 'PASS' : 'FAIL'}`)

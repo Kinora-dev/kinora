@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import type { Project } from '../../src/bridge'
-import { Badge } from '@kinora/ui/badge'
+import { denom, formatPct, latestRun, runHealth } from '@kinora/core'
 import { Button } from '@kinora/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@kinora/ui/card'
 import { Input } from '@kinora/ui/input'
-import { onMounted, ref } from 'vue'
+import { Separator } from '@kinora/ui/separator'
+import { computed, onMounted, ref } from 'vue'
+import AppHeader from './components/AppHeader.vue'
+import ProjectCard from './components/ProjectCard.vue'
+import StatBlock from './components/StatBlock.vue'
 
 const view = ref<'loading' | 'login' | 'projects'>('loading')
 const serverUrl = ref('http://localhost:3000')
@@ -15,6 +19,29 @@ const submitting = ref(false)
 const projects = ref<Project[]>([])
 
 const labelClass = 'font-mono text-[11px] tracking-wider text-muted-foreground uppercase'
+
+const stats = computed(() => {
+  const latest = projects.value.map(latestRun).filter(r => r != null)
+  let pass = 0
+  let total = 0
+  let tests = 0
+  let failing = 0
+  for (const r of latest) {
+    pass += r.counts.expected + r.counts.flaky
+    total += denom(r.counts)
+    tests += r.counts.total
+    if (runHealth(r.counts) === 'failing')
+      failing++
+  }
+  const runs = projects.value.reduce((sum, p) => sum + p.runs.length, 0)
+  return {
+    projects: projects.value.length,
+    runs,
+    tests,
+    failing,
+    passRate: total === 0 ? 1 : pass / total,
+  }
+})
 
 async function refresh(): Promise<void> {
   const s = await window.kinora.session()
@@ -52,107 +79,90 @@ async function onLogout(): Promise<void> {
 function openTrace(): void {
   void window.kinora.openLocalTrace()
 }
-
-function lastRun(p: Project) {
-  return p.runs[0]
-}
-
-function lastRunWhen(p: Project): string {
-  const run = lastRun(p)
-  return run ? new Date(run.startedAt).toLocaleString() : 'No runs yet'
-}
 </script>
 
 <template>
-  <div class="flex h-full flex-col bg-background text-foreground">
-    <!-- top bar -->
-    <header class="flex h-12 shrink-0 items-center gap-2.5 border-b border-border px-5">
-      <span class="size-2 rounded-full bg-signal" style="animation: rec-pulse 2s ease-in-out infinite" />
-      <span class="text-sm font-semibold tracking-tight">kinora</span>
-      <span class="font-mono text-[11px] text-muted-foreground">desktop</span>
-      <div v-if="view === 'projects'" class="ml-auto flex items-center gap-3">
-        <span class="font-mono text-[11px] text-muted-foreground">{{ serverUrl }}</span>
-        <Button variant="outline" size="sm" @click="openTrace">
-          Open trace
-        </Button>
-        <Button variant="ghost" size="sm" @click="onLogout">
-          Sign out
-        </Button>
-      </div>
-    </header>
+  <!-- login: standalone, no app chrome (matches web) -->
+  <div v-if="view === 'login'" class="flex h-full items-center justify-center bg-background p-6">
+    <Card class="w-full max-w-sm">
+      <CardHeader>
+        <CardTitle class="text-base">
+          Sign in to kinora
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form class="space-y-4" @submit.prevent="onLogin">
+          <div class="space-y-1.5">
+            <label :class="labelClass" for="server">Server</label>
+            <Input id="server" v-model="serverUrl" type="url" placeholder="https://api.kinora.dev" />
+          </div>
+          <div class="space-y-1.5">
+            <label :class="labelClass" for="email">Email</label>
+            <Input id="email" v-model="email" type="email" autocomplete="email" placeholder="you@team.dev" />
+          </div>
+          <div class="space-y-1.5">
+            <label :class="labelClass" for="password">Password</label>
+            <Input id="password" v-model="password" type="password" autocomplete="current-password" placeholder="••••••••" />
+          </div>
+          <p v-if="error" class="rounded-md border border-fail/30 bg-fail/10 px-3 py-2 text-xs text-fail">
+            {{ error }}
+          </p>
+          <Button type="submit" :disabled="submitting" class="w-full bg-signal text-white hover:bg-signal/90">
+            {{ submitting ? 'Signing in…' : 'Sign in' }}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  </div>
 
-    <!-- loading -->
-    <div v-if="view === 'loading'" class="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-      Loading…
-    </div>
+  <!-- loading -->
+  <div v-else-if="view === 'loading'" class="flex h-full items-center justify-center bg-background text-sm text-muted-foreground">
+    Loading…
+  </div>
 
-    <!-- login -->
-    <div v-else-if="view === 'login'" class="flex flex-1 items-center justify-center p-6">
-      <Card class="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle class="text-base">
-            Sign in to kinora
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form class="space-y-4" @submit.prevent="onLogin">
-            <div class="space-y-1.5">
-              <label :class="labelClass" for="server">Server</label>
-              <Input id="server" v-model="serverUrl" type="url" placeholder="https://api.kinora.dev" />
-            </div>
-            <div class="space-y-1.5">
-              <label :class="labelClass" for="email">Email</label>
-              <Input id="email" v-model="email" type="email" autocomplete="email" placeholder="you@team.dev" />
-            </div>
-            <div class="space-y-1.5">
-              <label :class="labelClass" for="password">Password</label>
-              <Input id="password" v-model="password" type="password" autocomplete="current-password" placeholder="••••••••" />
-            </div>
-            <p v-if="error" class="rounded-md border border-fail/30 bg-fail/10 px-3 py-2 text-xs text-fail">
-              {{ error }}
+  <!-- dashboard -->
+  <div v-else class="app-grid flex h-full flex-col bg-background text-foreground">
+    <AppHeader :server-url="serverUrl" @open-trace="openTrace" @logout="onLogout" />
+
+    <main class="mx-auto w-full max-w-7xl flex-1 overflow-auto px-5 py-8">
+      <div class="flex flex-col gap-8">
+        <div class="flex flex-col gap-6">
+          <div>
+            <h1 class="text-2xl font-semibold tracking-tight">
+              Test runs overview
+            </h1>
+            <p class="mt-1 text-sm text-muted-foreground">
+              Playwright report history across every project, one strip per run.
             </p>
-            <Button type="submit" :disabled="submitting" class="w-full bg-signal text-white hover:bg-signal/90">
-              {{ submitting ? 'Signing in…' : 'Sign in' }}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+          </div>
 
-    <!-- projects -->
-    <div v-else class="flex-1 overflow-auto p-6">
-      <h1 class="mb-4 text-sm font-semibold tracking-tight">
-        Projects <span class="font-mono text-xs text-muted-foreground">({{ projects.length }})</span>
-      </h1>
-      <p v-if="projects.length === 0" class="text-sm text-muted-foreground">
-        No projects yet. Push a run from the reporter or CLI.
-      </p>
-      <div v-else class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <Card v-for="p in projects" :key="p.id" data-project>
-          <CardHeader>
-            <CardTitle class="text-sm">
-              {{ p.name }}
-            </CardTitle>
-            <span class="font-mono text-[11px] text-muted-foreground">{{ p.id }}</span>
-          </CardHeader>
-          <CardContent class="space-y-2">
-            <div v-if="lastRun(p)" class="flex flex-wrap gap-1.5">
-              <Badge variant="outline" class="border-pass/30 text-pass">
-                {{ lastRun(p).counts.expected }} passed
-              </Badge>
-              <Badge v-if="lastRun(p).counts.unexpected" variant="outline" class="border-fail/30 text-fail">
-                {{ lastRun(p).counts.unexpected }} failed
-              </Badge>
-              <Badge v-if="lastRun(p).counts.flaky" variant="outline" class="border-signal/30 text-signal">
-                {{ lastRun(p).counts.flaky }} flaky
-              </Badge>
-            </div>
-            <p class="font-mono text-[11px] text-muted-foreground">
-              {{ lastRunWhen(p) }}
-            </p>
-          </CardContent>
-        </Card>
+          <div
+            v-if="projects.length"
+            class="flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg border border-border/70 bg-card/80 px-6 py-5"
+          >
+            <StatBlock label="Projects" :value="stats.projects" />
+            <Separator orientation="vertical" class="h-10" />
+            <StatBlock
+              label="Global pass rate"
+              :value="formatPct(stats.passRate)"
+              :tone="stats.passRate >= 0.99 ? 'pass' : stats.passRate >= 0.9 ? 'flaky' : 'fail'"
+            />
+            <Separator orientation="vertical" class="h-10" />
+            <StatBlock label="Tests / latest" :value="stats.tests" />
+            <Separator orientation="vertical" class="h-10" />
+            <StatBlock label="Total runs" :value="stats.runs" />
+            <Separator orientation="vertical" class="h-10" />
+            <StatBlock label="Failing now" :value="stats.failing" :tone="stats.failing > 0 ? 'fail' : 'pass'" />
+          </div>
+        </div>
+
+        <p v-if="projects.length === 0" class="py-16 text-center font-mono text-sm text-muted-foreground">
+          No projects yet. Push a run from the reporter or CLI.
+        </p>
+        <div v-else class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          <ProjectCard v-for="p in projects" :key="p.id" :project="p" />
+        </div>
       </div>
-    </div>
+    </main>
   </div>
 </template>
