@@ -7,5 +7,5 @@ export default defineConfig({
   format: ['cjs'],
   platform: 'node',
   dts: false,
-  external: ['electron', '@kinora/server', '@kinora/core', '@kinora/trace-viewer', '@kinora/ui'],
+  deps: { neverBundle: ['electron', '@kinora/server', '@kinora/core', '@kinora/trace-viewer', '@kinora/ui'] },
 })

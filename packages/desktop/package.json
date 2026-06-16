@@ -2,6 +2,7 @@
   "name": "@kinora/desktop",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "description": "kinora desktop: cloud dashboard + local Playwright trace viewer (Electron).",
   "author": "Joris Gallot",
   "license": "FSL-1.1-MIT",
