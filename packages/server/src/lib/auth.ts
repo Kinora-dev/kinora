@@ -124,13 +124,10 @@ export const auth = betterAuth({
       },
     },
   },
-  // Prod: share the session cookie across app.kinora.dev <-> api.kinora.dev
-  advanced: {
-    crossSubDomainCookies: {
-      enabled: env.NODE_ENV === 'production',
-      domain: '.kinora.dev',
-    },
-  },
+  // Share the session cookie across subdomains (cloud: app. <-> api.). Self-host single-origin leaves it unset.
+  advanced: env.COOKIE_DOMAIN
+    ? { crossSubDomainCookies: { enabled: true, domain: env.COOKIE_DOMAIN } }
+    : {},
   secret: env.AUTH_SECRET,
   plugins: [
     // Plugin default is 10 req/day per key, which any real CI exceeds, billing quotas already cap ingest volume.

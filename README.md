@@ -65,14 +65,10 @@ export default defineConfig({
 Set the token via env (keep it out of the config / in CI secrets):
 
 ```bash
-# hosted cloud: token only, the URL defaults to the kinora cloud
 KINORA_TOKEN=<token> npx playwright test
-
-# self-host: point at your own server
-KINORA_URL=https://your-kinora-server KINORA_TOKEN=<token> npx playwright test
 ```
 
-On GitHub Actions, git and CI metadata are filled in automatically. See [`@kinora/reporter`](packages/reporter) for all options and the CI example.
+On GitHub Actions, git and CI metadata are filled in automatically. See [`@kinora/reporter`](packages/reporter) for all options and the CI example. Self-hosting? Point it at your server with `KINORA_URL` ([selfhost/README.md](selfhost/README.md)).
 
 ### CLI (manual)
 
@@ -81,7 +77,6 @@ For setups without the reporter, or to upload an existing `results.json` from a 
 ```bash
 # playwright.config.ts: reporter: [['json', { outputFile: 'results.json' }]]
 npx @kinora/cli upload results.json --project web-app --token <project-token>
-# --url defaults to the hosted cloud, add --url https://your-kinora-server to self-host
 ```
 
 The CLI can also bulk-import a backlog of historical reports (`kinora import <dir>`). See [`@kinora/cli`](packages/cli) for all flags and the CI example.
@@ -124,7 +119,15 @@ pnpm test:e2e     # trace-viewer and web e2e (Playwright)
 
 ## Self-hosting
 
-Each deployable (`server`, `web`, `landing`) ships a `Dockerfile`, built from the repo root. A single `docker compose` bundle (web + server + Postgres + S3-compatible storage) is still planned; for now, build those images or use the development setup above to run it end to end.
+Run the whole stack with one `docker compose` (Postgres + server + dashboard, single origin, local-FS artifacts, no S3):
+
+```bash
+cd selfhost
+cp .env.example .env   # edit PUBLIC_URL, AUTH_SECRET, POSTGRES_PASSWORD
+docker compose up -d --build
+```
+
+See [`selfhost/README.md`](selfhost/README.md) for configuration, sending tests, custom domains, upgrades, and backups.
 
 ## Licensing
 

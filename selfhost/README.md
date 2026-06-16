@@ -1,0 +1,88 @@
+# Self-hosting kinora
+
+Run the whole stack (Postgres + server + dashboard) with one `docker compose`, on a single
+origin, with trace artifacts on a local volume.
+
+## Quickstart
+
+From this `selfhost/` directory:
+
+```bash
+cp .env.example .env
+# edit at least: PUBLIC_URL, AUTH_SECRET, POSTGRES_PASSWORD
+docker compose up -d --build
+```
+
+Open `PUBLIC_URL` (default http://localhost:8080) and create your account. The first user owns
+their workspace; invite teammates from Settings.
+
+## What's here
+
+- `docker-compose.yml` - Postgres, a one-shot migrate, the server, and the web container.
+- `nginx.conf` - the web container's reverse proxy (serves the dashboard + trace viewer, proxies the API to the server).
+- `.env.example` - all configuration.
+
+Images are built from the repo root via the per-package Dockerfiles; the compose `build.context` is `..`.
+
+## How it works
+
+Everything is **one origin**. The web container serves the dashboard and the embedded trace
+viewer, and reverse-proxies `/api`, `/trpc`, and `/artifacts` to the server. So there is no CORS
+to configure and the session cookie stays host-only (`COOKIE_DOMAIN` empty). Postgres data and
+trace artifacts live in named volumes (`kinora-db`, `kinora-artifacts`). Migrations run
+automatically (the `migrate` service) before the server starts.
+
+## Configuration (`.env`)
+
+| Var                                                   | Required | Notes                                                                      |
+| ----------------------------------------------------- | -------- | -------------------------------------------------------------------------- |
+| `PUBLIC_URL`                                          | yes      | The URL users reach kinora at. Drives links, cookies, and artifact URLs.   |
+| `WEB_PORT`                                            | no       | Host port for the web container (default 8080). Match `PUBLIC_URL`.        |
+| `AUTH_SECRET`                                         | yes      | Session secret. `openssl rand -hex 32`.                                    |
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | yes      | Database credentials.                                                      |
+| `SMTP_*`                                              | no       | Enables email verification, password reset, invitations, and email alerts. |
+| `GOOGLE_*` / `GITHUB_*`                               | no       | Social login. Leave empty for email + password only.                       |
+| `S3_*`                                                | no       | Use an S3-compatible store instead of the local volume.                    |
+
+Self-host runs with `KINORA_CLOUD=false` (no billing; every feature, including alerts, is unlimited).
+
+## Send your tests
+
+Point the reporter or CLI at your `PUBLIC_URL`:
+
+```bash
+# reporter (in playwright.config.ts: reporter: [['@kinora/reporter', { project: { slug: 'web-app' } }]])
+KINORA_URL=https://kinora.example.com KINORA_TOKEN=<token> npx playwright test
+
+# CLI
+npx @kinora/cli upload results.json --project web-app \
+  --url https://kinora.example.com --token <token>
+```
+
+Create the token in the dashboard under Settings -> Workspace. See the
+[reporter](../packages/reporter) and [cli](../packages/cli) docs for all options.
+
+## Own domain and HTTPS
+
+Set `PUBLIC_URL` to your public https URL (e.g. `https://kinora.example.com`) and put the web
+container behind your own TLS proxy (Caddy, Traefik, nginx, a load balancer, ...) forwarding to
+`WEB_PORT`. Rebuild the web image after changing `PUBLIC_URL` (it is baked at build time):
+`docker compose up -d --build web`.
+
+## Upgrades
+
+```bash
+git pull
+docker compose up -d --build
+```
+
+Migrations apply automatically on start.
+
+## Backups
+
+Two volumes hold all state:
+
+- `kinora-db` - the Postgres database.
+- `kinora-artifacts` - uploaded trace.zip / screenshots / videos.
+
+Back them up with your usual volume backup workflow (or `pg_dump` for the database).

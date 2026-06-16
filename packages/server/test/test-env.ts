@@ -6,6 +6,7 @@ export const TEST_ENV: Record<keyof Env, string> = {
   PORT: '3000',
   BASE_URL: 'http://localhost:3000',
   WEB_ORIGIN: 'http://localhost:5173',
+  COOKIE_DOMAIN: '',
   AUTH_SECRET: 'integration-tests-secret-not-used-for-anything-real',
   POSTGRES_USER: process.env.POSTGRES_USER ?? 'kinora',
   POSTGRES_PASSWORD: process.env.POSTGRES_PASSWORD ?? 'kinora',

@@ -1,0 +1,79 @@
+# kinora self-host: Postgres + server (local-FS artifacts) + web (single-origin reverse proxy).
+# Run from this directory:
+#   cp .env.example .env     # then edit PUBLIC_URL, AUTH_SECRET, POSTGRES_PASSWORD
+#   docker compose up -d --build
+#   open $PUBLIC_URL
+#
+# Everything is one origin: the web container serves the dashboard and proxies the API to the
+# server, so there's no CORS or cross-subdomain cookie setup. Artifacts live on a local volume
+# (no S3 needed). See README.md. Build context is the repo root (the images need the workspace).
+name: kinora-selfhost
+
+services:
+  postgres:
+    image: postgres:18.1
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - kinora-db:/var/lib/postgresql
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # One-shot: apply migrations, then exit. The server waits for it to finish.
+  migrate:
+    build:
+      context: ..
+      dockerfile: packages/server/Dockerfile
+    command: [node, dist/scripts/migrate.mjs, latest]
+    env_file: .env
+    environment:
+      POSTGRES_HOST: postgres
+      BASE_URL: ${PUBLIC_URL}
+      WEB_ORIGIN: ${PUBLIC_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  server:
+    build:
+      context: ..
+      dockerfile: packages/server/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_HOST: postgres
+      BASE_URL: ${PUBLIC_URL}
+      WEB_ORIGIN: ${PUBLIC_URL}
+    volumes:
+      - kinora-artifacts:/app/.data/artifacts
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  web:
+    build:
+      context: ..
+      dockerfile: packages/web/Dockerfile
+      args:
+        # Baked at build: the public URL the browser uses (same origin as this container).
+        VITE_KINORA_SERVER_URL: ${PUBLIC_URL}
+    restart: unless-stopped
+    # Override the cloud (static-only) nginx with the self-host proxy config.
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - '${WEB_PORT:-8080}:80'
+    depends_on:
+      - server
+
+volumes:
+  kinora-db:
+  kinora-artifacts:

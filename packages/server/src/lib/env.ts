@@ -7,6 +7,8 @@ const envSchema = z.object({
   PORT: z.coerce.number(),
   BASE_URL: z.url(),
   WEB_ORIGIN: z.string(),
+  // Share the session cookie across subdomains (e.g. .kinora.dev for app/api). Unset = host-only (single-origin self-host).
+  COOKIE_DOMAIN: z.string().optional(),
   AUTH_SECRET: z.string(),
   POSTGRES_USER: z.string(),
   POSTGRES_PASSWORD: z.string(),
@@ -38,6 +40,10 @@ const envSchema = z.object({
 }).refine(
   e => !e.KINORA_CLOUD || Boolean(e.POLAR_ACCESS_TOKEN && e.POLAR_WEBHOOK_SECRET && e.POLAR_PRODUCT_TEAM_ID && e.POLAR_PRODUCT_PRO_ID),
   { message: 'KINORA_CLOUD=true requires POLAR_ACCESS_TOKEN, POLAR_WEBHOOK_SECRET, POLAR_PRODUCT_TEAM_ID and POLAR_PRODUCT_PRO_ID' },
+).refine(
+  // Cloud runs app./api. on subdomains, so the session cookie must be shared across them.
+  e => !e.KINORA_CLOUD || Boolean(e.COOKIE_DOMAIN),
+  { message: 'KINORA_CLOUD=true requires COOKIE_DOMAIN (e.g. .kinora.dev)' },
 )
 
 export type Env = z.infer<typeof envSchema>
