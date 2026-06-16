@@ -69,14 +69,30 @@ function sendFile(req: http.IncomingMessage, res: http.ServerResponse, absPath: 
   })
 }
 
+export interface ServeDirs {
+  viewerDir: string
+  homeDir: string
+}
+
 export interface StartedServer {
   port: number
   server: http.Server
-  viewerDir: string
 }
 
-// Loopback server: viewer static under /trace/, arbitrary local zip via /file?path=.
-export function startServer(viewerDir: string): Promise<StartedServer> {
+// Serve a static dir mounted under a URL prefix (e.g. /trace, /home), Range-capable.
+function serveMounted(req: http.IncomingMessage, res: http.ServerResponse, dir: string, prefix: string, pathname: string): void {
+  const rel = pathname.slice(prefix.length) || '/index.html'
+  const abs = path.join(dir, rel)
+  if (!abs.startsWith(dir)) {
+    res.writeHead(403)
+    res.end('forbidden')
+    return
+  }
+  sendFile(req, res, abs)
+}
+
+// Loopback server: home UI under /home/, trace viewer under /trace/, local zip via /file?path=.
+export function startServer({ viewerDir, homeDir }: ServeDirs): Promise<StartedServer> {
   return new Promise((resolve) => {
     const server = http.createServer((req, res) => {
       const u = new URL(req.url ?? '/', `http://${req.headers.host}`)
@@ -93,21 +109,23 @@ export function startServer(viewerDir: string): Promise<StartedServer> {
         return
       }
 
-      if (u.pathname === '/' || u.pathname === '/trace' || u.pathname === '/trace/') {
+      if (u.pathname === '/' || u.pathname === '/home') {
+        res.writeHead(302, { Location: '/home/index.html' })
+        res.end()
+        return
+      }
+      if (u.pathname === '/trace') {
         res.writeHead(302, { Location: '/trace/index.html' })
         res.end()
         return
       }
 
+      if (u.pathname.startsWith('/home/')) {
+        serveMounted(req, res, homeDir, '/home', u.pathname)
+        return
+      }
       if (u.pathname.startsWith('/trace/')) {
-        const rel = u.pathname.slice('/trace'.length) // -> /index.html, /assets/.., /sw.bundle.js
-        const abs = path.join(viewerDir, rel)
-        if (!abs.startsWith(viewerDir)) {
-          res.writeHead(403)
-          res.end('forbidden')
-          return
-        }
-        sendFile(req, res, abs)
+        serveMounted(req, res, viewerDir, '/trace', u.pathname)
         return
       }
 
@@ -117,7 +135,7 @@ export function startServer(viewerDir: string): Promise<StartedServer> {
 
     server.listen(0, '127.0.0.1', () => {
       const { port } = server.address() as AddressInfo
-      resolve({ port, server, viewerDir })
+      resolve({ port, server })
     })
   })
 }

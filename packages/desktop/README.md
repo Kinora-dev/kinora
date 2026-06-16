@@ -1,8 +1,11 @@
 # @kinora/desktop
 
-Desktop app (Electron) that opens local Playwright `trace.zip` files in the kinora
-trace viewer, with no account and no kinora server. A self-contained replacement for
-`playwright show-trace`.
+Desktop app (Electron). Two things in one shell:
+
+- **Local trace viewer** - open any local `trace.zip` (no account, no server). A
+  self-contained replacement for `playwright show-trace`.
+- **Account dashboard** - sign in to a kinora server and browse your projects
+  (more dashboard surface incoming).
 
 ## Why Electron
 
@@ -23,13 +26,20 @@ and a sandboxed preload most reliably as CommonJS; the ESM path would force
 
 ## Layout
 
-- `src/main.ts` - Electron entry: loopback server, window, launch/open routing, headless probe.
-- `src/server.ts` - loopback HTTP: viewer static under `/trace/`, local zip via `/file?path=` (Range/206).
-- `src/menu.ts` - app menu, **File > Open Trace…** (Cmd+O).
-- `src/preload.ts` - drag-drop a `.zip` -> IPC -> open.
+Main process (`src/`, built to CJS by tsdown):
 
-The renderer is the built `@kinora/trace-viewer` `dist/`, served unmodified. Resolved from
-the workspace dependency in dev (`require.resolve`), and from `resourcesPath/viewer` when packaged.
+- `main.ts` - Electron entry: loopback server, home + viewer windows, IPC handlers, probes.
+- `server.ts` - loopback HTTP: home UI under `/home/`, viewer under `/trace/`, local zip via `/file?path=` (Range/206).
+- `config.ts` - server URL + bearer token, persisted with `safeStorage`.
+- `account.ts` - email/password sign-in (-> bearer token). `trpc.ts` - typed dashboard client.
+- `bridge.ts` - IPC contract types. `home-preload.ts` - exposes it as `window.kinora`. `preload.ts` - viewer drag-drop. `menu.ts` - app menu.
+
+Renderers (served by the loopback server):
+
+- Home UI: `home/` - Vue 3 + `@kinora/ui` (the shared design system), Vite build -> `home/dist`.
+- Trace viewer: the built `@kinora/trace-viewer` `dist/`, served unmodified.
+
+Both are resolved from the workspace deps in dev and from `resourcesPath/<name>` when packaged.
 
 ## Develop
 
