@@ -9,17 +9,14 @@ export interface SessionInfo {
   serverUrl: string
 }
 
-export interface LoginInput {
-  serverUrl: string
-  email: string
-  password: string
-}
-
 // Exposed on window.kinora in the home renderer (contextBridge). The renderer never
 // holds the token or talks to the server directly; everything goes through the main process.
 export interface KinoraBridge {
   session: () => Promise<SessionInfo>
-  login: (input: LoginInput) => Promise<{ ok: boolean, error?: string }>
+  // OAuth device flow: opens the system browser to sign in (github/google/email) + approve.
+  loginWithDevice: () => Promise<{ ok: boolean, error?: string }>
+  // Notifies the renderer of the user code to display while the device flow is pending.
+  onDevicePending: (cb: (info: { userCode: string, verificationUri: string }) => void) => void
   logout: () => Promise<void>
   projects: () => Promise<Project[]>
   run: (input: { projectId: string, runId: string }) => Promise<RunReport>

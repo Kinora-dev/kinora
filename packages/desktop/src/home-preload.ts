@@ -5,7 +5,8 @@ import { contextBridge, ipcRenderer } from 'electron'
 // the server live in main; the renderer never sees them.
 const bridge: KinoraBridge = {
   session: () => ipcRenderer.invoke('kinora:session'),
-  login: input => ipcRenderer.invoke('kinora:login', input),
+  loginWithDevice: () => ipcRenderer.invoke('kinora:login-device'),
+  onDevicePending: cb => ipcRenderer.on('kinora:device-pending', (_e, info) => cb(info)),
   logout: () => ipcRenderer.invoke('kinora:logout'),
   projects: () => ipcRenderer.invoke('kinora:projects'),
   run: input => ipcRenderer.invoke('kinora:run', input),

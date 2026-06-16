@@ -1,10 +1,10 @@
 /* eslint-disable no-console */
-import type { LoginInput } from './bridge'
 import path from 'node:path'
 import process from 'node:process'
-import { app, BrowserWindow, dialog, ipcMain } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { signIn } from './account'
 import { loadConfig, saveConfig } from './config'
+import { pollDeviceToken, requestDeviceCode } from './device'
 import { buildMenu } from './menu'
 import { startServer } from './server'
 import { makeTrpc } from './trpc'
@@ -13,6 +13,7 @@ import { makeTrpc } from './trpc'
 // HOME logs in with env creds and checks the project list renders.
 const VIEWER_PROBE = process.env.KINORA_DESKTOP_PROBE === '1'
 const HOME_PROBE = process.env.KINORA_HOME_PROBE === '1'
+const DEVICE_PROBE = process.env.KINORA_DEVICE_PROBE === '1'
 const PROBE_TRACE = process.env.KINORA_DESKTOP_TRACE || null
 
 let port = 0
@@ -96,15 +97,22 @@ function createHomeWindow(): BrowserWindow {
 function registerIpc(): void {
   ipcMain.handle('kinora:session', () => ({ loggedIn: !!config.token, serverUrl: config.serverUrl }))
 
-  ipcMain.handle('kinora:login', async (_e, input: LoginInput) => {
+  // Device flow: open the system browser to approve (no embedded webview, so all providers
+  // work), then poll for the access token. The user code is surfaced to the renderer.
+  ipcMain.handle('kinora:login-device', async () => {
     try {
-      const token = await signIn(input.serverUrl, config.webOrigin, input.email, input.password)
-      config = { ...config, serverUrl: input.serverUrl, token }
+      const code = await requestDeviceCode(config.serverUrl)
+      homeWin?.webContents.send('kinora:device-pending', { userCode: code.user_code, verificationUri: code.verification_uri })
+      await shell.openExternal(code.verification_uri_complete)
+      const token = await pollDeviceToken(config.serverUrl, code.device_code, code.interval ?? 5)
+      if (!token)
+        return { ok: false, error: 'Device authorization failed or timed out' }
+      config = { ...config, token }
       saveConfig(config)
       return { ok: true }
     }
     catch (err) {
-      return { ok: false, error: err instanceof Error ? err.message : 'Sign in failed' }
+      return { ok: false, error: err instanceof Error ? err.message : 'Device login failed' }
     }
   })
 
@@ -163,6 +171,16 @@ async function main(): Promise<void> {
     return
   }
 
+  // Device-flow probe: request a code, simulate the browser approval (sign in + approve),
+  // then poll for the access token. Validates the full server-side device grant headless.
+  if (DEVICE_PROBE) {
+    config = { ...config, serverUrl: process.env.KINORA_SERVER || config.serverUrl, webOrigin: process.env.KINORA_WEB_ORIGIN || config.webOrigin }
+    const ok = await probeDevice()
+    console.log(`[probe] ${ok ? 'PASS' : 'FAIL'}`)
+    app.exit(ok ? 0 : 1)
+    return
+  }
+
   homeWin = createHomeWindow()
   homeWin.on('closed', () => {
     homeWin = null
@@ -210,6 +228,22 @@ async function probeHome(): Promise<void> {
   console.log(`[probe] home ${JSON.stringify(v)}`)
   console.log(`[probe] ${ok ? 'PASS' : 'FAIL'}`)
   app.exit(ok ? 0 : 1)
+}
+
+async function probeDevice(): Promise<boolean> {
+  const code = await requestDeviceCode(config.serverUrl)
+  console.log(`[probe] device/code user_code=${code.user_code}`)
+  // Simulate the browser approval: sign in for a session token, then approve the user code.
+  const token = await signIn(config.serverUrl, config.webOrigin, process.env.KINORA_EMAIL || 'demo@kinora.dev', process.env.KINORA_PASSWORD || 'password123')
+  const approve = await fetch(`${config.serverUrl}/api/auth/device/approve`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'Origin': config.webOrigin },
+    body: JSON.stringify({ userCode: code.user_code }),
+  })
+  console.log(`[probe] device/approve status=${approve.status}`)
+  const accessToken = await pollDeviceToken(config.serverUrl, code.device_code, 1)
+  console.log(`[probe] device access_token=${accessToken ? 'yes' : 'no'}`)
+  return !!accessToken
 }
 
 app.whenReady().then(main).catch((err: unknown) => {

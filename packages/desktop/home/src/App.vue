@@ -2,8 +2,7 @@
 import type { Project, RunReport } from '../../src/bridge'
 import { denom, formatPct, latestRun, runHealth } from '@kinora/core'
 import { Button } from '@kinora/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@kinora/ui/card'
-import { Input } from '@kinora/ui/input'
+import { Card, CardContent } from '@kinora/ui/card'
 import { Separator } from '@kinora/ui/separator'
 import { StatBlock } from '@kinora/ui/stat-block'
 import { computed, onMounted, ref } from 'vue'
@@ -13,16 +12,13 @@ import ProjectDetail from './components/ProjectDetail.vue'
 
 const view = ref<'loading' | 'login' | 'projects'>('loading')
 const serverUrl = ref('http://localhost:3000')
-const email = ref('')
-const password = ref('')
 const error = ref('')
-const submitting = ref(false)
+const devicePending = ref(false)
+const deviceCode = ref('')
 const projects = ref<Project[]>([])
 const selected = ref<Project | null>(null)
 const report = ref<RunReport | null>(null)
 const reportLoading = ref(false)
-
-const labelClass = 'font-mono text-[11px] tracking-wider text-muted-foreground uppercase'
 
 const stats = computed(() => {
   const latest = projects.value.map(latestRun).filter(r => r != null)
@@ -61,17 +57,20 @@ async function refresh(): Promise<void> {
 
 onMounted(refresh)
 
-async function onLogin(): Promise<void> {
+window.kinora.onDevicePending((info) => {
+  deviceCode.value = info.userCode
+})
+
+async function onDeviceLogin(): Promise<void> {
   error.value = ''
-  submitting.value = true
-  const res = await window.kinora.login({ serverUrl: serverUrl.value, email: email.value, password: password.value })
-  submitting.value = false
-  if (!res.ok) {
-    error.value = res.error || 'Sign in failed'
-    return
-  }
-  password.value = ''
-  await refresh()
+  deviceCode.value = ''
+  devicePending.value = true
+  const res = await window.kinora.loginWithDevice()
+  devicePending.value = false
+  if (res.ok)
+    await refresh()
+  else if (res.error && res.error !== 'cancelled')
+    error.value = res.error
 }
 
 async function onLogout(): Promise<void> {
@@ -107,35 +106,38 @@ function onViewTrace(traceUrl: string): void {
 </script>
 
 <template>
-  <!-- login: standalone, no app chrome (matches web) -->
-  <div v-if="view === 'login'" class="flex h-full items-center justify-center bg-background p-6">
+  <!-- login: single device flow (signs in via the system browser: github/google/email) -->
+  <div v-if="view === 'login'" class="app-grid flex h-full flex-col items-center justify-center gap-7 bg-background p-6">
+    <div class="flex flex-col items-center gap-2 text-center">
+      <div class="flex items-center gap-2.5">
+        <span
+          class="size-2.5 rounded-full bg-signal"
+          style="animation: rec-pulse 2s ease-in-out infinite"
+          aria-hidden="true"
+        />
+        <span class="font-mono text-xl font-semibold tracking-tight lowercase">kinora</span>
+      </div>
+      <span class="font-mono text-[10px] font-medium tracking-wider text-muted-foreground uppercase">desktop</span>
+    </div>
     <Card class="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle class="text-base">
-          Sign in to kinora
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form class="space-y-4" @submit.prevent="onLogin">
-          <div class="space-y-1.5">
-            <label :class="labelClass" for="server">Server</label>
-            <Input id="server" v-model="serverUrl" type="url" placeholder="https://api.kinora.dev" />
-          </div>
-          <div class="space-y-1.5">
-            <label :class="labelClass" for="email">Email</label>
-            <Input id="email" v-model="email" type="email" autocomplete="email" placeholder="you@team.dev" />
-          </div>
-          <div class="space-y-1.5">
-            <label :class="labelClass" for="password">Password</label>
-            <Input id="password" v-model="password" type="password" autocomplete="current-password" placeholder="••••••••" />
-          </div>
-          <p v-if="error" class="rounded-md border border-fail/30 bg-fail/10 px-3 py-2 text-xs text-fail">
-            {{ error }}
+      <CardContent class="space-y-4">
+        <p class="text-center text-sm text-muted-foreground">
+          Sign in to your kinora account.
+        </p>
+        <div v-if="devicePending" class="space-y-1.5 text-center">
+          <p class="text-xs text-muted-foreground">
+            Approve in your browser. Confirm this code:
           </p>
-          <Button type="submit" :disabled="submitting" class="w-full bg-signal text-white hover:bg-signal/90">
-            {{ submitting ? 'Signing in…' : 'Sign in' }}
-          </Button>
-        </form>
+          <p class="font-mono text-lg font-semibold tracking-[0.3em]">
+            {{ deviceCode || '····' }}
+          </p>
+        </div>
+        <Button v-else class="w-full bg-signal text-white hover:bg-signal/90" @click="onDeviceLogin">
+          Sign in with browser
+        </Button>
+        <p v-if="error" class="rounded-md border border-fail/30 bg-fail/10 px-3 py-2 text-xs text-fail">
+          {{ error }}
+        </p>
       </CardContent>
     </Card>
   </div>

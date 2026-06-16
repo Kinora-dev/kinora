@@ -10,6 +10,8 @@ export const router = createRouter({
     // Uses the invite meta: a reset link must open whatever the session state.
     { path: '/reset-password', name: 'reset-password', component: () => import('@/pages/ResetPasswordPage.vue'), meta: { invite: true } },
     { path: '/', name: 'overview', component: () => import('@/pages/OverviewPage.vue') },
+    // Device authorization approval (desktop / CLI login). Authed; guests bounce to login then back.
+    { path: '/device', name: 'device', component: () => import('@/pages/DeviceApprovalPage.vue') },
     {
       path: '/settings',
       component: () => import('@/pages/SettingsLayout.vue'),
@@ -76,7 +78,7 @@ router.beforeEach(async (to) => {
   if (to.meta.invite)
     return
   if (!authed && !to.meta.public)
-    return { name: 'login' }
+    return { name: 'login', query: { redirect: to.fullPath } }
   if (authed && to.meta.public)
     return { name: 'overview' }
 })

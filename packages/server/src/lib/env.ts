@@ -41,9 +41,10 @@ const envSchema = z.object({
   e => !e.KINORA_CLOUD || Boolean(e.POLAR_ACCESS_TOKEN && e.POLAR_WEBHOOK_SECRET && e.POLAR_PRODUCT_TEAM_ID && e.POLAR_PRODUCT_PRO_ID),
   { message: 'KINORA_CLOUD=true requires POLAR_ACCESS_TOKEN, POLAR_WEBHOOK_SECRET, POLAR_PRODUCT_TEAM_ID and POLAR_PRODUCT_PRO_ID' },
 ).refine(
-  // Cloud runs app./api. on subdomains, so the session cookie must be shared across them.
-  e => !e.KINORA_CLOUD || Boolean(e.COOKIE_DOMAIN),
-  { message: 'KINORA_CLOUD=true requires COOKIE_DOMAIN (e.g. .kinora.dev)' },
+  // Cross-subdomain cookies are a prod concern (app./api.); dev runs on localhost where
+  // the two ports already share host-only cookies, so COOKIE_DOMAIN can stay empty there.
+  e => !(e.KINORA_CLOUD && e.NODE_ENV === 'production') || Boolean(e.COOKIE_DOMAIN),
+  { message: 'KINORA_CLOUD=true in production requires COOKIE_DOMAIN (e.g. .kinora.dev)' },
 )
 
 export type Env = z.infer<typeof envSchema>

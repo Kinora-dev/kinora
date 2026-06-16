@@ -2,18 +2,23 @@
 import { Badge } from '@kinora/ui/badge'
 import { Loader2 } from 'lucide-vue-next'
 import { ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { toast } from 'vue-sonner'
 import Icon from '@/components/Icon.vue'
 import { authClient } from '@/lib/auth'
 
 type Provider = 'github' | 'google'
 
+const route = useRoute()
 const pending = ref<Provider | null>(null)
 const lastMethod = authClient.getLastUsedLoginMethod()
 
 async function signIn(provider: Provider): Promise<void> {
   pending.value = provider
-  const { error } = await authClient.signIn.social({ provider, callbackURL: window.location.origin })
+  // Honor ?redirect= (e.g. /device?user_code=…) so OAuth returns there, not the overview.
+  const r = route.query.redirect
+  const callbackURL = typeof r === 'string' && r.startsWith('/') ? `${window.location.origin}${r}` : window.location.origin
+  const { error } = await authClient.signIn.social({ provider, callbackURL })
   if (error) {
     toast.error(error.message ?? `Could not sign in with ${provider}`)
     pending.value = null
