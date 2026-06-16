@@ -1,0 +1,6 @@
+# Standalone workspace root: isolates electron's dependency tree from the kinora
+# root workspace (whose trustPolicy: no-downgrade rejects electron's older
+# transitives). Mirrors landing/. Own lockfile, own install, out of root CI.
+onlyBuiltDependencies:
+  - electron
+  - esbuild
