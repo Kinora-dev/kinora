@@ -4,7 +4,7 @@ import type { SessionUser } from '../../src/bridge'
 import { Avatar, AvatarFallback, AvatarImage } from '@kinora/ui/avatar'
 import { Button } from '@kinora/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@kinora/ui/dropdown-menu'
-import { Check, ChevronsUpDown, ExternalLink, LogOut, Settings } from 'lucide-vue-next'
+import { Check, ChevronsUpDown, ExternalLink, FolderOpen, LogOut, Settings } from 'lucide-vue-next'
 import { computed } from 'vue'
 
 const props = defineProps<{ projects: ProjectEntry[], activeId: string | null, user: SessionUser | null }>()
@@ -50,8 +50,9 @@ const initial = computed(() => (props.user?.name || props.user?.email || '?').ch
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <div class="ml-auto flex items-center gap-2">
-        <Button variant="outline" size="sm" class="h-8 font-mono text-xs" @click="$emit('openTrace')">
+      <div class="ml-auto flex items-center gap-4">
+        <Button variant="outline" size="sm" class="h-8 gap-1.5 font-mono text-xs" @click="$emit('openTrace')">
+          <FolderOpen class="size-3.5" />
           Open trace
         </Button>
         <DropdownMenu v-if="user">
