@@ -13,7 +13,7 @@ files:
 # The built trace-viewer dist, served by the loopback server at runtime
 # (resolveViewerDir() -> resourcesPath/viewer when packaged).
 extraResources:
-  - from: ../packages/trace-viewer/dist
+  - from: ../trace-viewer/dist
     to: viewer
 
 mac:

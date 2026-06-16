@@ -4,11 +4,17 @@ trustPolicy: no-downgrade
 
 injectWorkspacePackages: true
 
+# electron + electron-builder pull pre-provenance tooling deps that trip
+# trustPolicy: no-downgrade. Exempt just those (policy stays enforced elsewhere).
+trustPolicyExclude:
+  - undici-types
+  - semver
 packages:
   - packages/*
 
 onlyBuiltDependencies:
   - esbuild
+  - electron
 peerDependencyRules:
   allowedVersions:
     '@vee-validate/zod>zod': '4'

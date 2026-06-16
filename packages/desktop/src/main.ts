@@ -29,11 +29,12 @@ function argvTrace(): string | null {
 }
 
 // Packaged: the viewer dist is copied into resources (electron-builder extraResources).
-// Dev: compiled to desktop/dist, the viewer dist sits two levels up under packages/.
+// Dev: the built dist of the @kinora/trace-viewer workspace dependency.
 function resolveViewerDir(): string {
   if (app.isPackaged)
     return path.join(process.resourcesPath, 'viewer')
-  return path.join(__dirname, '../../packages/trace-viewer/dist')
+  const pkg = require.resolve('@kinora/trace-viewer/package.json')
+  return path.join(path.dirname(pkg), 'dist')
 }
 
 // Absolute loopback URLs. An absolute ?trace= avoids any base-resolution ambiguity

@@ -12,7 +12,13 @@
     "start": "electron .",
     "dev": "tsdown && electron .",
     "probe": "KINORA_DESKTOP_PROBE=1 electron .",
-    "dist:mac": "pnpm -C .. --filter @kinora/trace-viewer build && pnpm build && electron-builder --mac"
+    "dist:mac": "pnpm --filter @kinora/trace-viewer build && pnpm build && electron-builder --mac"
+  },
+  "dependencies": {
+    "@kinora/core": "workspace:*",
+    "@kinora/server": "workspace:*",
+    "@kinora/trace-viewer": "workspace:*",
+    "@kinora/ui": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.12.3",

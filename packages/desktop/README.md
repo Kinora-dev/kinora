@@ -28,9 +28,8 @@ and a sandboxed preload most reliably as CommonJS; the ESM path would force
 - `src/menu.ts` - app menu, **File > Open Trace…** (Cmd+O).
 - `src/preload.ts` - drag-drop a `.zip` -> IPC -> open.
 
-The renderer is the built `@kinora/trace-viewer` `dist/`, served unmodified. Resolved by
-relative path (`../packages/trace-viewer/dist`) in dev, and from `resourcesPath/viewer`
-when packaged.
+The renderer is the built `@kinora/trace-viewer` `dist/`, served unmodified. Resolved from
+the workspace dependency in dev (`require.resolve`), and from `resourcesPath/viewer` when packaged.
 
 ## Develop
 
@@ -38,12 +37,11 @@ when packaged.
 # from repo root: build the viewer once (the desktop app serves its dist/)
 pnpm --filter @kinora/trace-viewer build
 
-cd desktop
-pnpm install                      # own workspace, own lockfile
+cd packages/desktop
 pnpm dev                          # build + launch, demo trace renders
 pnpm start path/to/trace.zip      # open a specific trace
 pnpm probe                        # headless self-check, exits 0/1
-KINORA_DESKTOP_PROBE=1 electron . path/to/trace.zip   # headless open-file check
+KINORA_DESKTOP_PROBE=1 pnpm exec electron . path/to/trace.zip   # headless open-file check
 ```
 
 Open a trace three ways: **File > Open Trace…**, **drag-drop** a `.zip`, or pass a
@@ -52,12 +50,11 @@ path as an argument / macOS `open-file`.
 ## Package
 
 ```bash
-pnpm dist:mac     # dmg + zip into release/ (builds the viewer from the root workspace first)
+pnpm dist:mac     # dmg + zip into release/ (builds the viewer first)
 ```
 
-`pnpm build` / `pnpm typecheck` only compile + check the TS (fast), and packaging
-(`dist:mac`) is opt-in. This workspace is not in the root `pnpm -r` build/typecheck, so
-it has no effect on root CI there; root `eslint .` does still lint `desktop/src`.
+`build` / `typecheck` / `lint` run in root CI (`pnpm -r`); they only compile + check the TS
+(fast). Packaging (`dist:mac`, electron-builder) is opt-in and not run by CI.
 
 Not done yet: code signing, notarization, auto-update (electron-updater). Config stubs
 are in `electron-builder.yml`.

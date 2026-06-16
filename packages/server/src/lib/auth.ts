@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { apiKey } from '@better-auth/api-key'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { lastLoginMethod, organization } from 'better-auth/plugins'
+import { bearer, lastLoginMethod, organization } from 'better-auth/plugins'
 import { and, eq } from 'drizzle-orm'
 import { polarAuthPlugin, polarClient } from '../billing/polar'
 import { db } from '../db'
@@ -132,6 +132,9 @@ export const auth = betterAuth({
   plugins: [
     // Plugin default is 10 req/day per key, which any real CI exceeds, billing quotas already cap ingest volume.
     apiKey({ rateLimit: { enabled: false } }),
+    // Lets non-browser clients (desktop app) send the session token as `Authorization: Bearer`
+    // instead of a cookie; getSession then resolves it from the header.
+    bearer(),
     lastLoginMethod(),
     organization({
       // Only the auto-created personal org exists; members can't spin up extra orgs.
