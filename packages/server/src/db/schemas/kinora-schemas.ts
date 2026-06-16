@@ -80,6 +80,8 @@ export const subscription = pgTable('subscription', {
   productId: text('product_id'),
   currentPeriodEnd: timestamp('current_period_end'),
   cancelAtPeriodEnd: boolean('cancel_at_period_end').notNull().default(false),
+  // Polar event-occurrence time of the last applied state; lets us drop out-of-order webhooks.
+  stateChangedAt: timestamp('state_changed_at'),
   updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
 })
 

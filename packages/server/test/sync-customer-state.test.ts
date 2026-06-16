@@ -23,6 +23,7 @@ describe('syncCustomerState', () => {
     await syncCustomerState({
       userId: user.id,
       polarCustomerId: 'cus_1',
+      eventAt: new Date('2026-01-01T00:00:00Z'),
       subscriptions: [{ productId: teamProductId, status: 'active', currentPeriodEnd: new Date('2030-01-01'), cancelAtPeriodEnd: false }],
     })
 
@@ -38,6 +39,7 @@ describe('syncCustomerState', () => {
     await syncCustomerState({
       userId: user.id,
       polarCustomerId: 'cus_2',
+      eventAt: new Date('2026-01-01T00:00:00Z'),
       subscriptions: [{ productId: 'unknown-product', status: 'active', currentPeriodEnd: null, cancelAtPeriodEnd: false }],
     })
 
@@ -49,11 +51,13 @@ describe('syncCustomerState', () => {
     await syncCustomerState({
       userId: user.id,
       polarCustomerId: 'cus_3',
+      eventAt: new Date('2026-01-01T00:00:00Z'),
       subscriptions: [{ productId: teamProductId, status: 'trialing', currentPeriodEnd: null, cancelAtPeriodEnd: false }],
     })
     await syncCustomerState({
       userId: user.id,
       polarCustomerId: 'cus_3',
+      eventAt: new Date('2026-01-02T00:00:00Z'),
       subscriptions: [{ productId: proProductId, status: 'active', currentPeriodEnd: null, cancelAtPeriodEnd: true }],
     })
 
@@ -65,8 +69,29 @@ describe('syncCustomerState', () => {
   })
 
   it('ignores a customer state with no external user id', async () => {
-    await syncCustomerState({ userId: null, polarCustomerId: 'cus_x', subscriptions: [] })
+    await syncCustomerState({ userId: null, polarCustomerId: 'cus_x', eventAt: new Date('2026-01-01T00:00:00Z'), subscriptions: [] })
     expect(await db.select().from(subscription)).toHaveLength(0)
+  })
+
+  it('ignores an out-of-order event older than the applied state', async () => {
+    const user = await createUser()
+    // Active pro lands first (later event), then a stale empty-state webhook arrives out of order.
+    await syncCustomerState({
+      userId: user.id,
+      polarCustomerId: 'cus_4',
+      eventAt: new Date('2026-01-02T00:00:00Z'),
+      subscriptions: [{ productId: proProductId, status: 'active', currentPeriodEnd: new Date('2030-01-01'), cancelAtPeriodEnd: false }],
+    })
+    await syncCustomerState({
+      userId: user.id,
+      polarCustomerId: 'cus_4',
+      eventAt: new Date('2026-01-01T00:00:00Z'),
+      subscriptions: [],
+    })
+
+    const sub = await row(await ownedOrgId(user.id))
+    expect(sub?.tier).toBe('pro')
+    expect(sub?.status).toBe('active')
   })
 })
 

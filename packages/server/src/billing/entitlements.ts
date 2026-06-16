@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { db } from '../db'
 import { member, subscription, user } from '../db/schemas/index'
 import { cloud, env } from '../lib/env'
@@ -64,6 +64,7 @@ export function retentionReducedText(name: string | null, tier: 'free' | 'team' 
 interface CustomerStateInput {
   userId: string | null | undefined
   polarCustomerId: string
+  eventAt: Date
   subscriptions: Array<{
     productId: string
     status: string
@@ -94,17 +95,27 @@ export async function syncCustomerState(state: CustomerStateInput): Promise<void
     productId: sub?.productId ?? null,
     currentPeriodEnd: sub?.currentPeriodEnd ?? null,
     cancelAtPeriodEnd: sub?.cancelAtPeriodEnd ?? false,
+    stateChangedAt: state.eventAt,
   }
 
   const prev = await db.query.subscription.findFirst({
     where: eq(subscription.organizationId, owner.organizationId),
-    columns: { tier: true, status: true },
+    columns: { tier: true, status: true, stateChangedAt: true },
   })
+
+  // Polar doesn't guarantee webhook ordering; skip an event older than the applied state so a stale
+  // empty-subscription payload can't overwrite an active paid plan. setWhere makes this race-safe.
+  if (prev?.stateChangedAt && state.eventAt < prev.stateChangedAt)
+    return
 
   await db
     .insert(subscription)
     .values({ organizationId: owner.organizationId, ...values })
-    .onConflictDoUpdate({ target: subscription.organizationId, set: values })
+    .onConflictDoUpdate({
+      target: subscription.organizationId,
+      set: values,
+      setWhere: sql`${subscription.stateChangedAt} IS NULL OR ${subscription.stateChangedAt} <= excluded.state_changed_at`,
+    })
 
   // Welcome and retention-drop are opposite transitions, so at most one fires; one user fetch covers both.
   const welcome = becameActivePaid(prev, tier, values.status) && (tier === 'team' || tier === 'pro')

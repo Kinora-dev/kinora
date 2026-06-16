@@ -33,10 +33,11 @@ export function polarAuthPlugin() {
       usage(),
       webhooks({
         secret: cloud.webhookSecret,
-        onCustomerStateChanged: async ({ data }) => {
+        onCustomerStateChanged: async ({ data, timestamp }) => {
           await syncCustomerState({
             userId: data.externalId,
             polarCustomerId: data.id,
+            eventAt: timestamp,
             subscriptions: data.activeSubscriptions.map(s => ({
               productId: s.productId,
               status: s.status,
