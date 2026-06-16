@@ -148,17 +148,6 @@ ${errors || '(no error captured)'}`
     <div v-else-if="!report" class="py-16 text-center font-mono text-sm text-muted-foreground">
       No runs yet for this project.
     </div>
-    <div v-else-if="failed.length === 0 && filter === 'failures'" class="flex flex-col items-center gap-3 py-16 text-center">
-      <p class="text-sm font-medium text-pass">
-        All green
-      </p>
-      <p class="text-xs text-muted-foreground">
-        No failures in the latest run.
-      </p>
-      <Button variant="outline" size="sm" class="font-mono text-xs" @click="filter = 'all'">
-        Show all tests
-      </Button>
-    </div>
     <template v-else>
       <div
         v-if="regressedKeys.size"
@@ -180,7 +169,20 @@ ${errors || '(no error captured)'}`
         </button>
       </div>
 
-      <Card class="gap-0 divide-y divide-border/60 p-0">
+      <div v-if="rows.length === 0" class="flex flex-col items-center gap-1.5 py-14 text-center">
+        <template v-if="filter === 'failures'">
+          <p class="text-sm font-medium text-pass">
+            All green
+          </p>
+          <p class="text-xs text-muted-foreground">
+            No failures in the latest run.
+          </p>
+        </template>
+        <p v-else class="text-sm text-muted-foreground">
+          No tests.
+        </p>
+      </div>
+      <Card v-else class="gap-0 divide-y divide-border/60 p-0">
         <div v-for="row in rows" :key="row.test.testKey" class="flex items-start gap-3 px-4 py-3">
           <span class="mt-1.5 size-1.5 shrink-0 rounded-full" :class="color(row.test.status)" />
           <div class="min-w-0 flex-1 space-y-1">
