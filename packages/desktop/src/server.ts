@@ -79,8 +79,15 @@ export interface StartedServer {
   server: http.Server
 }
 
+// CSP for the served documents. Neither renderer evals, so omitting 'unsafe-eval'
+// clears Electron's "Insecure Content-Security-Policy" dev warning. Fonts are bundled
+// (same-origin), so no CDN host is allowed. The viewer renders captured trace snapshots
+// (inline styles, same-origin SW resources, blob/data URIs), so it's broader than home.
+const HOME_CSP = `default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'`
+const VIEWER_CSP = `default-src 'self' data: blob:; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http:; font-src 'self' data:; connect-src 'self' https: http: data: blob:; worker-src 'self' blob:; child-src 'self' blob: data:; frame-src 'self' blob: data:`
+
 // Serve a static dir mounted under a URL prefix (e.g. /trace, /home), Range-capable.
-function serveMounted(req: http.IncomingMessage, res: http.ServerResponse, dir: string, prefix: string, pathname: string): void {
+function serveMounted(req: http.IncomingMessage, res: http.ServerResponse, dir: string, prefix: string, pathname: string, csp: string): void {
   const rel = pathname.slice(prefix.length) || '/index.html'
   const abs = path.join(dir, rel)
   if (!abs.startsWith(dir)) {
@@ -88,6 +95,8 @@ function serveMounted(req: http.IncomingMessage, res: http.ServerResponse, dir: 
     res.end('forbidden')
     return
   }
+  if (abs.toLowerCase().endsWith('.html'))
+    res.setHeader('Content-Security-Policy', csp)
   sendFile(req, res, abs)
 }
 
@@ -128,11 +137,11 @@ export function startServer({ viewerDir, homeDir }: ServeDirs): Promise<StartedS
       }
 
       if (u.pathname.startsWith('/home/')) {
-        serveMounted(req, res, homeDir, '/home', u.pathname)
+        serveMounted(req, res, homeDir, '/home', u.pathname, HOME_CSP)
         return
       }
       if (u.pathname.startsWith('/trace/')) {
-        serveMounted(req, res, viewerDir, '/trace', u.pathname)
+        serveMounted(req, res, viewerDir, '/trace', u.pathname, VIEWER_CSP)
         return
       }
 

@@ -57,7 +57,7 @@ function ensureViewerWindow(): BrowserWindow {
       show: !VIEWER_PROBE,
       webPreferences: { contextIsolation: true, nodeIntegration: false, preload: path.join(__dirname, 'preload.cjs') },
     })
-    viewerWin.webContents.on('console-message', (_e, level, message) => console.log(`[viewer:${level}] ${message}`))
+    viewerWin.webContents.on('console-message', ({ level, message }) => console.log(`[viewer:${level}] ${message}`))
     viewerWin.on('closed', () => {
       viewerWin = null
     })
@@ -91,7 +91,7 @@ function createHomeWindow(): BrowserWindow {
     show: !HOME_PROBE,
     webPreferences: { contextIsolation: true, nodeIntegration: false, preload: path.join(__dirname, 'home-preload.cjs') },
   })
-  win.webContents.on('console-message', (_e, level, message) => console.log(`[home:${level}] ${message}`))
+  win.webContents.on('console-message', ({ level, message }) => console.log(`[home:${level}] ${message}`))
   void win.loadURL(`http://127.0.0.1:${port}/home/index.html`)
   return win
 }
