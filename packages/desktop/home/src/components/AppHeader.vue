@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import type { ProjectEntry } from '@kinora/core'
+import type { ColorMode } from '@kinora/ui/theme'
 import type { SessionUser } from '../../src/bridge'
 import { Avatar, AvatarFallback, AvatarImage } from '@kinora/ui/avatar'
 import { Button } from '@kinora/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@kinora/ui/dropdown-menu'
+import { SegmentedControl } from '@kinora/ui/segmented-control'
+import { colorMode } from '@kinora/ui/theme'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@kinora/ui/tooltip'
-import { Check, ChevronsUpDown, ExternalLink, FolderGit2, FolderOpen, LogOut, Settings } from 'lucide-vue-next'
+import { Check, ChevronsUpDown, ExternalLink, FolderGit2, FolderOpen, LogOut, Monitor, Moon, Settings, Sun } from 'lucide-vue-next'
 import { computed } from 'vue'
 
 const props = defineProps<{ projects: ProjectEntry[], activeId: string | null, user: SessionUser | null, projectPath: string | null, highlightLink: boolean }>()
@@ -14,6 +17,15 @@ defineEmits<{ select: [id: string], openTrace: [], logout: [], openAccount: [], 
 const active = computed(() => props.projects.find(p => p.id === props.activeId))
 const initial = computed(() => (props.user?.name || props.user?.email || '?').charAt(0).toUpperCase())
 const folderName = computed(() => props.projectPath?.replace(/\/$/, '').split('/').pop() ?? '')
+
+const themeOptions = [
+  { value: 'auto', label: 'System', icon: Monitor },
+  { value: 'light', label: 'Light', icon: Sun },
+  { value: 'dark', label: 'Dark', icon: Moon },
+]
+function setTheme(value: ColorMode): void {
+  colorMode.value = value
+}
 </script>
 
 <template>
@@ -96,6 +108,18 @@ const folderName = computed(() => props.projectPath?.replace(/\/$/, '').split('/
                   <span class="truncate text-xs font-normal text-muted-foreground">{{ user.email }}</span>
                 </div>
               </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <div class="px-2 py-1.5" @click.stop>
+                <p class="mb-1.5 font-mono text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
+                  Theme
+                </p>
+                <SegmentedControl
+                  icon-only
+                  :model-value="colorMode"
+                  :options="themeOptions"
+                  @update:model-value="(v) => setTheme(v as ColorMode)"
+                />
+              </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem @click="$emit('openAccount')">
                 <Settings class="size-4" />
