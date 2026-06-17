@@ -1,10 +1,14 @@
 import type { Buffer } from 'node:buffer'
 import type { ChildProcess } from 'node:child_process'
+import type { FSWatcher } from 'node:fs'
 import { spawn } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { augmentedPath } from './editor'
+
+const IGNORE_DIRS = ['node_modules', '.git', 'test-results', 'playwright-report', 'dist', 'build', '.output', '.next', '.nuxt', 'coverage']
+const WATCH_EXT = /\.(?:tsx?|jsx?|mjs|cjs|vue)$/
 
 export interface RerunOpts {
   repoRoot: string
@@ -58,4 +62,29 @@ export function startRerun(opts: RerunOpts, onOutput: (chunk: string) => void, o
   })
   child.on('close', code => onDone({ ok: code === 0, code: code ?? -1, tracePath: findTrace(opts.outDir) }))
   return child
+}
+
+// Watch the repo for source edits (debounced) and fire onChange. Returns a stop fn.
+// Trace output lives in a temp dir, so runs don't re-trigger the watch.
+export function watchRepo(repoRoot: string, onChange: () => void): () => void {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  let watcher: FSWatcher | undefined
+  try {
+    watcher = fs.watch(repoRoot, { recursive: true }, (_event, filename) => {
+      if (!filename)
+        return
+      const f = filename.toString()
+      if (f.split(path.sep).some(seg => IGNORE_DIRS.includes(seg)) || !WATCH_EXT.test(f))
+        return
+      clearTimeout(timer)
+      timer = setTimeout(onChange, 300)
+    })
+  }
+  catch {
+    // Recursive watch is unsupported on some platforms (e.g. Linux); watch becomes a no-op.
+  }
+  return () => {
+    clearTimeout(timer)
+    watcher?.close()
+  }
 }

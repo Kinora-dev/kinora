@@ -43,10 +43,14 @@ export interface KinoraBridge {
   openInEditor: (input: { projectId: string, file: string, line: number, column: number }) => Promise<{ ok: boolean, error?: string }>
   // Re-run a single test locally via the repo's playwright (needs the project linked).
   rerunTest: (input: { projectId: string, file: string, line: number, projectName?: string }) => Promise<{ ok: boolean, error?: string }>
+  // A re-run launched (user-triggered or by watch mode): reset the panel.
+  onRerunStarted: (cb: () => void) => void
   // Live combined stdout/stderr of the running re-run.
   onRerunOutput: (cb: (chunk: string) => void) => void
   // Re-run finished: pass/fail + whether a fresh trace was produced.
   onRerunDone: (cb: (r: { ok: boolean, code: number, hasTrace: boolean }) => void) => void
+  // Toggle watch mode: auto re-run the last test when the repo changes.
+  setWatch: (enabled: boolean) => Promise<void>
   // Kill the in-flight re-run.
   cancelRerun: () => Promise<void>
   // Open the trace the last re-run produced in the embedded viewer.

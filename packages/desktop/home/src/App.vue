@@ -22,7 +22,7 @@ const comparison = ref<RunComparison | null>(null)
 const reportLoading = ref(false)
 const projectPaths = ref<Record<string, string>>({})
 const highlightLink = ref(false)
-const rerun = ref<{ title: string, status: 'running' | 'passed' | 'failed' | 'error', log: string, hasTrace: boolean } | null>(null)
+const rerun = ref<{ title: string, status: 'running' | 'passed' | 'failed' | 'error', log: string, hasTrace: boolean, watch: boolean } | null>(null)
 const logEl = ref<HTMLElement | null>(null)
 
 const rerunStatusText = computed(() => {
@@ -85,6 +85,13 @@ window.kinora.onDevicePending((info) => {
   deviceCode.value = info.userCode
 })
 
+window.kinora.onRerunStarted(() => {
+  if (rerun.value) {
+    rerun.value.status = 'running'
+    rerun.value.log = ''
+    rerun.value.hasTrace = false
+  }
+})
 window.kinora.onRerunOutput((chunk) => {
   if (rerun.value)
     rerun.value.log += chunk
@@ -187,7 +194,7 @@ async function onRerun(t: { file: string, line: number, projectName: string, tit
     return
   if (!projectPaths.value[id] && !(await linkActiveProject()))
     return
-  rerun.value = { title: t.title, status: 'running', log: '', hasTrace: false }
+  rerun.value = { title: t.title, status: 'running', log: '', hasTrace: false, watch: false }
   const res = await window.kinora.rerunTest({ projectId: id, file: t.file, line: t.line, projectName: t.projectName })
   if (!res.ok && res.error && res.error !== 'no-path') {
     rerun.value.status = 'error'
@@ -197,7 +204,14 @@ async function onRerun(t: { file: string, line: number, projectName: string, tit
 function stopRerun(): void {
   void window.kinora.cancelRerun()
 }
+function toggleWatch(): void {
+  if (!rerun.value)
+    return
+  rerun.value.watch = !rerun.value.watch
+  void window.kinora.setWatch(rerun.value.watch)
+}
 function closeRerun(): void {
+  void window.kinora.setWatch(false)
   void window.kinora.cancelRerun()
   rerun.value = null
 }
@@ -293,8 +307,19 @@ function viewRerunTrace(): void {
           <div class="flex min-w-0 items-center gap-2">
             <span class="font-mono text-[11px] tracking-wider uppercase" :class="rerunStatusCls">{{ rerunStatusText }}</span>
             <span class="truncate text-sm">{{ rerun.title }}</span>
+            <span v-if="rerun.watch && rerun.status !== 'running'" class="shrink-0 font-mono text-[10px] text-muted-foreground">· watching for changes</span>
           </div>
           <div class="flex shrink-0 gap-1.5">
+            <Button
+              variant="outline"
+              size="sm"
+              class="h-7 font-mono text-[11px]"
+              :class="rerun.watch ? 'border-signal text-signal' : ''"
+              title="Auto re-run when you save a file"
+              @click="toggleWatch"
+            >
+              {{ rerun.watch ? 'Watching' : 'Watch' }}
+            </Button>
             <Button v-if="rerun.status === 'running'" variant="outline" size="sm" class="h-7 font-mono text-[11px]" @click="stopRerun">
               Stop
             </Button>

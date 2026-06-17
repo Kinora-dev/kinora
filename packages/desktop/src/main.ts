@@ -8,7 +8,7 @@ import { loadConfig, saveConfig } from './config'
 import { pollDeviceToken, requestDeviceCode } from './device'
 import { openInEditor } from './editor'
 import { buildMenu } from './menu'
-import { startRerun } from './runner'
+import { startRerun, watchRepo } from './runner'
 import { startServer } from './server'
 import { makeTrpc } from './trpc'
 
@@ -28,6 +28,9 @@ let deviceAbort: AbortController | null = null
 // The current local test re-run + its produced trace (for "View trace").
 let rerunChild: ChildProcess | null = null
 let lastRerunTrace: string | null = null
+// Last re-run target (replayed by watch mode) + the active file watcher's stop fn.
+let lastRerunInput: { projectId: string, file: string, line: number, projectName?: string } | null = null
+let rerunWatchStop: (() => void) | null = null
 
 // macOS open-file (file association) and argv both hand us a local trace to view.
 let pendingOpen: string | null = null
@@ -223,23 +226,21 @@ function registerIpc(): void {
     }
   })
 
-  ipcMain.handle('kinora:rerun-test', (_e, input: { projectId: string, file: string, line: number, projectName?: string }) => {
-    const root = config.projectPaths[input.projectId]
-    if (!root)
+  ipcMain.handle('kinora:rerun-test', (_e, input: RerunInput) => {
+    if (!config.projectPaths[input.projectId])
       return { ok: false, error: 'no-path' }
-    rerunChild?.kill()
-    lastRerunTrace = null
-    const outDir = path.join(app.getPath('temp'), `kinora-rerun-${Date.now()}`)
-    rerunChild = startRerun(
-      { repoRoot: root, file: input.file, line: input.line, projectName: input.projectName, outDir },
-      chunk => homeWin?.webContents.send('kinora:rerun-output', chunk),
-      (r) => {
-        rerunChild = null
-        lastRerunTrace = r.tracePath
-        homeWin?.webContents.send('kinora:rerun-done', { ok: r.ok, code: r.code, hasTrace: !!r.tracePath })
-      },
-    )
+    lastRerunInput = input
+    launchRerun(input)
     return { ok: true }
+  })
+
+  // Watch the linked repo and auto re-run the last test on save.
+  ipcMain.handle('kinora:set-watch', (_e, enabled: boolean) => {
+    rerunWatchStop?.()
+    rerunWatchStop = null
+    const root = lastRerunInput && config.projectPaths[lastRerunInput.projectId]
+    if (enabled && root)
+      rerunWatchStop = watchRepo(root, () => lastRerunInput && launchRerun(lastRerunInput))
   })
 
   ipcMain.handle('kinora:cancel-rerun', () => rerunChild?.kill())
@@ -247,6 +248,27 @@ function registerIpc(): void {
     if (lastRerunTrace)
       openViewer(lastRerunTrace)
   })
+}
+
+interface RerunInput { projectId: string, file: string, line: number, projectName?: string }
+
+function launchRerun(input: RerunInput): void {
+  const root = config.projectPaths[input.projectId]
+  if (!root)
+    return
+  rerunChild?.kill()
+  lastRerunTrace = null
+  homeWin?.webContents.send('kinora:rerun-started')
+  const outDir = path.join(app.getPath('temp'), `kinora-rerun-${Date.now()}`)
+  rerunChild = startRerun(
+    { repoRoot: root, file: input.file, line: input.line, projectName: input.projectName, outDir },
+    chunk => homeWin?.webContents.send('kinora:rerun-output', chunk),
+    (r) => {
+      rerunChild = null
+      lastRerunTrace = r.tracePath
+      homeWin?.webContents.send('kinora:rerun-done', { ok: r.ok, code: r.code, hasTrace: !!r.tracePath })
+    },
+  )
 }
 
 async function main(): Promise<void> {
