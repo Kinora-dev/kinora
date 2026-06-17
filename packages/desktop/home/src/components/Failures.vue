@@ -247,7 +247,7 @@ ${errors || '(no error captured)'}`
                   </TooltipTrigger>
                   <TooltipContent>{{ linked ? 'Open in your editor' : 'Link a folder first' }}</TooltipContent>
                 </Tooltip>
-                <Tooltip>
+                <Tooltip v-if="row.fail">
                   <TooltipTrigger as-child>
                     <Button
                       variant="outline"
