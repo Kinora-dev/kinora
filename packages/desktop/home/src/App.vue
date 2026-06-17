@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Project, RunComparison, RunReport, SessionUser, TestHistory } from '../../src/bridge'
-import { latestRun } from '@kinora/core'
+import { latestRun, stripAnsi } from '@kinora/core'
 import { Button } from '@kinora/ui/button'
 import { Card, CardContent } from '@kinora/ui/card'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
@@ -30,6 +30,8 @@ const rerunStatusText = computed(() => {
   return s === 'running' ? 'Running…' : s === 'passed' ? 'Passed' : s === 'failed' ? 'Failed' : s === 'error' ? 'Error' : ''
 })
 const rerunStatusCls = computed(() => (rerun.value?.status === 'passed' ? 'text-pass' : rerun.value?.status === 'running' ? 'text-signal' : 'text-fail'))
+// Strip the whole buffer (not per-chunk) so the line reporter's cursor codes (ESC[1A/[2K) go.
+const rerunLog = computed(() => stripAnsi(rerun.value?.log ?? ''))
 
 const activeProject = computed(() => projects.value.find(p => p.id === activeId.value) ?? null)
 const activePath = computed(() => (activeId.value ? projectPaths.value[activeId.value] ?? null : null))
@@ -331,7 +333,7 @@ function viewRerunTrace(): void {
             </Button>
           </div>
         </div>
-        <pre ref="logEl" class="mt-2 max-h-48 overflow-auto rounded-md bg-muted/40 p-2 font-mono text-[11px] leading-relaxed whitespace-pre-wrap">{{ rerun.log }}</pre>
+        <pre ref="logEl" class="mt-2 max-h-48 overflow-auto rounded-md bg-muted/40 p-2 font-mono text-[11px] leading-relaxed whitespace-pre-wrap">{{ rerunLog }}</pre>
       </div>
     </div>
   </div>
