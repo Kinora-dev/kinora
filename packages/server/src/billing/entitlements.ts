@@ -14,12 +14,19 @@ export interface Entitlements {
   alerts: boolean
 }
 
+const UNLIMITED: Omit<Entitlements, 'tier'> = {
+  maxProjects: Number.POSITIVE_INFINITY,
+  retentionDays: Number.POSITIVE_INFINITY,
+  includedResults: Number.POSITIVE_INFINITY,
+  alerts: true,
+}
+
 const LIMITS: Record<Tier, Omit<Entitlements, 'tier'>> = {
   free: { maxProjects: 1, retentionDays: 7, includedResults: 2_500, alerts: false },
   team: { maxProjects: Number.POSITIVE_INFINITY, retentionDays: 90, includedResults: 10_000, alerts: true },
   pro: { maxProjects: Number.POSITIVE_INFINITY, retentionDays: 365, includedResults: 50_000, alerts: true },
-  enterprise: { maxProjects: Number.POSITIVE_INFINITY, retentionDays: Number.POSITIVE_INFINITY, includedResults: Number.POSITIVE_INFINITY, alerts: true },
-  selfhost: { maxProjects: Number.POSITIVE_INFINITY, retentionDays: Number.POSITIVE_INFINITY, includedResults: Number.POSITIVE_INFINITY, alerts: true },
+  enterprise: UNLIMITED,
+  selfhost: UNLIMITED,
 }
 
 export function retentionDaysFor(tier: Tier): number {
@@ -157,15 +164,29 @@ export async function getSubscription(organizationId: string): Promise<Subscript
   return row ?? null
 }
 
+export async function ownerIsAdmin(organizationId: string): Promise<boolean> {
+  const [owner] = await db
+    .select({ role: user.role })
+    .from(member)
+    .innerJoin(user, eq(member.userId, user.id))
+    .where(and(eq(member.organizationId, organizationId), eq(member.role, 'owner')))
+    .limit(1)
+  return owner?.role === 'admin'
+}
+
 export async function getEntitlements(organizationId: string): Promise<Entitlements> {
   if (!cloud)
-    return { tier: 'selfhost', ...LIMITS.selfhost }
+    return { tier: 'selfhost', ...UNLIMITED }
 
   const row = await db.query.subscription.findFirst({
     where: eq(subscription.organizationId, organizationId),
     columns: { tier: true },
   })
   const tier = row?.tier ?? 'free'
+  // Admins keep their real tier label but get no caps.
+  if (await ownerIsAdmin(organizationId))
+    return { tier, ...UNLIMITED }
+
   return { tier, ...LIMITS[tier] }
 }
 

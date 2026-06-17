@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { apiKey } from '@better-auth/api-key'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { bearer, deviceAuthorization, lastLoginMethod, organization } from 'better-auth/plugins'
+import { admin, bearer, deviceAuthorization, lastLoginMethod, organization } from 'better-auth/plugins'
 import { and, eq } from 'drizzle-orm'
 import { polarAuthPlugin, polarClient } from '../billing/polar'
 import { db } from '../db'
@@ -149,6 +149,7 @@ export const auth = betterAuth({
         })
       },
     }),
+    admin(),
     ...(polarPlugin ? [polarPlugin] : []),
   ],
 })
