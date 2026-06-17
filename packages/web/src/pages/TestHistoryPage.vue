@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { formatPct } from '@kinora/core'
+import { formatPct, stripAnsi } from '@kinora/core'
 import { Separator } from '@kinora/ui/separator'
 import { Skeleton } from '@kinora/ui/skeleton'
 import { StatBlock } from '@kinora/ui/stat-block'
@@ -121,7 +121,7 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
             </div>
             <span v-if="p.retries" class="font-mono text-[11px] text-flaky">{{ p.retries }} retry</span>
           </div>
-          <pre v-if="p.errorMessage" class="mt-2 overflow-x-auto rounded-md bg-fail/5 p-3 font-mono text-[11px] leading-relaxed text-fail">{{ p.errorMessage }}</pre>
+          <pre v-if="p.errorMessage" class="mt-2 overflow-x-auto rounded-md bg-fail/5 p-3 font-mono text-[11px] leading-relaxed text-fail">{{ stripAnsi(p.errorMessage) }}</pre>
         </RouterLink>
 
         <div v-if="!incidents.length" class="py-8 text-center font-mono text-sm text-pass">

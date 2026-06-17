@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { PwTestStatus } from '@kinora/core'
-import { formatDuration, formatPct, passRate } from '@kinora/core'
+import { formatDuration, formatPct, passRate, stripAnsi } from '@kinora/core'
 import { Button } from '@kinora/ui/button'
 import { Separator } from '@kinora/ui/separator'
 import { Skeleton } from '@kinora/ui/skeleton'
@@ -225,7 +225,7 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
 
           <!-- Error + attachments -->
           <div v-if="t.errors.length" class="mt-3 overflow-x-auto rounded-md bg-fail/5 p-3">
-            <pre class="font-mono text-[11px] leading-relaxed text-fail">{{ t.errors[0].message }}</pre>
+            <pre class="font-mono text-[11px] leading-relaxed text-fail">{{ stripAnsi(t.errors[0].message) }}</pre>
           </div>
           <div v-if="t.attachments.length" class="mt-2 flex flex-wrap items-center gap-1.5">
             <a
