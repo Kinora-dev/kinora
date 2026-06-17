@@ -27,17 +27,13 @@ export default defineConfig({
 })
 ```
 
-The token comes from the environment (keep it out of the config file). The server URL defaults to the hosted cloud; set `KINORA_URL` only when self-hosting:
+The token comes from the environment (keep it out of the config file); the server URL defaults to the hosted cloud:
 
 ```bash
-# hosted cloud
 KINORA_TOKEN=<token> npx playwright test
-
-# self-host
-KINORA_URL=https://kinora.example.com KINORA_TOKEN=<token> npx playwright test
 ```
 
-Create an API token in the kinora dashboard (Settings → Workspace).
+Create an API token in the kinora dashboard (Settings → Workspace). Self-hosting? Point at your server with `KINORA_URL` - see [selfhost/README.md](https://github.com/joris-gallot/kinora/blob/main/selfhost/README.md).
 
 ## Options
 
@@ -55,17 +51,16 @@ Create an API token in the kinora dashboard (Settings → Workspace).
 | `project` | `{ slug: string, name?: string }`    | required                     | Target project. `name` defaults to `slug`. |
 | `url`     | `string`                             | env `KINORA_URL`, then cloud | kinora server base URL. Set for self-host. |
 | `token`   | `string`                             | env `KINORA_TOKEN`           | Project API token. Prefer the env var.     |
-| `git`     | `{ sha?, branch? }`                  | auto on GitHub Actions       | Git metadata for the run.                  |
+| `git`     | `{ sha?, branch?, repoUrl? }`        | auto on GitHub Actions       | Git metadata. `repoUrl` links a sha to its commit. |
 | `ci`      | `{ provider?, runUrl?, runNumber? }` | auto on GitHub Actions       | CI metadata for the run.                   |
 
-On GitHub Actions, `git` and `ci` are filled from the standard `GITHUB_*` env vars. Pass them explicitly on other CI providers.
+On GitHub Actions, `git` and `ci` are filled from the standard `GITHUB_*` env vars (including the repo URL, so shas link to their commit in the dashboard). Pass them explicitly on other CI providers.
 
 ## CI example (GitHub Actions)
 
 ```yaml
 - run: npx playwright test
   env:
-    KINORA_URL: ${{ vars.KINORA_URL }}
     KINORA_TOKEN: ${{ secrets.KINORA_TOKEN }}
 ```
 

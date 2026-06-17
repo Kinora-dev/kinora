@@ -14,15 +14,10 @@ reporter: [['json', { outputFile: 'results.json' }]]
 Then upload it:
 
 ```bash
-# hosted cloud: token only, the URL defaults to the kinora cloud
 npx @kinora/cli upload results.json --project web-app --token <project-token>
-
-# self-host: point at your own server
-npx @kinora/cli upload results.json --project web-app \
-  --url https://kinora.example.com --token <project-token>
 ```
 
-Create a project API token in the kinora dashboard (Settings → Workspace). Auth can also come from the environment: `KINORA_TOKEN` and `KINORA_URL`.
+Create a project API token in the kinora dashboard (Settings → Workspace). Auth can also come from the environment: `KINORA_TOKEN` and `KINORA_URL`. Self-hosting? Point at your server with `--url` / `KINORA_URL` - see [selfhost/README.md](https://github.com/joris-gallot/kinora/blob/main/selfhost/README.md).
 
 ## Bulk import (historical backfill)
 
@@ -41,12 +36,15 @@ npx @kinora/cli import ./reports --project web-app --token <project-token> --con
 --name <name>         project display name (default: slug)
 --git-sha <sha>
 --git-branch <branch>
+--git-repo-url <url>  remote URL (https://github.com/org/repo) to link shas to commits
 --ci-provider <name>
 --ci-run-url <url>
 --ci-run-number <n>
 --concurrency <n>     parallel uploads for bulk import (default: 6)
 -h, --help
 ```
+
+On GitHub Actions, `git` and `ci` metadata (including the repo URL) auto-detect from the standard `GITHUB_*` env vars; the flags override them. Pass the flags explicitly on other CI providers.
 
 ## CI example (GitHub Actions)
 
@@ -56,7 +54,9 @@ npx @kinora/cli import ./reports --project web-app --token <project-token> --con
   if: always()
   env:
     KINORA_TOKEN: ${{ secrets.KINORA_TOKEN }}
-    # KINORA_URL only when self-hosting
+    # git + ci metadata (sha, branch, repo URL, run link) auto-detect from GITHUB_*
 ```
 
-See the [main README](https://github.com/joris-gallot/kinora#readme) for the full workflow, the reporter, and self-hosting.
+## License
+
+MIT
