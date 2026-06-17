@@ -113,8 +113,11 @@ const planNote = computed<{ text: string, tone: string } | null>(() => {
   const b = billing.value
   if (!b || !b.status)
     return null
-  if (b.status === 'trialing')
-    return { text: `Trial · ends ${fmtDate(b.currentPeriodEnd)}`, tone: 'text-signal' }
+  if (b.status === 'trialing') {
+    return b.cancelAtPeriodEnd
+      ? { text: `Trial · ends ${fmtDate(b.currentPeriodEnd)} · won't renew`, tone: 'text-fail' }
+      : { text: `Trial · ends ${fmtDate(b.currentPeriodEnd)}`, tone: 'text-signal' }
+  }
   if (b.cancelAtPeriodEnd && b.currentPeriodEnd)
     return { text: `Cancels ${fmtDate(b.currentPeriodEnd)}`, tone: 'text-fail' }
   if (b.status === 'past_due')
