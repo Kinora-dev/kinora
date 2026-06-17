@@ -36,7 +36,7 @@ function setMode(value: ColorMode): void {
         <component :is="activeIcon" class="size-4" />
       </Button>
     </DropdownMenuTrigger>
-    <DropdownMenuContent align="end" class="w-40 font-mono">
+    <DropdownMenuContent align="end" class="w-32 font-mono">
       <DropdownMenuLabel class="text-[10px] tracking-wider text-muted-foreground uppercase">
         Theme
       </DropdownMenuLabel>
@@ -49,11 +49,11 @@ function setMode(value: ColorMode): void {
           v-for="opt in options"
           :key="opt.value"
           :value="opt.value"
-          class="gap-2 text-[11px] tracking-wider uppercase"
+          class="gap-2 pl-2 text-[11px] tracking-wider uppercase"
           :class="colorMode === opt.value ? 'text-foreground' : 'text-muted-foreground'"
         >
           <template #indicator-icon>
-            <span class="size-1.5 rounded-full bg-signal" />
+            <span />
           </template>
           <component :is="opt.icon" class="size-3.5" />
           {{ opt.label }}
