@@ -24,9 +24,11 @@ Options:
   --name <name>         Project display name (default: slug)
   --git-sha <sha>
   --git-branch <branch>
+  --git-repo-url <url>  Remote URL (https://github.com/org/repo) to link shas to commits
   --ci-provider <name>
   --ci-run-url <url>
   --ci-run-number <n>
+  (In GitHub Actions, git + ci metadata auto-detect from the env; flags override.)
   --concurrency <n>     Parallel uploads for bulk import (default 6)
   -h, --help`
 
@@ -46,6 +48,7 @@ async function main(): Promise<void> {
       'url': { type: 'string' },
       'git-sha': { type: 'string' },
       'git-branch': { type: 'string' },
+      'git-repo-url': { type: 'string' },
       'ci-provider': { type: 'string' },
       'ci-run-url': { type: 'string' },
       'ci-run-number': { type: 'string' },
@@ -91,12 +94,21 @@ async function main(): Promise<void> {
   if (!existsSync(reportFile))
     fail(`report not found: ${reportFile}`)
 
-  const git = values['git-sha'] || values['git-branch']
-    ? { sha: values['git-sha'], branch: values['git-branch'] }
+  // git + ci: explicit flags override, else auto-detect from GitHub Actions env (like the reporter).
+  const ghRepoUrl = process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY
+    ? `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}`
     : undefined
-  const ci = values['ci-provider'] || values['ci-run-url'] || values['ci-run-number']
-    ? { provider: values['ci-provider'], runUrl: values['ci-run-url'], runNumber: values['ci-run-number'] }
-    : undefined
+  const sha = values['git-sha'] ?? process.env.GITHUB_SHA
+  const branch = values['git-branch'] ?? process.env.GITHUB_REF_NAME
+  const repoUrl = values['git-repo-url'] ?? ghRepoUrl
+  const git = sha || branch || repoUrl ? { sha, branch, repoUrl } : undefined
+
+  const ghActions = !!process.env.GITHUB_ACTIONS
+  const ciProvider = values['ci-provider'] ?? (ghActions ? 'github' : undefined)
+  const ciRunUrl = values['ci-run-url']
+    ?? (ghActions && ghRepoUrl && process.env.GITHUB_RUN_ID ? `${ghRepoUrl}/actions/runs/${process.env.GITHUB_RUN_ID}` : undefined)
+  const ciRunNumber = values['ci-run-number'] ?? (ghActions ? process.env.GITHUB_RUN_NUMBER : undefined)
+  const ci = ciProvider || ciRunUrl || ciRunNumber ? { provider: ciProvider, runUrl: ciRunUrl, runNumber: ciRunNumber } : undefined
 
   const raw: unknown = JSON.parse(await readFile(reportFile, 'utf8'))
   const res = await uploadReport(raw, {

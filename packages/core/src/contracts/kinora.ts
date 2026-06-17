@@ -15,6 +15,8 @@ export type Counts = z.infer<typeof countsSchema>
 export const gitMetaSchema = z.object({
   sha: z.string().optional(),
   branch: z.string().optional(),
+  // Remote URL (e.g. https://github.com/org/repo) to link a sha to its commit.
+  repoUrl: z.string().optional(),
 })
 export type GitMeta = z.infer<typeof gitMetaSchema>
 

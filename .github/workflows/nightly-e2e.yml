@@ -61,14 +61,12 @@ jobs:
       - name: Install Playwright browser
         run: pnpm --filter @kinora/web exec playwright install --with-deps chromium
 
-      # Run each suite with the json reporter, then upload via the *published* CLI (npx) -
-      # a real customer path, self-contained (no in-repo build). Traces come from the config's
-      # on-first-retry, so failed + flaky tests carry one. `|| true` keeps red data flowing.
+      # Run each suite with the json reporter, then upload via the *published* CLI (npx)
       - name: E2E + upload to kinora cloud
         continue-on-error: true
         run: |
           pnpm --filter @kinora/server db:reset:e2e
           PLAYWRIGHT_JSON_OUTPUT_NAME="$RUNNER_TEMP/web.json" pnpm --filter @kinora/web exec playwright test --reporter=json || true
-          npx --yes @kinora/cli@latest upload "$RUNNER_TEMP/web.json" --project kinora-web-e2e --name "Kinora Web E2E" --git-sha "$GITHUB_SHA" --git-branch "$GITHUB_REF_NAME"
+          npx --yes @kinora/cli@latest upload "$RUNNER_TEMP/web.json" --project kinora-web-e2e --name "Kinora Web E2E"
           PLAYWRIGHT_JSON_OUTPUT_NAME="$RUNNER_TEMP/viewer.json" pnpm --filter @kinora/trace-viewer exec playwright test --reporter=json || true
-          npx --yes @kinora/cli@latest upload "$RUNNER_TEMP/viewer.json" --project kinora-viewer-e2e --name "Kinora Trace Viewer E2E" --git-sha "$GITHUB_SHA" --git-branch "$GITHUB_REF_NAME"
+          npx --yes @kinora/cli@latest upload "$RUNNER_TEMP/viewer.json" --project kinora-viewer-e2e --name "Kinora Trace Viewer E2E"

@@ -35,6 +35,12 @@ const previousRunId = computed(() => {
   return idx >= 0 && idx + 1 < sorted.length ? sorted[idx + 1].runId : undefined
 })
 
+// Link a sha to its commit. github/gitlab use /commit/, bitbucket /commits/.
+function commitUrl(repoUrl: string, sha: string): string {
+  const base = repoUrl.replace(/\/$/, '')
+  return `${base}/${base.includes('bitbucket.org') ? 'commits' : 'commit'}/${sha}`
+}
+
 const filter = useRouteQuery<'all' | PwTestStatus>('status', 'all')
 const search = useRouteQuery('q', '')
 
@@ -103,7 +109,16 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
             <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-xs text-muted-foreground">
               <span v-if="report.meta.git?.branch" class="flex items-center gap-1">
                 <GitBranch class="size-3" />{{ report.meta.git.branch }}
-                <span v-if="report.meta.git.sha">@ {{ report.meta.git.sha }}</span>
+                <template v-if="report.meta.git.sha">
+                  @ <a
+                    v-if="report.meta.git.repoUrl"
+                    :href="commitUrl(report.meta.git.repoUrl, report.meta.git.sha)"
+                    target="_blank"
+                    rel="noreferrer"
+                    class="hover:text-foreground hover:underline"
+                  >{{ report.meta.git.sha }}</a>
+                  <span v-else>{{ report.meta.git.sha }}</span>
+                </template>
               </span>
               <span v-if="report.meta.playwrightVersion">playwright {{ report.meta.playwrightVersion }}</span>
             </div>

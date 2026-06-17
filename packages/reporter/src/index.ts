@@ -74,9 +74,11 @@ function countsOf(tests: NormTest[]): Counts {
 function detectGit(): GitMeta | undefined {
   const sha = process.env.GITHUB_SHA
   const branch = process.env.GITHUB_REF_NAME
-  if (!sha && !branch)
+  const { GITHUB_SERVER_URL, GITHUB_REPOSITORY } = process.env
+  const repoUrl = GITHUB_SERVER_URL && GITHUB_REPOSITORY ? `${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}` : undefined
+  if (!sha && !branch && !repoUrl)
     return undefined
-  return { sha, branch }
+  return { sha, branch, repoUrl }
 }
 
 function detectCi(): CiMeta | undefined {
