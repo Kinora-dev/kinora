@@ -3,7 +3,6 @@ import type { ProjectEntry } from '@kinora/core'
 import type { ColorMode } from '@kinora/ui/theme'
 import type { SessionUser } from '../../src/bridge'
 import { Avatar, AvatarFallback, AvatarImage } from '@kinora/ui/avatar'
-import { Button } from '@kinora/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@kinora/ui/dropdown-menu'
 import { SegmentedControl } from '@kinora/ui/segmented-control'
 import { colorMode } from '@kinora/ui/theme'
@@ -83,10 +82,14 @@ function setTheme(value: ColorMode): void {
         <div class="ml-auto flex items-center gap-4">
           <Tooltip>
             <TooltipTrigger as-child>
-              <Button variant="outline" size="sm" class="h-8 gap-1.5 font-mono text-xs" @click="$emit('openTrace')">
-                <FolderOpen class="size-3.5" />
+              <button
+                type="button"
+                class="flex items-center gap-1.5 rounded-md border border-border/70 px-2.5 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:border-border hover:text-foreground"
+                @click="$emit('openTrace')"
+              >
+                <FolderOpen class="size-3 opacity-60" />
                 Open trace
-              </Button>
+              </button>
             </TooltipTrigger>
             <TooltipContent>Open a local trace.zip in the viewer</TooltipContent>
           </Tooltip>
