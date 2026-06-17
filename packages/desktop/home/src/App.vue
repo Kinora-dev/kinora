@@ -3,7 +3,7 @@ import type { Project, RunComparison, RunReport, SessionUser, TestHistory } from
 import { latestRun } from '@kinora/core'
 import { Button } from '@kinora/ui/button'
 import { Card, CardContent } from '@kinora/ui/card'
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import AppHeader from './components/AppHeader.vue'
 import Failures from './components/Failures.vue'
 
@@ -21,6 +21,14 @@ const histories = ref<TestHistory[]>([])
 const comparison = ref<RunComparison | null>(null)
 const reportLoading = ref(false)
 const projectPaths = ref<Record<string, string>>({})
+const rerun = ref<{ title: string, status: 'running' | 'passed' | 'failed' | 'error', log: string, hasTrace: boolean } | null>(null)
+const logEl = ref<HTMLElement | null>(null)
+
+const rerunStatusText = computed(() => {
+  const s = rerun.value?.status
+  return s === 'running' ? 'Running…' : s === 'passed' ? 'Passed' : s === 'failed' ? 'Failed' : s === 'error' ? 'Error' : ''
+})
+const rerunStatusCls = computed(() => (rerun.value?.status === 'passed' ? 'text-pass' : rerun.value?.status === 'running' ? 'text-signal' : 'text-fail'))
 
 const activeProject = computed(() => projects.value.find(p => p.id === activeId.value) ?? null)
 const activePath = computed(() => (activeId.value ? projectPaths.value[activeId.value] ?? null : null))
@@ -74,6 +82,25 @@ onMounted(refresh)
 
 window.kinora.onDevicePending((info) => {
   deviceCode.value = info.userCode
+})
+
+window.kinora.onRerunOutput((chunk) => {
+  if (rerun.value)
+    rerun.value.log += chunk
+})
+window.kinora.onRerunDone((r) => {
+  if (!rerun.value)
+    return
+  rerun.value.status = r.code === -1 ? 'error' : r.ok ? 'passed' : 'failed'
+  rerun.value.hasTrace = r.hasTrace
+})
+
+// Tail the live log to the latest output.
+watch(() => rerun.value?.log, () => {
+  void nextTick(() => {
+    if (logEl.value)
+      logEl.value.scrollTop = logEl.value.scrollHeight
+  })
 })
 
 function selectProject(id: string): void {
@@ -141,6 +168,30 @@ async function onOpenInEditor(loc: { file: string, line: number, column: number 
   const res = await window.kinora.openInEditor({ projectId: id, ...loc })
   if (!res.ok && res.error && res.error !== 'no-path')
     error.value = res.error
+}
+
+async function onRerun(t: { file: string, line: number, projectName: string, title: string }): Promise<void> {
+  const id = activeId.value
+  if (!id)
+    return
+  if (!projectPaths.value[id] && !(await linkActiveProject()))
+    return
+  rerun.value = { title: t.title, status: 'running', log: '', hasTrace: false }
+  const res = await window.kinora.rerunTest({ projectId: id, file: t.file, line: t.line, projectName: t.projectName })
+  if (!res.ok && res.error && res.error !== 'no-path') {
+    rerun.value.status = 'error'
+    rerun.value.log = res.error
+  }
+}
+function stopRerun(): void {
+  void window.kinora.cancelRerun()
+}
+function closeRerun(): void {
+  void window.kinora.cancelRerun()
+  rerun.value = null
+}
+function viewRerunTrace(): void {
+  void window.kinora.openRerunTrace()
 }
 </script>
 
@@ -218,7 +269,32 @@ async function onOpenInEditor(loc: { file: string, line: number, column: number 
         :linked="!!activePath"
         @view-trace="onViewTrace"
         @open-in-editor="onOpenInEditor"
+        @rerun="onRerun"
       />
     </main>
+
+    <!-- local re-run: live output + result -->
+    <div v-if="rerun" class="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur">
+      <div class="mx-auto max-w-4xl px-5 py-3">
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex min-w-0 items-center gap-2">
+            <span class="font-mono text-[11px] tracking-wider uppercase" :class="rerunStatusCls">{{ rerunStatusText }}</span>
+            <span class="truncate text-sm">{{ rerun.title }}</span>
+          </div>
+          <div class="flex shrink-0 gap-1.5">
+            <Button v-if="rerun.status === 'running'" variant="outline" size="sm" class="h-7 font-mono text-[11px]" @click="stopRerun">
+              Stop
+            </Button>
+            <Button v-if="rerun.hasTrace" variant="outline" size="sm" class="h-7 font-mono text-[11px]" @click="viewRerunTrace">
+              View trace
+            </Button>
+            <Button variant="ghost" size="sm" class="h-7 font-mono text-[11px] text-muted-foreground" @click="closeRerun">
+              Close
+            </Button>
+          </div>
+        </div>
+        <pre ref="logEl" class="mt-2 max-h-48 overflow-auto rounded-md bg-muted/40 p-2 font-mono text-[11px] leading-relaxed whitespace-pre-wrap">{{ rerun.log }}</pre>
+      </div>
+    </div>
   </div>
 </template>

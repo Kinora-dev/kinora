@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+import type { ChildProcess } from 'node:child_process'
 import path from 'node:path'
 import process from 'node:process'
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
@@ -7,6 +8,7 @@ import { loadConfig, saveConfig } from './config'
 import { pollDeviceToken, requestDeviceCode } from './device'
 import { openInEditor } from './editor'
 import { buildMenu } from './menu'
+import { startRerun } from './runner'
 import { startServer } from './server'
 import { makeTrpc } from './trpc'
 
@@ -23,6 +25,9 @@ let viewerWin: BrowserWindow | null = null
 let config = loadConfig()
 // Aborts the in-flight device-flow poll when the user cancels.
 let deviceAbort: AbortController | null = null
+// The current local test re-run + its produced trace (for "View trace").
+let rerunChild: ChildProcess | null = null
+let lastRerunTrace: string | null = null
 
 // macOS open-file (file association) and argv both hand us a local trace to view.
 let pendingOpen: string | null = null
@@ -216,6 +221,31 @@ function registerIpc(): void {
     catch (err) {
       return { ok: false, error: err instanceof Error ? err.message : 'Could not open editor' }
     }
+  })
+
+  ipcMain.handle('kinora:rerun-test', (_e, input: { projectId: string, file: string, line: number, projectName?: string }) => {
+    const root = config.projectPaths[input.projectId]
+    if (!root)
+      return { ok: false, error: 'no-path' }
+    rerunChild?.kill()
+    lastRerunTrace = null
+    const outDir = path.join(app.getPath('temp'), `kinora-rerun-${Date.now()}`)
+    rerunChild = startRerun(
+      { repoRoot: root, file: input.file, line: input.line, projectName: input.projectName, outDir },
+      chunk => homeWin?.webContents.send('kinora:rerun-output', chunk),
+      (r) => {
+        rerunChild = null
+        lastRerunTrace = r.tracePath
+        homeWin?.webContents.send('kinora:rerun-done', { ok: r.ok, code: r.code, hasTrace: !!r.tracePath })
+      },
+    )
+    return { ok: true }
+  })
+
+  ipcMain.handle('kinora:cancel-rerun', () => rerunChild?.kill())
+  ipcMain.handle('kinora:open-rerun-trace', () => {
+    if (lastRerunTrace)
+      openViewer(lastRerunTrace)
   })
 }
 

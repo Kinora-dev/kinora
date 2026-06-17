@@ -41,6 +41,16 @@ export interface KinoraBridge {
   setProjectPath: (projectId: string) => Promise<string | null>
   // Open a test's source at file:line:column in the editor (needs the project linked).
   openInEditor: (input: { projectId: string, file: string, line: number, column: number }) => Promise<{ ok: boolean, error?: string }>
+  // Re-run a single test locally via the repo's playwright (needs the project linked).
+  rerunTest: (input: { projectId: string, file: string, line: number, projectName?: string }) => Promise<{ ok: boolean, error?: string }>
+  // Live combined stdout/stderr of the running re-run.
+  onRerunOutput: (cb: (chunk: string) => void) => void
+  // Re-run finished: pass/fail + whether a fresh trace was produced.
+  onRerunDone: (cb: (r: { ok: boolean, code: number, hasTrace: boolean }) => void) => void
+  // Kill the in-flight re-run.
+  cancelRerun: () => Promise<void>
+  // Open the trace the last re-run produced in the embedded viewer.
+  openRerunTrace: () => Promise<void>
   // Open the web account settings in the system browser (account mgmt lives in web).
   openAccount: () => Promise<void>
 }

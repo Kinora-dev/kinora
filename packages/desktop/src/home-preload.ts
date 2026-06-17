@@ -18,6 +18,11 @@ const bridge: KinoraBridge = {
   projectPaths: () => ipcRenderer.invoke('kinora:project-paths'),
   setProjectPath: projectId => ipcRenderer.invoke('kinora:set-project-path', projectId),
   openInEditor: input => ipcRenderer.invoke('kinora:open-in-editor', input),
+  rerunTest: input => ipcRenderer.invoke('kinora:rerun-test', input),
+  onRerunOutput: cb => ipcRenderer.on('kinora:rerun-output', (_e, chunk) => cb(chunk)),
+  onRerunDone: cb => ipcRenderer.on('kinora:rerun-done', (_e, r) => cb(r)),
+  cancelRerun: () => ipcRenderer.invoke('kinora:cancel-rerun'),
+  openRerunTrace: () => ipcRenderer.invoke('kinora:open-rerun-trace'),
   openAccount: () => ipcRenderer.invoke('kinora:open-account'),
 }
 

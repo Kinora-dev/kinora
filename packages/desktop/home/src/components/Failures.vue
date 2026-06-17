@@ -3,7 +3,7 @@ import type { NormTest, ProjectEntry, RunComparison, RunReport, TestHistory } fr
 import { formatPct, passRate } from '@kinora/core'
 import { Button } from '@kinora/ui/button'
 import { Card } from '@kinora/ui/card'
-import { Check, Copy, FileCode2, Play } from 'lucide-vue-next'
+import { Check, Copy, FileCode2, Play, RefreshCw } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 
 const props = defineProps<{
@@ -17,6 +17,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   viewTrace: [traceUrl: string]
   openInEditor: [loc: { file: string, line: number, column: number }]
+  rerun: [t: { file: string, line: number, projectName: string, title: string }]
 }>()
 
 type Filter = 'failures' | 'regressions' | 'all'
@@ -99,6 +100,7 @@ const rows = computed(() => {
     const h = historyMap.value.get(test.testKey)
     return {
       test,
+      fail: isFail(test),
       strip: h ? h.points.slice(-14).map(p => p.status) : [],
       label: labelFor(test, h),
       rate: rateHint(test, h),
@@ -211,6 +213,17 @@ ${errors || '(no error captured)'}`
               {{ row.label.text }}
             </span>
             <div class="flex gap-1.5">
+              <Button
+                v-if="row.fail"
+                variant="outline"
+                size="sm"
+                class="h-7 gap-1.5 font-mono text-[11px]"
+                :title="linked ? 'Re-run this test locally' : 'Link a local repo, then re-run'"
+                @click="emit('rerun', { file: row.test.file, line: row.test.line, projectName: row.test.projectName, title: row.test.title })"
+              >
+                <RefreshCw class="size-3" />
+                Re-run
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
