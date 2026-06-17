@@ -86,17 +86,24 @@ const failed = computed(() => allTests.value.filter(isFail))
 const rate = computed(() => (props.report ? passRate(props.report.counts) : 0))
 
 const filterOptions = computed(() => {
-  const opts: { key: Filter, label: string }[] = [{ key: 'failures', label: `Failing ${failed.value.length}` }]
+  const opts: { key: Filter, label: string }[] = []
+  if (failed.value.length)
+    opts.push({ key: 'failures', label: `Failing ${failed.value.length}` })
   if (regressedKeys.value.size)
     opts.push({ key: 'regressions', label: `Regressed ${regressedKeys.value.size}` })
   opts.push({ key: 'all', label: 'All' })
   return opts
 })
 
+// All-green: no Failing tab, so a stale 'failures' selection resolves to the first available ('all').
+const effectiveFilter = computed<Filter>(() =>
+  filterOptions.value.some(o => o.key === filter.value) ? filter.value : filterOptions.value[0].key,
+)
+
 const rows = computed(() => {
-  const list = filter.value === 'all'
+  const list = effectiveFilter.value === 'all'
     ? allTests.value
-    : filter.value === 'regressions'
+    : effectiveFilter.value === 'regressions'
       ? failed.value.filter(t => regressedKeys.value.has(t.testKey))
       : failed.value
   return list.map((test) => {
@@ -173,7 +180,7 @@ ${errors || '(no error captured)'}`
             :key="opt.key"
             type="button"
             class="rounded-md px-2.5 py-1 font-mono text-[11px] tracking-wider uppercase transition-colors"
-            :class="filter === opt.key ? 'bg-accent text-foreground' : 'text-muted-foreground hover:text-foreground'"
+            :class="effectiveFilter === opt.key ? 'bg-accent text-foreground' : 'text-muted-foreground hover:text-foreground'"
             @click="filter = opt.key"
           >
             {{ opt.label }}
@@ -181,15 +188,7 @@ ${errors || '(no error captured)'}`
         </div>
 
         <div v-if="rows.length === 0" class="flex flex-col items-center gap-1.5 py-14 text-center">
-          <template v-if="filter === 'failures'">
-            <p class="text-sm font-medium text-pass">
-              All green
-            </p>
-            <p class="text-xs text-muted-foreground">
-              No failures in the latest run.
-            </p>
-          </template>
-          <p v-else class="text-sm text-muted-foreground">
+          <p class="text-sm text-muted-foreground">
             No tests.
           </p>
         </div>
