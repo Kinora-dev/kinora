@@ -21,6 +21,7 @@ const histories = ref<TestHistory[]>([])
 const comparison = ref<RunComparison | null>(null)
 const reportLoading = ref(false)
 const projectPaths = ref<Record<string, string>>({})
+const highlightLink = ref(false)
 const rerun = ref<{ title: string, status: 'running' | 'passed' | 'failed' | 'error', log: string, hasTrace: boolean } | null>(null)
 const logEl = ref<HTMLElement | null>(null)
 
@@ -148,6 +149,16 @@ function onViewTrace(traceUrl: string): void {
   void window.kinora.openTraceUrl(traceUrl)
 }
 
+let linkPulseTimer: ReturnType<typeof setTimeout> | undefined
+// A disabled Re-run/Open was clicked: flash the header's "Link folder" to guide the user.
+function onRequestLink(): void {
+  highlightLink.value = true
+  clearTimeout(linkPulseTimer)
+  linkPulseTimer = setTimeout(() => {
+    highlightLink.value = false
+  }, 1800)
+}
+
 async function linkActiveProject(): Promise<string | null> {
   const id = activeId.value
   if (!id)
@@ -247,6 +258,7 @@ function viewRerunTrace(): void {
       :active-id="activeId"
       :user="user"
       :project-path="activePath"
+      :highlight-link="highlightLink"
       @select="selectProject"
       @open-trace="openTrace"
       @open-account="openAccount"
@@ -270,6 +282,7 @@ function viewRerunTrace(): void {
         @view-trace="onViewTrace"
         @open-in-editor="onOpenInEditor"
         @rerun="onRerun"
+        @request-link="onRequestLink"
       />
     </main>
 

@@ -3,6 +3,7 @@ import type { NormTest, ProjectEntry, RunComparison, RunReport, TestHistory } fr
 import { formatPct, passRate } from '@kinora/core'
 import { Button } from '@kinora/ui/button'
 import { Card } from '@kinora/ui/card'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@kinora/ui/tooltip'
 import { Check, Copy, FileCode2, Play, RefreshCw } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 
@@ -18,6 +19,8 @@ const emit = defineEmits<{
   viewTrace: [traceUrl: string]
   openInEditor: [loc: { file: string, line: number, column: number }]
   rerun: [t: { file: string, line: number, projectName: string, title: string }]
+  // Re-run / Open need a linked repo; when absent, nudge the user to link first.
+  requestLink: []
 }>()
 
 type Filter = 'failures' | 'regressions' | 'all'
@@ -130,135 +133,154 @@ ${errors || '(no error captured)'}`
 </script>
 
 <template>
-  <div class="flex flex-col gap-5">
-    <div class="flex flex-wrap items-end justify-between gap-3">
-      <div>
-        <h1 class="text-xl font-semibold tracking-tight">
-          {{ project.name }}
-        </h1>
-        <p class="mt-0.5 font-mono text-[11px] text-muted-foreground">
-          {{ project.id }} · latest run
-        </p>
-      </div>
-      <div v-if="report" class="flex items-center gap-4 font-mono text-xs tabular-nums">
-        <span class="text-pass">{{ report.counts.expected }} passed</span>
-        <span v-if="report.counts.unexpected" class="text-fail">{{ report.counts.unexpected }} failed</span>
-        <span v-if="report.counts.flaky" class="text-flaky">{{ report.counts.flaky }} flaky</span>
-        <span class="text-muted-foreground">{{ formatPct(rate) }}</span>
-      </div>
-    </div>
-
-    <div v-if="loading" class="py-16 text-center font-mono text-sm text-muted-foreground">
-      Loading latest run…
-    </div>
-    <div v-else-if="!report" class="py-16 text-center font-mono text-sm text-muted-foreground">
-      No runs yet for this project.
-    </div>
-    <template v-else>
-      <div
-        v-if="regressedKeys.size"
-        class="rounded-md border border-fail/30 bg-fail/5 px-3 py-2 font-mono text-[11px] text-fail"
-      >
-        {{ regressedKeys.size }} {{ regressedKeys.size === 1 ? 'test' : 'tests' }} broke since the last green run · {{ greenRel }}
-      </div>
-
-      <div class="flex items-center gap-1">
-        <button
-          v-for="opt in filterOptions"
-          :key="opt.key"
-          type="button"
-          class="rounded-md px-2.5 py-1 font-mono text-[11px] tracking-wider uppercase transition-colors"
-          :class="filter === opt.key ? 'bg-accent text-foreground' : 'text-muted-foreground hover:text-foreground'"
-          @click="filter = opt.key"
-        >
-          {{ opt.label }}
-        </button>
-      </div>
-
-      <div v-if="rows.length === 0" class="flex flex-col items-center gap-1.5 py-14 text-center">
-        <template v-if="filter === 'failures'">
-          <p class="text-sm font-medium text-pass">
-            All green
+  <TooltipProvider :delay-duration="150">
+    <div class="flex flex-col gap-5">
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 class="text-xl font-semibold tracking-tight">
+            {{ project.name }}
+          </h1>
+          <p class="mt-0.5 font-mono text-[11px] text-muted-foreground">
+            {{ project.id }} · latest run
           </p>
-          <p class="text-xs text-muted-foreground">
-            No failures in the latest run.
-          </p>
-        </template>
-        <p v-else class="text-sm text-muted-foreground">
-          No tests.
-        </p>
-      </div>
-      <Card v-else class="gap-0 divide-y divide-border/60 p-0">
-        <div v-for="row in rows" :key="row.test.testKey" class="flex items-start gap-3 px-4 py-3">
-          <span class="mt-1.5 size-1.5 shrink-0 rounded-full" :class="color(row.test.status)" />
-          <div class="min-w-0 flex-1 space-y-1">
-            <p class="truncate text-sm">
-              {{ row.test.title }}
-            </p>
-            <p class="truncate font-mono text-[11px] text-muted-foreground">
-              {{ row.test.file }}:{{ row.test.line }} · {{ row.test.projectName }}
-            </p>
-            <p v-if="row.test.errors[0]" class="line-clamp-2 font-mono text-[11px] text-fail/80">
-              {{ row.test.errors[0].message }}
-            </p>
-            <div v-if="row.strip.length || row.rate" class="flex items-center gap-2 pt-0.5">
-              <div v-if="row.strip.length" class="flex items-center gap-[2px]">
-                <span v-for="(s, i) in row.strip" :key="i" class="size-1.5 rounded-[1px]" :class="color(s)" />
-              </div>
-              <span v-if="row.rate" class="font-mono text-[10px] text-muted-foreground">{{ row.rate }}</span>
-            </div>
-          </div>
-          <div class="flex shrink-0 flex-col items-end gap-1.5">
-            <span class="font-mono text-[11px] tracking-wider uppercase" :class="row.label.cls">
-              {{ row.label.text }}
-            </span>
-            <div class="flex gap-1.5">
-              <Button
-                v-if="row.fail"
-                variant="outline"
-                size="sm"
-                class="h-7 gap-1.5 font-mono text-[11px]"
-                :title="linked ? 'Re-run this test locally' : 'Link a local repo, then re-run'"
-                @click="emit('rerun', { file: row.test.file, line: row.test.line, projectName: row.test.projectName, title: row.test.title })"
-              >
-                <RefreshCw class="size-3" />
-                Re-run
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                class="h-7 gap-1.5 font-mono text-[11px]"
-                :title="linked ? 'Open in editor' : 'Link a local repo, then open in editor'"
-                @click="emit('openInEditor', { file: row.test.file, line: row.test.line, column: row.test.column })"
-              >
-                <FileCode2 class="size-3" />
-                Open
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                class="h-7 gap-1.5 font-mono text-[11px]"
-                :title="copiedKey === row.test.testKey ? 'Copied' : 'Copy a fix prompt'"
-                @click="copyPrompt(row.test)"
-              >
-                <Check v-if="copiedKey === row.test.testKey" class="size-3" />
-                <Copy v-else class="size-3" />
-                Prompt
-              </Button>
-              <Button
-                v-if="row.trace"
-                variant="outline"
-                size="sm"
-                class="h-7 gap-1.5 font-mono text-[11px]"
-                @click="emit('viewTrace', row.trace)"
-              >
-                <Play class="size-3" />
-                Trace
-              </Button>
-            </div>
-          </div>
         </div>
-      </Card>
-    </template>
-  </div>
+        <div v-if="report" class="flex items-center gap-4 font-mono text-xs tabular-nums">
+          <span class="text-pass">{{ report.counts.expected }} passed</span>
+          <span v-if="report.counts.unexpected" class="text-fail">{{ report.counts.unexpected }} failed</span>
+          <span v-if="report.counts.flaky" class="text-flaky">{{ report.counts.flaky }} flaky</span>
+          <span class="text-muted-foreground">{{ formatPct(rate) }}</span>
+        </div>
+      </div>
+
+      <div v-if="loading" class="py-16 text-center font-mono text-sm text-muted-foreground">
+        Loading latest run…
+      </div>
+      <div v-else-if="!report" class="py-16 text-center font-mono text-sm text-muted-foreground">
+        No runs yet for this project.
+      </div>
+      <template v-else>
+        <div
+          v-if="regressedKeys.size"
+          class="rounded-md border border-fail/30 bg-fail/5 px-3 py-2 font-mono text-[11px] text-fail"
+        >
+          {{ regressedKeys.size }} {{ regressedKeys.size === 1 ? 'test' : 'tests' }} broke since the last green run · {{ greenRel }}
+        </div>
+
+        <div class="flex items-center gap-1">
+          <button
+            v-for="opt in filterOptions"
+            :key="opt.key"
+            type="button"
+            class="rounded-md px-2.5 py-1 font-mono text-[11px] tracking-wider uppercase transition-colors"
+            :class="filter === opt.key ? 'bg-accent text-foreground' : 'text-muted-foreground hover:text-foreground'"
+            @click="filter = opt.key"
+          >
+            {{ opt.label }}
+          </button>
+        </div>
+
+        <div v-if="rows.length === 0" class="flex flex-col items-center gap-1.5 py-14 text-center">
+          <template v-if="filter === 'failures'">
+            <p class="text-sm font-medium text-pass">
+              All green
+            </p>
+            <p class="text-xs text-muted-foreground">
+              No failures in the latest run.
+            </p>
+          </template>
+          <p v-else class="text-sm text-muted-foreground">
+            No tests.
+          </p>
+        </div>
+        <Card v-else class="gap-0 divide-y divide-border/60 p-0">
+          <div v-for="row in rows" :key="row.test.testKey" class="flex items-start gap-3 px-4 py-3">
+            <span class="mt-1.5 size-1.5 shrink-0 rounded-full" :class="color(row.test.status)" />
+            <div class="min-w-0 flex-1 space-y-1">
+              <p class="truncate text-sm">
+                {{ row.test.title }}
+              </p>
+              <p class="truncate font-mono text-[11px] text-muted-foreground">
+                {{ row.test.file }}:{{ row.test.line }} · {{ row.test.projectName }}
+              </p>
+              <p v-if="row.test.errors[0]" class="line-clamp-2 font-mono text-[11px] text-fail/80">
+                {{ row.test.errors[0].message }}
+              </p>
+              <div v-if="row.strip.length || row.rate" class="flex items-center gap-2 pt-0.5">
+                <div v-if="row.strip.length" class="flex items-center gap-[2px]">
+                  <span v-for="(s, i) in row.strip" :key="i" class="size-1.5 rounded-[1px]" :class="color(s)" />
+                </div>
+                <span v-if="row.rate" class="font-mono text-[10px] text-muted-foreground">{{ row.rate }}</span>
+              </div>
+            </div>
+            <div class="flex shrink-0 flex-col items-end gap-1.5">
+              <span class="font-mono text-[11px] tracking-wider uppercase" :class="row.label.cls">
+                {{ row.label.text }}
+              </span>
+              <div class="flex gap-1.5">
+                <Tooltip v-if="row.fail">
+                  <TooltipTrigger as-child>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      class="h-7 gap-1.5 font-mono text-[11px]"
+                      :class="{ 'opacity-50': !linked }"
+                      @click="linked ? emit('rerun', { file: row.test.file, line: row.test.line, projectName: row.test.projectName, title: row.test.title }) : emit('requestLink')"
+                    >
+                      <RefreshCw class="size-3" />
+                      Re-run
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{{ linked ? 'Re-run this test locally' : 'Link a folder first' }}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger as-child>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      class="h-7 gap-1.5 font-mono text-[11px]"
+                      :class="{ 'opacity-50': !linked }"
+                      @click="linked ? emit('openInEditor', { file: row.test.file, line: row.test.line, column: row.test.column }) : emit('requestLink')"
+                    >
+                      <FileCode2 class="size-3" />
+                      Open
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{{ linked ? 'Open in your editor' : 'Link a folder first' }}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger as-child>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      class="h-7 gap-1.5 font-mono text-[11px]"
+                      @click="copyPrompt(row.test)"
+                    >
+                      <Check v-if="copiedKey === row.test.testKey" class="size-3" />
+                      <Copy v-else class="size-3" />
+                      Prompt
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{{ copiedKey === row.test.testKey ? 'Copied' : 'Copy a fix prompt for an agent' }}</TooltipContent>
+                </Tooltip>
+                <Tooltip v-if="row.trace">
+                  <TooltipTrigger as-child>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      class="h-7 gap-1.5 font-mono text-[11px]"
+                      @click="emit('viewTrace', row.trace)"
+                    >
+                      <Play class="size-3" />
+                      Trace
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Open the Playwright trace</TooltipContent>
+                </Tooltip>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </template>
+    </div>
+  </TooltipProvider>
 </template>
