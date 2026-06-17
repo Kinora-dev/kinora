@@ -45,4 +45,21 @@ describe('ingest /api/v1/runs', () => {
     expect(await db.query.project.findMany()).toHaveLength(1)
     expect(await db.query.run.findMany()).toHaveLength(2)
   })
+
+  it('rounds fractional durations to fit the integer columns', async () => {
+    const user = await createUser()
+    const key = await createApiKey(user.id)
+
+    const payload = runPayload('web-app')
+    payload.run.duration = 1234.9
+    payload.tests[0].duration = 56.7
+
+    const res = await ingest(key, payload)
+    expect(res.status).toBe(201)
+
+    const runs = await db.query.run.findMany()
+    expect(runs[0].duration).toBe(1235)
+    const tests = await db.query.test.findMany()
+    expect(tests[0].duration).toBe(57)
+  })
 })

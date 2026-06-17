@@ -114,6 +114,9 @@ watch(() => rerun.value?.log, () => {
 })
 
 function selectProject(id: string): void {
+  // The re-run/watch session is tied to a test in the current project; end it on switch.
+  if (rerun.value)
+    closeRerun()
   activeId.value = id
   localStorage.setItem(STORE_KEY, id)
   void loadActive()

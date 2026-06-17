@@ -29,6 +29,8 @@ let deviceAbort: AbortController | null = null
 // The current local test re-run + its produced trace (for "View trace").
 let rerunChild: ChildProcess | null = null
 let lastRerunTrace: string | null = null
+// Bumped per re-run so a killed run's late stdout/close callbacks are ignored.
+let rerunGen = 0
 // Last re-run target (replayed by watch mode) + the active file watcher's stop fn.
 let lastRerunInput: { projectId: string, file: string, line: number, projectName?: string } | null = null
 let rerunWatchStop: (() => void) | null = null
@@ -257,27 +259,39 @@ function registerIpc(): void {
 
 interface RerunInput { projectId: string, file: string, line: number, projectName?: string }
 
+// The home window may be gone (closed while a viewer window keeps the app alive).
+function sendHome(channel: string, payload?: unknown): void {
+  if (homeWin && !homeWin.isDestroyed())
+    homeWin.webContents.send(channel, payload)
+}
+
 function launchRerun(input: RerunInput): void {
   const root = config.projectPaths[input.projectId]
   if (!root)
     return
+  const gen = ++rerunGen
   rerunChild?.kill()
   lastRerunTrace = null
-  homeWin?.webContents.send('kinora:rerun-started')
+  sendHome('kinora:rerun-started')
   const found = resolveTest(root, input.file)
   if (!found) {
-    homeWin?.webContents.send('kinora:rerun-output', `Couldn't find ${input.file} under ${root}\n`)
-    homeWin?.webContents.send('kinora:rerun-done', { ok: false, code: -1, hasTrace: false })
+    sendHome('kinora:rerun-output', `Couldn't find ${input.file} under ${root}\n`)
+    sendHome('kinora:rerun-done', { ok: false, code: -1, hasTrace: false })
     return
   }
   const outDir = path.join(app.getPath('temp'), `kinora-rerun-${Date.now()}`)
   rerunChild = startRerun(
     { repoRoot: found.configDir, file: found.rel, line: input.line, projectName: input.projectName, outDir },
-    chunk => homeWin?.webContents.send('kinora:rerun-output', chunk),
+    (chunk) => {
+      if (gen === rerunGen)
+        sendHome('kinora:rerun-output', chunk)
+    },
     (r) => {
+      if (gen !== rerunGen)
+        return
       rerunChild = null
       lastRerunTrace = r.tracePath
-      homeWin?.webContents.send('kinora:rerun-done', { ok: r.ok, code: r.code, hasTrace: !!r.tracePath })
+      sendHome('kinora:rerun-done', { ok: r.ok, code: r.code, hasTrace: !!r.tracePath })
     },
   )
 }
