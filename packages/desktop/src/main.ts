@@ -1,11 +1,15 @@
 /* eslint-disable no-console */
+import type { ChildProcess } from 'node:child_process'
 import path from 'node:path'
 import process from 'node:process'
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { signIn } from './account'
 import { loadConfig, saveConfig } from './config'
 import { pollDeviceToken, requestDeviceCode } from './device'
+import { openInEditor } from './editor'
 import { buildMenu } from './menu'
+import { resolveTest } from './resolve'
+import { startRerun, watchRepo } from './runner'
 import { startServer } from './server'
 import { makeTrpc } from './trpc'
 
@@ -22,6 +26,14 @@ let viewerWin: BrowserWindow | null = null
 let config = loadConfig()
 // Aborts the in-flight device-flow poll when the user cancels.
 let deviceAbort: AbortController | null = null
+// The current local test re-run + its produced trace (for "View trace").
+let rerunChild: ChildProcess | null = null
+let lastRerunTrace: string | null = null
+// Bumped per re-run so a killed run's late stdout/close callbacks are ignored.
+let rerunGen = 0
+// Last re-run target (replayed by watch mode) + the active file watcher's stop fn.
+let lastRerunInput: { projectId: string, file: string, line: number, projectName?: string } | null = null
+let rerunWatchStop: (() => void) | null = null
 
 // macOS open-file (file association) and argv both hand us a local trace to view.
 let pendingOpen: string | null = null
@@ -188,6 +200,100 @@ function registerIpc(): void {
     if (!res.canceled && res.filePaths[0])
       openViewer(res.filePaths[0])
   })
+
+  ipcMain.handle('kinora:project-paths', () => config.projectPaths)
+
+  ipcMain.handle('kinora:set-project-path', async (_e, projectId: string) => {
+    const res = await dialog.showOpenDialog(homeWin ?? undefined as never, {
+      title: 'Select the local repo for this project',
+      properties: ['openDirectory'],
+    })
+    if (res.canceled || !res.filePaths[0])
+      return null
+    const dir = res.filePaths[0]
+    config = { ...config, projectPaths: { ...config.projectPaths, [projectId]: dir } }
+    saveConfig(config)
+    return dir
+  })
+
+  ipcMain.handle('kinora:open-in-editor', async (_e, input: { projectId: string, file: string, line: number, column: number }) => {
+    const root = config.projectPaths[input.projectId]
+    if (!root)
+      return { ok: false, error: 'no-path' }
+    const found = resolveTest(root, input.file)
+    if (!found)
+      return { ok: false, error: `Couldn't find ${input.file} under ${root}` }
+    try {
+      await openInEditor(found.absFile, input.line, input.column)
+      return { ok: true }
+    }
+    catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : 'Could not open editor' }
+    }
+  })
+
+  ipcMain.handle('kinora:rerun-test', (_e, input: RerunInput) => {
+    if (!config.projectPaths[input.projectId])
+      return { ok: false, error: 'no-path' }
+    lastRerunInput = input
+    launchRerun(input)
+    return { ok: true }
+  })
+
+  // Watch the test's playwright project and auto re-run on save.
+  ipcMain.handle('kinora:set-watch', (_e, enabled: boolean) => {
+    rerunWatchStop?.()
+    rerunWatchStop = null
+    const root = lastRerunInput && config.projectPaths[lastRerunInput.projectId]
+    const found = root && lastRerunInput ? resolveTest(root, lastRerunInput.file) : null
+    if (enabled && found)
+      rerunWatchStop = watchRepo(found.configDir, () => lastRerunInput && launchRerun(lastRerunInput))
+  })
+
+  ipcMain.handle('kinora:cancel-rerun', () => rerunChild?.kill())
+  ipcMain.handle('kinora:open-rerun-trace', () => {
+    if (lastRerunTrace)
+      openViewer(lastRerunTrace)
+  })
+}
+
+interface RerunInput { projectId: string, file: string, line: number, projectName?: string }
+
+// The home window may be gone (closed while a viewer window keeps the app alive).
+function sendHome(channel: string, payload?: unknown): void {
+  if (homeWin && !homeWin.isDestroyed())
+    homeWin.webContents.send(channel, payload)
+}
+
+function launchRerun(input: RerunInput): void {
+  const root = config.projectPaths[input.projectId]
+  if (!root)
+    return
+  const gen = ++rerunGen
+  rerunChild?.kill()
+  lastRerunTrace = null
+  sendHome('kinora:rerun-started')
+  const found = resolveTest(root, input.file)
+  if (!found) {
+    sendHome('kinora:rerun-output', `Couldn't find ${input.file} under ${root}\n`)
+    sendHome('kinora:rerun-done', { ok: false, code: -1, hasTrace: false })
+    return
+  }
+  const outDir = path.join(app.getPath('temp'), `kinora-rerun-${Date.now()}`)
+  rerunChild = startRerun(
+    { repoRoot: found.configDir, file: found.rel, line: input.line, projectName: input.projectName, outDir },
+    (chunk) => {
+      if (gen === rerunGen)
+        sendHome('kinora:rerun-output', chunk)
+    },
+    (r) => {
+      if (gen !== rerunGen)
+        return
+      rerunChild = null
+      lastRerunTrace = r.tracePath
+      sendHome('kinora:rerun-done', { ok: r.ok, code: r.code, hasTrace: !!r.tracePath })
+    },
+  )
 }
 
 async function main(): Promise<void> {

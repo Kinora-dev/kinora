@@ -23,6 +23,17 @@ body {
   50% { opacity: 0.35; }
 }
 
+/* Draw the eye to "Link folder" when a disabled Re-run/Open is clicked. */
+@keyframes link-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--color-signal) 55%, transparent); }
+  70%, 100% { box-shadow: 0 0 0 7px transparent; }
+}
+.link-pulse {
+  border-color: var(--color-signal);
+  color: var(--color-signal);
+  animation: link-pulse 0.9s ease-out 2;
+}
+
 .app-grid {
   background-image:
     linear-gradient(to right, color-mix(in oklch, var(--border) 40%, transparent) 1px, transparent 1px),
