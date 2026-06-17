@@ -33,11 +33,13 @@ onMounted(() => {
       <!-- global top bar -->
       <header class="flex h-11 items-center gap-2.5 border-b border-border px-4">
         <span class="size-2 rounded-full bg-signal" style="animation: rec-pulse 2s ease-in-out infinite" />
-        <span class="text-sm font-semibold tracking-tight">kinora</span>
-        <span class="font-mono text-[11px] text-muted-foreground">trace</span>
-        <span v-if="store.model.value?.title" class="min-w-0 truncate text-xs text-muted-foreground">
-          · {{ store.model.value.title }}
-        </span>
+        <div class="flex min-w-0 items-baseline gap-2.5">
+          <span class="text-sm font-semibold tracking-tight">kinora</span>
+          <span class="font-mono text-[11px] text-muted-foreground">trace</span>
+          <span v-if="store.model.value?.title" class="min-w-0 truncate text-xs text-muted-foreground">
+            · {{ store.model.value.title }}
+          </span>
+        </div>
         <div class="ml-auto">
           <ThemeToggle />
         </div>
