@@ -1,0 +1,68 @@
+name: Nightly E2E
+
+# Runs kinora's own e2e suites daily and uploads results + traces to the kinora cloud
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  VITE_KINORA_SERVER_URL: http://localhost:3399
+
+jobs:
+  e2e_upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18.1
+        env:
+          POSTGRES_USER: kinora
+          POSTGRES_PASSWORD: kinora
+          POSTGRES_DB: kinora
+        ports:
+          - 5436:5432
+        options: >-
+          --health-cmd "pg_isready -U kinora"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      NODE_ENV: development
+      PORT: '3399'
+      BASE_URL: http://localhost:3399
+      WEB_ORIGIN: http://localhost:5399
+      AUTH_SECRET: ci-e2e-secret-not-used-for-anything-real
+      POSTGRES_USER: kinora
+      POSTGRES_PASSWORD: kinora
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: '5436'
+      POSTGRES_DB: kinora_e2e
+      STORAGE_DIR: .data/artifacts
+      GOOGLE_CLIENT_ID: ''
+      GOOGLE_CLIENT_SECRET: ''
+      GITHUB_CLIENT_ID: ''
+      GITHUB_CLIENT_SECRET: ''
+      KINORA_CLOUD: 'false'
+      KINORA_TOKEN: ${{ secrets.KINORA_TOKEN }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version-file: package.json
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browser
+        run: pnpm --filter @kinora/web exec playwright install --with-deps chromium
+
+      # The reporter uploads in onEnd regardless of pass/fail, so a red test still pushes
+      # (and red data is useful) - don't fail the workflow on it.
+      - name: E2E (viewer + web) -> kinora cloud
+        run: pnpm test:e2e
+        continue-on-error: true
