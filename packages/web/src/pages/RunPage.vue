@@ -97,11 +97,10 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
       <div class="flex flex-col gap-6">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <h1 class="font-mono text-xl font-semibold tracking-tight">
-              {{ report.runId }}
+            <h1 class="text-xl font-semibold tracking-tight">
+              {{ dateFmt.format(new Date(report.startedAt)) }}
             </h1>
             <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-xs text-muted-foreground">
-              <span>{{ dateFmt.format(new Date(report.startedAt)) }}</span>
               <span v-if="report.meta.git?.branch" class="flex items-center gap-1">
                 <GitBranch class="size-3" />{{ report.meta.git.branch }}
                 <span v-if="report.meta.git.sha">@ {{ report.meta.git.sha }}</span>
