@@ -73,7 +73,8 @@ publicApi.post('/runs', zValidator('json', ingestRunSchema), async (c) => {
       id: runId,
       projectId,
       startedAt: new Date(input.run.startedAt),
-      duration: input.run.duration,
+      // Playwright reports fractional ms; the column is integer.
+      duration: Math.round(input.run.duration),
       counts: input.run.counts,
       countsByTag: countsByTagFrom(input.tests),
       playwrightVersion: input.run.playwrightVersion,
@@ -96,7 +97,7 @@ publicApi.post('/runs', zValidator('json', ingestRunSchema), async (c) => {
         projectName: item.projectName,
         status: item.status,
         ok: item.ok,
-        duration: item.duration,
+        duration: Math.round(item.duration),
         retries: item.retries,
         tags: item.tags,
         annotations: item.annotations,

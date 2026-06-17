@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { NormTest, ProjectEntry, RunComparison, RunReport, TestHistory } from '@kinora/core'
-import { formatPct, passRate } from '@kinora/core'
+import { formatPct, passRate, stripAnsi } from '@kinora/core'
 import { Button } from '@kinora/ui/button'
 import { Card } from '@kinora/ui/card'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@kinora/ui/tooltip'
@@ -104,6 +104,7 @@ const rows = computed(() => {
     return {
       test,
       fail: isFail(test),
+      errorMsg: test.errors[0] ? stripAnsi(test.errors[0].message) : '',
       strip: h ? h.points.slice(-14).map(p => p.status) : [],
       label: labelFor(test, h),
       rate: rateHint(test, h),
@@ -113,7 +114,7 @@ const rows = computed(() => {
 })
 
 async function copyPrompt(test: NormTest): Promise<void> {
-  const errors = test.errors.map(e => (e.stack ? `${e.message}\n${e.stack}` : e.message)).join('\n\n')
+  const errors = test.errors.map(e => stripAnsi(e.stack ? `${e.message}\n${e.stack}` : e.message)).join('\n\n')
   const prompt = `This Playwright test is failing. Find the root cause and fix it.
 
 Test: ${test.title}
@@ -202,8 +203,8 @@ ${errors || '(no error captured)'}`
               <p class="truncate font-mono text-[11px] text-muted-foreground">
                 {{ row.test.file }}:{{ row.test.line }} · {{ row.test.projectName }}
               </p>
-              <p v-if="row.test.errors[0]" class="line-clamp-2 font-mono text-[11px] text-fail/80">
-                {{ row.test.errors[0].message }}
+              <p v-if="row.errorMsg" class="line-clamp-2 font-mono text-[11px] text-fail/80">
+                {{ row.errorMsg }}
               </p>
               <div v-if="row.strip.length || row.rate" class="flex items-center gap-2 pt-0.5">
                 <div v-if="row.strip.length" class="flex items-center gap-[2px]">

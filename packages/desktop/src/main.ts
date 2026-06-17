@@ -8,6 +8,7 @@ import { loadConfig, saveConfig } from './config'
 import { pollDeviceToken, requestDeviceCode } from './device'
 import { openInEditor } from './editor'
 import { buildMenu } from './menu'
+import { resolveTest } from './resolve'
 import { startRerun, watchRepo } from './runner'
 import { startServer } from './server'
 import { makeTrpc } from './trpc'
@@ -217,8 +218,11 @@ function registerIpc(): void {
     const root = config.projectPaths[input.projectId]
     if (!root)
       return { ok: false, error: 'no-path' }
+    const found = resolveTest(root, input.file)
+    if (!found)
+      return { ok: false, error: `Couldn't find ${input.file} under ${root}` }
     try {
-      await openInEditor(root, input.file, input.line, input.column)
+      await openInEditor(found.absFile, input.line, input.column)
       return { ok: true }
     }
     catch (err) {
@@ -234,13 +238,14 @@ function registerIpc(): void {
     return { ok: true }
   })
 
-  // Watch the linked repo and auto re-run the last test on save.
+  // Watch the test's playwright project and auto re-run on save.
   ipcMain.handle('kinora:set-watch', (_e, enabled: boolean) => {
     rerunWatchStop?.()
     rerunWatchStop = null
     const root = lastRerunInput && config.projectPaths[lastRerunInput.projectId]
-    if (enabled && root)
-      rerunWatchStop = watchRepo(root, () => lastRerunInput && launchRerun(lastRerunInput))
+    const found = root && lastRerunInput ? resolveTest(root, lastRerunInput.file) : null
+    if (enabled && found)
+      rerunWatchStop = watchRepo(found.configDir, () => lastRerunInput && launchRerun(lastRerunInput))
   })
 
   ipcMain.handle('kinora:cancel-rerun', () => rerunChild?.kill())
@@ -259,9 +264,15 @@ function launchRerun(input: RerunInput): void {
   rerunChild?.kill()
   lastRerunTrace = null
   homeWin?.webContents.send('kinora:rerun-started')
+  const found = resolveTest(root, input.file)
+  if (!found) {
+    homeWin?.webContents.send('kinora:rerun-output', `Couldn't find ${input.file} under ${root}\n`)
+    homeWin?.webContents.send('kinora:rerun-done', { ok: false, code: -1, hasTrace: false })
+    return
+  }
   const outDir = path.join(app.getPath('temp'), `kinora-rerun-${Date.now()}`)
   rerunChild = startRerun(
-    { repoRoot: root, file: input.file, line: input.line, projectName: input.projectName, outDir },
+    { repoRoot: found.configDir, file: found.rel, line: input.line, projectName: input.projectName, outDir },
     chunk => homeWin?.webContents.send('kinora:rerun-output', chunk),
     (r) => {
       rerunChild = null

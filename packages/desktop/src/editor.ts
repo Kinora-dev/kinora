@@ -1,5 +1,4 @@
 import { spawn } from 'node:child_process'
-import path from 'node:path'
 import process from 'node:process'
 
 // GUI-launched apps inherit a stripped PATH, so spawned CLIs (editor, playwright,
@@ -12,10 +11,10 @@ export function augmentedPath(): string {
   return [process.env.PATH, ...EXTRA_PATH].filter(Boolean).join(':')
 }
 
-// Open `repoRoot/file` at line:column in the editor. Rejects if the CLI isn't installed
+// Open an absolute file at line:column in the editor. Rejects if the CLI isn't installed
 // so the renderer can surface a hint.
-export function openInEditor(repoRoot: string, file: string, line: number, column: number): Promise<void> {
-  const target = `${path.join(repoRoot, file)}:${line}:${column}`
+export function openInEditor(absFile: string, line: number, column: number): Promise<void> {
+  const target = `${absFile}:${line}:${column}`
   const env = { ...process.env, PATH: augmentedPath() }
   return new Promise((resolve, reject) => {
     const child = spawn(BIN, ['--goto', target], { env, stdio: 'ignore' })
