@@ -119,7 +119,7 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
             {{ formatDuration(row.original.duration) }}
           </TableCell>
           <TableCell class="text-right font-mono text-xs text-muted-foreground">
-            {{ row.original.git?.sha ?? '-' }}
+            {{ row.original.git?.sha ? row.original.git.sha.slice(0, 7) : '-' }}
           </TableCell>
         </TableRow>
       </TableBody>

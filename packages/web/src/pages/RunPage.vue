@@ -116,8 +116,8 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
                     target="_blank"
                     rel="noreferrer"
                     class="hover:text-foreground hover:underline"
-                  >{{ report.meta.git.sha }}</a>
-                  <span v-else>{{ report.meta.git.sha }}</span>
+                  >{{ report.meta.git.sha.slice(0, 7) }}</a>
+                  <span v-else>{{ report.meta.git.sha.slice(0, 7) }}</span>
                 </template>
               </span>
               <span v-if="report.meta.playwrightVersion">playwright {{ report.meta.playwrightVersion }}</span>
