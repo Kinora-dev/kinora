@@ -6,7 +6,7 @@ import { and, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { notifyRun } from '../alerts/notify'
 import { getEntitlements, ingestCapError, quotaCrossing, quotaWarningText } from '../billing/entitlements'
-import { polarClient } from '../billing/polar'
+import { meterTestResults, polarClient } from '../billing/polar'
 import { currentPeriodResults, projectCount, startOfMonthUtc } from '../billing/usage'
 import { db } from '../db'
 import { artifact, member, project, run, test, user } from '../db/schemas/index'
@@ -121,15 +121,8 @@ publicApi.post('/runs', zValidator('json', ingestRunSchema), async (c) => {
         where: and(eq(member.organizationId, orgId), eq(member.role, 'owner')),
         columns: { userId: true },
       })
-      if (owner) {
-        await polarClient.events.ingest({
-          events: [{
-            name: 'test_results',
-            externalCustomerId: owner.userId,
-            metadata: { results: result.tests },
-          }],
-        })
-      }
+      if (owner)
+        await meterTestResults(owner.userId, result.tests)
     }
     catch (error) {
       logger.error({ error, orgId, runId: result.runId }, 'polar usage ingest failed')
