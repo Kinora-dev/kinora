@@ -204,7 +204,9 @@ publicApi.post('/runs/:runId/artifacts', async (c) => {
   const name = typeof body.name === 'string' ? body.name : 'trace'
 
   const buf = Buffer.from(await file.arrayBuffer())
-  const key = `${r.projectId}/${runId}/${randomUUID()}-${name}.zip`
+  // name is client-controlled; sanitize before it enters the storage path so it can't traverse.
+  const safeName = name.replace(/[^\w.-]/g, '_').slice(0, 100) || 'trace'
+  const key = `${r.projectId}/${runId}/${randomUUID()}-${safeName}.zip`
   await storage.put(key, buf)
 
   const t = testKey

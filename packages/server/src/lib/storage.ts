@@ -1,7 +1,7 @@
 import type { Buffer } from 'node:buffer'
 import type { S3Config } from './env'
 import { mkdir, rm, writeFile } from 'node:fs/promises'
-import { dirname, join, resolve } from 'node:path'
+import { dirname, resolve, sep } from 'node:path'
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { env, s3 } from './env'
@@ -16,9 +16,16 @@ export interface Storage {
 
 function localStorage(): Storage {
   const root = resolve(env.STORAGE_DIR)
+  // Reject keys that resolve outside STORAGE_DIR (defense in depth against traversal in the key).
+  const within = (key: string): string => {
+    const dest = resolve(root, key)
+    if (dest !== root && !dest.startsWith(root + sep))
+      throw new Error('invalid storage key')
+    return dest
+  }
   return {
     async put(key, body) {
-      const dest = join(root, key)
+      const dest = within(key)
       await mkdir(dirname(dest), { recursive: true })
       await writeFile(dest, body)
     },
@@ -27,7 +34,7 @@ function localStorage(): Storage {
     },
     async delete(key) {
       // force ignores a missing file, so retention purge stays idempotent.
-      await rm(join(root, key), { force: true })
+      await rm(within(key), { force: true })
     },
   }
 }
