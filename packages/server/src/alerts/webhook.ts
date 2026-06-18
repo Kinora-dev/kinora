@@ -1,5 +1,7 @@
 import type { Counts } from '@kinora/core'
+import type { Fetcher } from '../lib/ssrf'
 import type { AlertPayload } from './core'
+import { safeFetch } from '../lib/ssrf'
 
 // Stable JSON contract for consumers - keep field names stable across versions.
 export interface WebhookBody {
@@ -13,7 +15,7 @@ export interface WebhookBody {
 export async function postWebhook(
   url: string,
   p: AlertPayload,
-  fetchImpl: typeof globalThis.fetch = globalThis.fetch,
+  fetchImpl: Fetcher = safeFetch,
 ): Promise<void> {
   const body: WebhookBody = {
     project: p.projectName,

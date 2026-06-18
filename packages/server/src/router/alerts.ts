@@ -77,7 +77,10 @@ export const alertsRouter = router({
   upsert: adminProcedure
     .input(z.object({
       projectId: z.string(),
-      webhookUrl: z.string().url(),
+      webhookUrl: z.url({ protocol: /^https$/ }).refine(
+        u => new URL(u).hostname === 'hooks.slack.com',
+        'Must be a Slack webhook URL (hooks.slack.com)',
+      ),
       policy: policySchema,
       enabled: z.boolean(),
     }))

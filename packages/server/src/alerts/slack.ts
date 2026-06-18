@@ -1,4 +1,6 @@
+import type { Fetcher } from '../lib/ssrf'
 import type { AlertPayload } from './core'
+import { safeFetch } from '../lib/ssrf'
 import { listTests } from './core'
 
 export interface SlackPayload {
@@ -23,7 +25,7 @@ export function buildSlackMessage(input: AlertPayload): SlackPayload {
 export async function sendSlack(
   webhookUrl: string,
   payload: SlackPayload,
-  fetchImpl: typeof globalThis.fetch = globalThis.fetch,
+  fetchImpl: Fetcher = safeFetch,
 ): Promise<void> {
   const res = await fetchImpl(webhookUrl, {
     method: 'POST',

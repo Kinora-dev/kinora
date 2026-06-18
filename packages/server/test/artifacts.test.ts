@@ -11,7 +11,7 @@ beforeEach(resetDb)
 
 const root = resolve(env.STORAGE_DIR)
 
-async function uploadArtifact(key: string, name: string) {
+async function uploadArtifact(name: string) {
   const user = await createUser()
   const apiKey = await createApiKey(user.id)
   await ingest(apiKey)
@@ -30,7 +30,7 @@ async function uploadArtifact(key: string, name: string) {
 
 describe('artifact upload', () => {
   it('sanitizes a traversal name so the stored key stays under the run prefix', async () => {
-    const { res, run } = await uploadArtifact('k', '../../../../../../tmp/pwned')
+    const { res, run } = await uploadArtifact('../../../../../../tmp/pwned')
     expect(res.status).toBe(201)
 
     const a = (await db.query.artifact.findMany())[0]

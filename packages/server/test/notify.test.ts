@@ -57,11 +57,12 @@ async function seedPrevRun(projectId: string, tests: NormTest[], startedAt: Date
     await db.insert(testRow).values(tests.map(t => ({ id: randomUUID(), runId, projectId, ...t })))
 }
 
+// Targets use RFC 5737 documentation IPs: the SSRF guard treats them as public (skips DNS) and they never route.
 function setChannel(projectId: string, policy: 'always' | 'on-failure' | 'on-regression', enabled = true) {
-  return db.insert(slackIntegration).values({ projectId, webhookUrl: 'https://hooks.slack.com/services/x', policy, enabled })
+  return db.insert(slackIntegration).values({ projectId, webhookUrl: 'https://198.51.100.10/services/x', policy, enabled })
 }
 
-const WEBHOOK_URL = 'https://example.dev/hook'
+const WEBHOOK_URL = 'https://203.0.113.10/hook'
 function setWebhookChannel(projectId: string, policy: 'always' | 'on-failure' | 'on-regression', enabled = true) {
   return db.insert(alertChannel).values({ id: randomUUID(), projectId, kind: 'webhook', target: WEBHOOK_URL, policy, enabled })
 }
