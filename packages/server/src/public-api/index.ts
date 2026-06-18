@@ -7,7 +7,7 @@ import { Hono } from 'hono'
 import { notifyRun } from '../alerts/notify'
 import { getEntitlements, ingestCapError, quotaCrossing, quotaWarningText } from '../billing/entitlements'
 import { polarClient } from '../billing/polar'
-import { currentPeriodResults, projectCount } from '../billing/usage'
+import { currentPeriodResults, projectCount, startOfMonthUtc } from '../billing/usage'
 import { db } from '../db'
 import { artifact, member, project, run, test, user } from '../db/schemas/index'
 import { auth } from '../lib/auth'
@@ -39,7 +39,7 @@ publicApi.use('*', async (c, next) => {
 publicApi.post('/runs', zValidator('json', ingestRunSchema), async (c) => {
   const orgId = c.get('orgId')
   const input = c.req.valid('json')
-  // Bulk/historical import: still capped + metered, but no alerts (anti-spam).
+  // Backfill only suppresses alerts (anti-spam); billing/cap follow run.startedAt, so old runs are free.
   const backfill = c.req.query('backfill') === '1'
 
   const entitlements = await getEntitlements(orgId)
@@ -59,13 +59,17 @@ publicApi.post('/runs', zValidator('json', ingestRunSchema), async (c) => {
   const result = await db.transaction(async (tx) => {
     let projectId = existing?.id
     if (!projectId) {
-      projectId = randomUUID()
-      await tx.insert(project).values({
-        id: projectId,
+      // Concurrent imports race to create the same slug; let the unique index arbitrate, then re-read.
+      const inserted = await tx.insert(project).values({
+        id: randomUUID(),
         organizationId: orgId,
         slug: input.project.slug,
         name: input.project.name,
-      })
+      }).onConflictDoNothing({ target: [project.organizationId, project.slug] }).returning({ id: project.id })
+      projectId = inserted[0]?.id ?? (await tx.query.project.findFirst({
+        where: and(eq(project.organizationId, orgId), eq(project.slug, input.project.slug)),
+        columns: { id: true },
+      }))?.id
     }
 
     const runId = randomUUID()
@@ -109,7 +113,8 @@ publicApi.post('/runs', zValidator('json', ingestRunSchema), async (c) => {
     return { projectId, runId, tests: input.tests.length }
   })
 
-  if (polarClient && result.tests > 0) {
+  // Meter only runs that executed in the current period; historical backfill stays unmetered.
+  if (polarClient && result.tests > 0 && new Date(input.run.startedAt) >= startOfMonthUtc()) {
     try {
       // Polar customer = the org owner; meter usage against them.
       const owner = await db.query.member.findFirst({

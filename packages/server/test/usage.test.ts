@@ -12,7 +12,7 @@ function lastInstantOfPreviousMonthUtc(): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1) - 1)
 }
 
-async function seedTests(userId: string, count: number, createdAt?: Date): Promise<void> {
+async function seedTests(userId: string, count: number, startedAt?: Date): Promise<void> {
   const projectId = randomUUID()
   await db.insert(project).values({ id: projectId, organizationId: await ownedOrgId(userId), slug: `slug-${projectId}`, name: 'p' })
 
@@ -20,7 +20,7 @@ async function seedTests(userId: string, count: number, createdAt?: Date): Promi
   await db.insert(run).values({
     id: runId,
     projectId,
-    startedAt: new Date(),
+    startedAt: startedAt ?? new Date(),
     duration: 0,
     counts: { total: count, expected: count, unexpected: 0, flaky: 0, skipped: 0 },
   })
@@ -45,7 +45,6 @@ async function seedTests(userId: string, count: number, createdAt?: Date): Promi
       annotations: [],
       errors: [],
       attachments: [],
-      ...(createdAt ? { createdAt } : {}),
     })),
   )
 }
@@ -57,7 +56,7 @@ describe('currentPeriodResults', () => {
     expect(await currentPeriodResults(await ownedOrgId(user.id))).toBe(3)
   })
 
-  it('excludes test rows from previous months', async () => {
+  it('excludes runs that executed in previous months', async () => {
     const user = await createUser()
     await seedTests(user.id, 3)
     await seedTests(user.id, 5, lastInstantOfPreviousMonthUtc())
