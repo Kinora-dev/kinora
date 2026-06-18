@@ -4,6 +4,7 @@ import { zValidator } from '@hono/zod-validator'
 import { countsByTagFrom, ingestRunSchema } from '@kinora/core'
 import { and, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
+import { bodyLimit } from 'hono/body-limit'
 import { notifyRun } from '../alerts/notify'
 import { getEntitlements, ingestCapError, quotaCrossing, quotaWarningText } from '../billing/entitlements'
 import { meterTestResults, polarClient } from '../billing/polar'
@@ -36,7 +37,13 @@ publicApi.use('*', async (c, next) => {
   await next()
 })
 
-publicApi.post('/runs', zValidator('json', ingestRunSchema), async (c) => {
+// A run report is JSON; cap it well below the trace.zip artifact limit so a huge body can't OOM the parse.
+const ingestJsonLimit = bodyLimit({
+  maxSize: env.INGEST_MAX_JSON_MB * 1024 * 1024,
+  onError: c => c.json({ error: 'Payload too large' }, 413),
+})
+
+publicApi.post('/runs', ingestJsonLimit, zValidator('json', ingestRunSchema), async (c) => {
   const orgId = c.get('orgId')
   const input = c.req.valid('json')
   // Backfill only suppresses alerts (anti-spam); billing/cap follow run.startedAt, so old runs are free.
