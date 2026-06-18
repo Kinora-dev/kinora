@@ -21,7 +21,9 @@ Create a project API token in the kinora dashboard (Settings → Workspace). Aut
 
 ## Bulk import (historical backfill)
 
-Import every `*.json` report under a directory in one go - useful for seeding history from an existing archive. Imported runs are capped and metered like normal, but skip alerts (no notification spam), and traces are not uploaded.
+Import every `*.json` report under a directory in one go - useful for seeding history from an existing archive. Billing follows test execution date, so runs from past periods are free and don't consume your current quota; only current-period runs count. Imported runs also skip alerts (no notification spam).
+
+Traces are not uploaded by `import`: the reporter and `kinora upload` push traces because the `trace.zip` sits on disk next to the run, but a JSON-only archive has no zips to send. History (pass rates, trends, flaky detection) still works without them.
 
 ```bash
 npx @kinora/cli import ./reports --project web-app --token <project-token> --concurrency 8
