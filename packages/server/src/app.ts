@@ -8,6 +8,7 @@ import { secureHeaders } from 'hono/secure-headers'
 import { db } from './db'
 import { auth } from './lib/auth'
 import { env } from './lib/env'
+import { clientIp, rateLimit } from './lib/rate-limit'
 import { getTrustedOrigins } from './lib/utils'
 import { publicApi } from './public-api/index'
 import { appRouter } from './router/index'
@@ -40,8 +41,13 @@ app.get('/healthcheck', async (c) => {
 
 app.on(['POST', 'GET'], '/api/auth/*', c => auth.handler(c.req.raw))
 
+app.use('/trpc/*', rateLimit({ windowMs: 60_000, limit: 300 }))
 app.use('/trpc/*', trpcServer({ router: appRouter, createContext }))
 
+// Per-IP, before the body is read, so a flood is cheap to reject. Keyed by IP (not token) so
+// sharded CI spreads across runner IPs instead of summing into one bucket. Real throttle is
+// nginx limit_req (unspoofable IP); this is the backstop.
+app.use('/api/v1/*', rateLimit({ windowMs: 60_000, limit: env.INGEST_RATE_LIMIT, key: clientIp }))
 // Largest legitimate ingest body is a trace.zip artifact; cap before any parsing.
 app.use('/api/v1/*', bodyLimit({
   maxSize: 100 * 1024 * 1024,

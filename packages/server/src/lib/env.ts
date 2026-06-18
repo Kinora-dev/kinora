@@ -24,6 +24,8 @@ const envSchema = z.object({
   POLAR_WEBHOOK_SECRET: z.string().optional(),
   POLAR_PRODUCT_TEAM_ID: z.string().optional(),
   POLAR_PRODUCT_PRO_ID: z.string().optional(),
+  // Ingest requests per minute per client IP (DoS backstop; sharded CI spreads across IPs). Raise for pathological suites.
+  INGEST_RATE_LIMIT: z.coerce.number().int().positive().default(600),
   STORAGE_DIR: z.string().default('.data/artifacts'),
   S3_ENDPOINT: z.string().optional(),
   S3_REGION: z.string().optional(),
