@@ -12,17 +12,21 @@ export const countsSchema = z.object({
 })
 export type Counts = z.infer<typeof countsSchema>
 
+// repoUrl/runUrl are rendered as link hrefs, so constrain to https (no javascript:/data:/http -> stored XSS).
+// Tolerant: a bad value is dropped (catch -> undefined), not a reason to reject the whole run.
+const linkUrl = z.url({ protocol: /^https$/ }).optional().catch(undefined)
+
 export const gitMetaSchema = z.object({
   sha: z.string().optional(),
   branch: z.string().optional(),
   // Remote URL (e.g. https://github.com/org/repo) to link a sha to its commit.
-  repoUrl: z.string().optional(),
+  repoUrl: linkUrl,
 })
 export type GitMeta = z.infer<typeof gitMetaSchema>
 
 export const ciMetaSchema = z.object({
   provider: z.string().optional(),
-  runUrl: z.string().optional(),
+  runUrl: linkUrl,
   runNumber: z.string().optional(),
 })
 export type CiMeta = z.infer<typeof ciMetaSchema>

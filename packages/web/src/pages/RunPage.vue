@@ -15,6 +15,7 @@ import SearchInput from '@/components/app/SearchInput.vue'
 import TestStatusBadge from '@/components/viz/TestStatusBadge.vue'
 import { useManifest, useRun } from '@/composables/queries'
 import { traceViewerHref } from '@/lib/trace'
+import { httpsUrl } from '@/lib/url'
 
 const props = defineProps<{ projectId: string, runId: string }>()
 
@@ -36,10 +37,13 @@ const previousRunId = computed(() => {
 })
 
 // Link a sha to its commit. github/gitlab use /commit/, bitbucket /commits/.
-function commitUrl(repoUrl: string, sha: string): string {
-  const base = repoUrl.replace(/\/$/, '')
-  return `${base}/${base.includes('bitbucket.org') ? 'commits' : 'commit'}/${sha}`
-}
+// repoUrl is only trusted as an href if it's https; a bad value yields no link (guards stored XSS).
+const commitHref = computed(() => {
+  const g = report.value?.meta.git
+  const base = httpsUrl(g?.repoUrl)?.replace(/\/$/, '')
+  return base && g?.sha ? `${base}/${base.includes('bitbucket.org') ? 'commits' : 'commit'}/${g.sha}` : undefined
+})
+const ciRunHref = computed(() => httpsUrl(report.value?.meta.ci?.runUrl))
 
 const filter = useRouteQuery<'all' | PwTestStatus>('status', 'all')
 const search = useRouteQuery('q', '')
@@ -111,8 +115,8 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
                 <GitBranch class="size-3" />{{ report.meta.git.branch }}
                 <template v-if="report.meta.git.sha">
                   @ <a
-                    v-if="report.meta.git.repoUrl"
-                    :href="commitUrl(report.meta.git.repoUrl, report.meta.git.sha)"
+                    v-if="commitHref"
+                    :href="commitHref"
                     target="_blank"
                     rel="noreferrer"
                     class="hover:text-foreground hover:underline"
@@ -138,15 +142,15 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
               </RouterLink>
             </Button>
             <Button
-              v-if="report.meta.ci?.runUrl"
+              v-if="ciRunHref"
               as-child
               variant="outline"
               size="sm"
               class="font-mono text-xs text-muted-foreground"
             >
-              <a :href="report.meta.ci.runUrl" target="_blank" rel="noreferrer">
+              <a :href="ciRunHref" target="_blank" rel="noreferrer">
                 <ExternalLink class="size-3.5" />
-                {{ report.meta.ci.provider ?? 'CI' }}<span v-if="report.meta.ci.runNumber"> #{{ report.meta.ci.runNumber }}</span>
+                {{ report.meta.ci?.provider ?? 'CI' }}<span v-if="report.meta.ci?.runNumber"> #{{ report.meta.ci.runNumber }}</span>
               </a>
             </Button>
             <CopyLinkButton />

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { manifestSchema, runSummarySchema } from './kinora'
+import { gitMetaSchema, manifestSchema, runSummarySchema } from './kinora'
 
 describe('runSummarySchema', () => {
   it('defaults countsByTag to an empty object', () => {
@@ -28,5 +28,22 @@ describe('manifestSchema', () => {
   it('rejects an unknown schemaVersion', () => {
     const bad = manifestSchema.safeParse({ schemaVersion: 99, generatedAt: 'x', projects: [] })
     expect(bad.success).toBe(false)
+  })
+})
+
+describe('gitMetaSchema repoUrl', () => {
+  it('keeps an https url', () => {
+    expect(gitMetaSchema.parse({ repoUrl: 'https://github.com/org/repo' }).repoUrl).toBe('https://github.com/org/repo')
+  })
+
+  it('drops a javascript: url instead of failing the run', () => {
+    const r = gitMetaSchema.parse({ repoUrl: 'javascript:alert(1)', sha: 'abc' })
+    expect(r.repoUrl).toBeUndefined()
+    expect(r.sha).toBe('abc')
+  })
+
+  it('drops http and non-url strings', () => {
+    expect(gitMetaSchema.parse({ repoUrl: 'http://github.com/org/repo' }).repoUrl).toBeUndefined()
+    expect(gitMetaSchema.parse({ repoUrl: 'not a url' }).repoUrl).toBeUndefined()
   })
 })
