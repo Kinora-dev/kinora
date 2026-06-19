@@ -1,7 +1,7 @@
 import type { Manifest, NormTest, ProjectEntry, ProjectHistory, RunComparison, RunReport, RunSummary } from '@kinora/core'
 import { buildTestHistories, compareRuns, SCHEMA_VERSION } from '@kinora/core'
 import { TRPCError } from '@trpc/server'
-import { and, asc, desc, eq } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '../db'
 import { artifact, project, run, test } from '../db/schemas/index'
@@ -10,6 +10,10 @@ import { orgProcedure, router } from '../trpc/index'
 
 type RunRow = typeof run.$inferSelect
 type TestRow = typeof test.$inferSelect
+
+// Most-recent runs per project the dashboard loads. Memory bound until the UI gets pagination;
+// projects with more runs show this window in trends/history.
+export const MAX_DASHBOARD_RUNS = 500
 
 export async function ownedProject(organizationId: string, slug: string) {
   const p = await db.query.project.findFirst({
@@ -75,11 +79,16 @@ export const dashboardRouter = router({
       where: eq(project.organizationId, ctx.organizationId),
       orderBy: desc(project.updatedAt),
     })
-    const entries: ProjectEntry[] = []
-    for (const p of projects) {
-      const runs = await db.query.run.findMany({ where: eq(run.projectId, p.id), orderBy: desc(run.startedAt) })
-      entries.push({ id: p.slug, name: p.name, description: p.description ?? undefined, runs: runs.map(r => runSummary(p.slug, r)) })
-    }
+    // Per-project queries run concurrently (not a sequential N+1) and each is capped so one
+    // long-lived project can't load its entire run history into memory.
+    const entries: ProjectEntry[] = await Promise.all(projects.map(async (p) => {
+      const runs = await db.query.run.findMany({
+        where: eq(run.projectId, p.id),
+        orderBy: desc(run.startedAt),
+        limit: MAX_DASHBOARD_RUNS,
+      })
+      return { id: p.slug, name: p.name, description: p.description ?? undefined, runs: runs.map(r => runSummary(p.slug, r)) }
+    }))
     return { schemaVersion: SCHEMA_VERSION, generatedAt: new Date().toISOString(), projects: entries }
   }),
 
@@ -110,11 +119,14 @@ export const dashboardRouter = router({
     .input(z.object({ projectId: z.string().min(1) }))
     .query(async ({ ctx, input }): Promise<ProjectHistory> => {
       const p = await ownedProject(ctx.organizationId, input.projectId)
-      const runs = await db.query.run.findMany({ where: eq(run.projectId, p.id), orderBy: desc(run.startedAt) })
-      const allTests = await db.query.test.findMany({ where: eq(test.projectId, p.id) })
+      // Bound to the most recent runs, then load only those runs' tests (not every test row for the
+      // project) so a long-lived project doesn't pull millions of rows into memory.
+      const runs = await db.query.run.findMany({ where: eq(run.projectId, p.id), orderBy: desc(run.startedAt), limit: MAX_DASHBOARD_RUNS })
+      const runIds = runs.map(r => r.id)
+      const windowTests = runIds.length ? await db.query.test.findMany({ where: inArray(test.runId, runIds) }) : []
 
       const byRun = new Map<string, TestRow[]>()
-      for (const t of allTests) {
+      for (const t of windowTests) {
         const arr = byRun.get(t.runId) ?? []
         arr.push(t)
         byRun.set(t.runId, arr)

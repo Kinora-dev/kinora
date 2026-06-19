@@ -1,4 +1,9 @@
+import { randomUUID } from 'node:crypto'
+import { eq } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
+import { db } from '../src/db'
+import { project, run } from '../src/db/schemas/index'
+import { MAX_DASHBOARD_RUNS } from '../src/router/dashboard'
 import { caller, createApiKey, createUser, ingest, runPayload } from './helpers'
 
 describe('dashboard scoping', () => {
@@ -25,6 +30,24 @@ describe('dashboard scoping', () => {
     await ingest(await createApiKey(a.id))
 
     await expect((await caller(b)).dashboard.projectHistory({ projectId: 'web-app' })).rejects.toThrow()
+  })
+
+  it('manifest caps runs per project at DASHBOARD_MAX_RUNS', async () => {
+    const a = await createUser('a@test.dev')
+    await ingest(await createApiKey(a.id))
+    const p = await db.query.project.findFirst({ where: eq(project.slug, 'web-app') })
+
+    const extra = MAX_DASHBOARD_RUNS + 10
+    await db.insert(run).values(Array.from({ length: extra }, () => ({
+      id: randomUUID(),
+      projectId: p!.id,
+      startedAt: new Date(),
+      duration: 0,
+      counts: { total: 0, expected: 0, unexpected: 0, flaky: 0, skipped: 0 },
+    })))
+
+    const m = await (await caller(a)).dashboard.manifest()
+    expect(m.projects[0].runs).toHaveLength(MAX_DASHBOARD_RUNS)
   })
 
   it('manifest exposes countsByTag', async () => {
