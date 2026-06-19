@@ -77,9 +77,12 @@ export async function assertPublicUrl(raw: string): Promise<void> {
   }
 }
 
+// A hung endpoint must not tie up a caller; cap every outbound request.
+const OUTBOUND_TIMEOUT_MS = 5000
+
 // Residual DNS-rebinding TOCTOU between lookup and fetch is accepted; redirect:'error' stops a
 // public URL from 30x-ing to an internal one.
 export const safeFetch: Fetcher = async (url, init) => {
   await assertPublicUrl(url)
-  return globalThis.fetch(url, { ...init, redirect: 'error' })
+  return globalThis.fetch(url, { ...init, redirect: 'error', signal: AbortSignal.timeout(OUTBOUND_TIMEOUT_MS) })
 }

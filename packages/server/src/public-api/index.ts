@@ -138,20 +138,16 @@ publicApi.post('/runs', ingestJsonLimit, zValidator('json', ingestRunSchema), as
   }
 
   if (!backfill) {
-    try {
-      await notifyRun({
-        organizationId: orgId,
-        projectId: result.projectId,
-        runId: result.runId,
-        startedAt: new Date(input.run.startedAt),
-        branch: input.run.git?.branch,
-        counts: input.run.counts,
-        tests: input.tests,
-      })
-    }
-    catch (error) {
-      logger.error({ error, runId: result.runId }, 'alert notify failed')
-    }
+    // Fire-and-forget: alerts hit external webhook/Slack/SMTP and must not block or fail the ingest response.
+    void notifyRun({
+      organizationId: orgId,
+      projectId: result.projectId,
+      runId: result.runId,
+      startedAt: new Date(input.run.startedAt),
+      branch: input.run.git?.branch,
+      counts: input.run.counts,
+      tests: input.tests,
+    }).catch(error => logger.error({ error, runId: result.runId }, 'alert notify failed'))
   }
 
   // Free-tier usage warning, fired on the ingest that crosses 80% / 100% of the monthly cap.
