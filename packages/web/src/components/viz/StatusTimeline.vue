@@ -7,11 +7,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@kinora/ui/tooltip'
-import { computed } from 'vue'
+import { useResizeObserver } from '@vueuse/core'
+import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
+// `slots`: render a fixed number of equal cells (recent on the right, empty slots padding the left)
+// so every row lines up. Omit it for the full adaptive timeline (detail view).
 const props = withDefaults(
-  defineProps<{ points: TestPoint[], projectId: string, height?: number, link?: boolean, q?: string }>(),
+  defineProps<{ points: TestPoint[], projectId: string, height?: number, link?: boolean, q?: string, slots?: number }>(),
   { height: 20, link: true },
 )
 
@@ -22,27 +25,52 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
   minute: '2-digit',
 })
 
-const cells = computed(() =>
-  props.points.map(p => ({
+// Adaptive mode only: cells are min 3px + 3px gap, so render only the most recent points that fit and
+// never overflow the column. Width is unknown until mounted, so show all until measured.
+const CELL_PX = 6
+const root = ref<HTMLElement>()
+const maxCells = ref(Number.POSITIVE_INFINITY)
+useResizeObserver(root, ([entry]) => {
+  maxCells.value = Math.max(1, Math.floor(entry.contentRect.width / CELL_PX))
+})
+
+const cells = computed(() => {
+  const limit = props.slots ?? (Number.isFinite(maxCells.value) ? maxCells.value : props.points.length)
+  return props.points.slice(-limit).map(p => ({
     point: p,
     meta: pwStatusMeta[p.status],
     date: dateFmt.format(new Date(p.startedAt)),
-  })),
-)
+  }))
+})
+
+// In slots mode, fill the unused leading slots with empty placeholders so all rows are the same width.
+const padCount = computed(() => (props.slots ? Math.max(0, props.slots - cells.value.length) : 0))
+
+// Slots mode uses fixed-width cells so every cell is identical (flex-1 sub-pixel rounds unevenly across
+// a non-divisible width); adaptive mode flex-fills the column.
+const cellClass = computed(() => (props.slots ? 'w-1.5 shrink-0' : 'min-w-[3px] flex-1'))
+const containerClass = computed(() => (props.slots ? 'justify-end gap-[2px]' : 'gap-[3px]'))
 </script>
 
 <template>
   <TooltipProvider :delay-duration="80">
-    <div class="flex items-stretch gap-[3px]" :style="{ height: `${height}px` }">
+    <div ref="root" class="flex items-stretch overflow-hidden" :class="containerClass" :style="{ height: `${height}px` }">
+      <span
+        v-for="i in padCount"
+        :key="`pad-${i}`"
+        class="rounded-[2px] bg-muted/40"
+        :class="cellClass"
+      />
       <Tooltip v-for="c in cells" :key="c.point.runId">
         <TooltipTrigger as-child>
           <component
             :is="link ? RouterLink : 'div'"
             :to="link ? { name: 'run', params: { projectId, runId: c.point.runId }, query: q ? { q } : undefined } : undefined"
-            class="group flex flex-1 items-stretch"
+            class="group flex items-stretch"
+            :class="cellClass"
           >
             <span
-              class="w-full min-w-[3px] rounded-[2px] opacity-85 transition-all duration-150 group-hover:opacity-100"
+              class="w-full rounded-[2px] opacity-85 transition-all duration-150 group-hover:opacity-100"
               :class="c.meta.cell"
             />
           </component>
