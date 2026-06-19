@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { formatPct, stripAnsi } from '@kinora/core'
+import { Button } from '@kinora/ui/button'
 import { Separator } from '@kinora/ui/separator'
 import { Skeleton } from '@kinora/ui/skeleton'
 import { StatBlock } from '@kinora/ui/stat-block'
 import { ArrowLeft } from 'lucide-vue-next'
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import CopyLinkButton from '@/components/app/CopyLinkButton.vue'
 import StatusTimeline from '@/components/viz/StatusTimeline.vue'
@@ -29,6 +30,14 @@ const incidents = computed(() =>
     ? [...history.value.points].reverse().filter(p => p.status === 'unexpected' || p.status === 'flaky')
     : [],
 )
+
+// A failing test can have hundreds of incidents; show the most recent by default, reveal the rest on demand.
+const INCIDENT_LIMIT = 25
+const showAll = ref(false)
+const visibleIncidents = computed(() => (showAll.value ? incidents.value : incidents.value.slice(0, INCIDENT_LIMIT)))
+watch(testKey, () => {
+  showAll.value = false
+})
 
 const dateFmt = new Intl.DateTimeFormat(undefined, {
   weekday: 'short',
@@ -109,7 +118,7 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
           Failures & flakes ({{ incidents.length }})
         </h2>
         <RouterLink
-          v-for="p in incidents"
+          v-for="p in visibleIncidents"
           :key="p.runId"
           :to="{ name: 'run', params: { projectId, runId: p.runId }, query: { q: history.title } }"
           class="block rounded-lg border border-border/70 bg-card/80 px-4 py-3 transition-colors hover:border-border"
@@ -127,6 +136,16 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
         <div v-if="!incidents.length" class="py-8 text-center font-mono text-sm text-pass">
           No failures recorded. Rock solid.
         </div>
+
+        <Button
+          v-if="incidents.length > INCIDENT_LIMIT"
+          variant="outline"
+          size="sm"
+          class="mt-1 self-center font-mono text-xs text-muted-foreground"
+          @click="showAll = !showAll"
+        >
+          {{ showAll ? 'Show less' : `Show all ${incidents.length}` }}
+        </Button>
       </div>
     </template>
   </div>
