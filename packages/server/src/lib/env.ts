@@ -26,8 +26,6 @@ const envSchema = z.object({
   POLAR_PRODUCT_PRO_ID: z.string().optional(),
   // Ingest requests per minute per client IP (DoS backstop; sharded CI spreads across IPs). Raise for pathological suites.
   INGEST_RATE_LIMIT: z.coerce.number().int().positive().default(600),
-  // Max JSON body (MB) for POST /runs. Bounds parse-cost OOM; trace.zip artifact uploads keep their own larger limit.
-  INGEST_MAX_JSON_MB: z.coerce.number().int().positive().default(25),
   STORAGE_DIR: z.string().default('.data/artifacts'),
   S3_ENDPOINT: z.string().optional(),
   S3_REGION: z.string().optional(),

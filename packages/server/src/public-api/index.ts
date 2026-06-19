@@ -18,6 +18,7 @@ import { sendMail } from '../lib/mailer'
 import { storage } from '../lib/storage'
 
 const BEARER_PREFIX = 'Bearer '
+const INGEST_MAX_JSON_MB = 25
 
 // Public ingest API (api-key authed) - the reporter / cli upload here. The token's
 // referenceId is the owning organization id.
@@ -39,7 +40,7 @@ publicApi.use('*', async (c, next) => {
 
 // A run report is JSON; cap it well below the trace.zip artifact limit so a huge body can't OOM the parse.
 const ingestJsonLimit = bodyLimit({
-  maxSize: env.INGEST_MAX_JSON_MB * 1024 * 1024,
+  maxSize: INGEST_MAX_JSON_MB * 1024 * 1024,
   onError: c => c.json({ error: 'Payload too large' }, 413),
 })
 
