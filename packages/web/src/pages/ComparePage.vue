@@ -9,6 +9,7 @@ import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import TestStatusBadge from '@/components/viz/TestStatusBadge.vue'
 import { useCompareRuns } from '@/composables/queries'
+import { testLabel } from '@/lib/test-display'
 
 const props = defineProps<{ projectId: string }>()
 const route = useRoute()
@@ -114,7 +115,7 @@ function shortId(id: string): string {
         >
           <div class="min-w-0">
             <div class="truncate text-sm font-medium">
-              {{ t.titlePath.join(' › ') }}
+              {{ testLabel(t) }}
             </div>
             <div class="mt-0.5 font-mono text-[11px] text-muted-foreground">
               {{ t.file }} · {{ t.projectName }}

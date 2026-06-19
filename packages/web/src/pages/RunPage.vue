@@ -14,6 +14,7 @@ import CopyLinkButton from '@/components/app/CopyLinkButton.vue'
 import SearchInput from '@/components/app/SearchInput.vue'
 import TestStatusBadge from '@/components/viz/TestStatusBadge.vue'
 import { useManifest, useRun } from '@/composables/queries'
+import { testLabel } from '@/lib/test-display'
 import { traceViewerHref } from '@/lib/trace'
 import { httpsUrl } from '@/lib/url'
 
@@ -225,7 +226,7 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
                 :to="{ name: 'test', params: { projectId }, query: { key: t.testKey } }"
                 class="mt-1.5 block truncate text-sm font-medium hover:underline"
               >
-                {{ t.titlePath.join(' › ') }}
+                {{ testLabel(t) }}
               </RouterLink>
               <div class="mt-0.5 font-mono text-[11px] text-muted-foreground">
                 {{ t.file }}:{{ t.line }} &middot; {{ t.projectName }}

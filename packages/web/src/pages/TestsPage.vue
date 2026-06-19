@@ -22,6 +22,7 @@ import SearchInput from '@/components/app/SearchInput.vue'
 import StatusTimeline from '@/components/viz/StatusTimeline.vue'
 import TestStatusBadge from '@/components/viz/TestStatusBadge.vue'
 import { useProjectHistory } from '@/composables/queries'
+import { testLabel } from '@/lib/test-display'
 
 const props = defineProps<{ projectId: string }>()
 const { state, isLoading, error } = useProjectHistory(props.projectId)
@@ -145,7 +146,7 @@ function setPage(p: number) {
           <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-2">
               <TestStatusBadge :status="h.lastStatus" />
-              <span class="truncate text-sm font-medium">{{ h.titlePath.join(' › ') }}</span>
+              <span class="truncate text-sm font-medium">{{ testLabel(h) }}</span>
               <Badge v-if="h.newlyBroken" class="border-fail/30 bg-fail/15 text-[10px] text-fail">
                 Newly broken
               </Badge>
