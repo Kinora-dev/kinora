@@ -161,7 +161,7 @@ function setPage(p: number) {
 
           <div class="flex items-center gap-6">
             <div class="hidden w-40 sm:block">
-              <StatusTimeline :points="h.points" :project-id="projectId" :height="18" :link="false" />
+              <StatusTimeline :points="h.points" :project-id="projectId" :height="18" :link="false" :slots="20" />
             </div>
             <div class="w-14 text-right">
               <div class="font-mono text-sm tabular-nums" :class="h.recentFlakyRate ? 'text-flaky' : 'text-muted-foreground'">
