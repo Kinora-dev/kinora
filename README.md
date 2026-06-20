@@ -102,7 +102,7 @@ cd packages/web
 cp .env.example .env
 pnpm dev                        # dashboard on :5173
 
-# 3. trace viewer
+# 3. trace viewer (from the repo root)
 pnpm dev:viewer                 # trace viewer on :5174
 ```
 
@@ -120,15 +120,7 @@ pnpm test:e2e     # trace-viewer and web e2e (Playwright)
 
 ## Self-hosting
 
-Run the whole stack with one `docker compose` (Postgres + server + dashboard, single origin, local-FS artifacts, no S3):
-
-```bash
-cd selfhost
-cp .env.example .env   # edit PUBLIC_URL, AUTH_SECRET, POSTGRES_PASSWORD
-docker compose up -d --build
-```
-
-See [`selfhost/README.md`](selfhost/README.md) for configuration, sending tests, custom domains, upgrades, and backups.
+Run the whole stack with one `docker compose` (Postgres + server + dashboard, single origin, local-FS artifacts, no S3). See [`selfhost/README.md`](selfhost/README.md) for the quickstart, configuration, sending tests, custom domains, upgrades, and backups.
 
 ## Licensing
 

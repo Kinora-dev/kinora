@@ -51,7 +51,7 @@ On GitHub Actions, `git` and `ci` metadata (including the repo URL) auto-detect 
 ## CI example (GitHub Actions)
 
 ```yaml
-- run: npx playwright test --reporter=json --output=results.json
+- run: PLAYWRIGHT_JSON_OUTPUT_NAME=results.json npx playwright test --reporter=json
 - run: npx @kinora/cli upload results.json --project web-app
   if: always()
   env:
