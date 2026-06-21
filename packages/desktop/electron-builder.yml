@@ -30,6 +30,23 @@ mac:
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.inherit.plist
 
+dmg:
+  title: kinora ${version}
+  background: build/dmg-background.png
+  window:
+    width: 600
+    height: 400
+  iconSize: 120
+  iconTextSize: 13
+  contents:
+    - x: 150
+      y: 190
+      type: file
+    - x: 450
+      y: 190
+      type: link
+      path: /Applications
+
 win:
   target:
     - nsis
