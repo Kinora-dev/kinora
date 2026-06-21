@@ -25,6 +25,8 @@ const bridge: KinoraBridge = {
   cancelRerun: () => ipcRenderer.invoke('kinora:cancel-rerun'),
   openRerunTrace: () => ipcRenderer.invoke('kinora:open-rerun-trace'),
   openAccount: () => ipcRenderer.invoke('kinora:open-account'),
+  onUpdateReady: cb => ipcRenderer.on('kinora:update-ready', () => cb()),
+  restartToUpdate: () => ipcRenderer.invoke('kinora:restart-to-update'),
 }
 
 contextBridge.exposeInMainWorld('kinora', bridge)

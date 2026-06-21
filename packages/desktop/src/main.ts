@@ -3,6 +3,7 @@ import type { ChildProcess } from 'node:child_process'
 import path from 'node:path'
 import process from 'node:process'
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
+import { autoUpdater } from 'electron-updater'
 import { signIn } from './account'
 import { loadConfig, saveConfig } from './config'
 import { pollDeviceToken, requestDeviceCode } from './device'
@@ -248,6 +249,8 @@ function registerIpc(): void {
     if (lastRerunTrace)
       openViewer(lastRerunTrace)
   })
+
+  ipcMain.handle('kinora:restart-to-update', () => autoUpdater.quitAndInstall())
 }
 
 interface RerunInput { projectId: string, file: string, line: number, projectName?: string }
@@ -326,6 +329,17 @@ async function main(): Promise<void> {
     homeWin = null
   })
   buildMenu({ win: homeWin, onOpen: openViewer, onDemo: () => openViewer(null) })
+
+  // Auto-update from GitHub Releases. Downloads in the background and surfaces an
+  // in-app "Restart to update" pill when ready; installs on quit either way.
+  // Packaged only: dev/probe builds have no published feed.
+  if (app.isPackaged) {
+    autoUpdater.on('error', err => console.error('[updater]', err))
+    autoUpdater.on('update-downloaded', () => sendHome('kinora:update-ready'))
+    void autoUpdater.checkForUpdates()
+    // Long-running sessions: re-check periodically so users who never restart still update.
+    setInterval(() => void autoUpdater.checkForUpdates(), 6 * 60 * 60 * 1000)
+  }
 
   // A trace passed at launch opens straight in the viewer.
   const launchTrace = pendingOpen || argvTrace()

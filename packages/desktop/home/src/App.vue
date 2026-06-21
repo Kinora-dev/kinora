@@ -23,6 +23,7 @@ const projectPaths = ref<Record<string, string>>({})
 const highlightLink = ref(false)
 const rerun = ref<{ title: string, status: 'running' | 'passed' | 'failed' | 'error', log: string, hasTrace: boolean, watch: boolean } | null>(null)
 const logEl = ref<HTMLElement | null>(null)
+const updateReady = ref(false)
 
 const rerunStatusText = computed(() => {
   const s = rerun.value?.status
@@ -78,6 +79,10 @@ onMounted(refresh)
 
 window.kinora.onDevicePending((info) => {
   deviceCode.value = info.userCode
+})
+
+window.kinora.onUpdateReady(() => {
+  updateReady.value = true
 })
 
 window.kinora.onRerunStarted(() => {
@@ -148,6 +153,10 @@ function openTrace(): void {
 
 function openAccount(): void {
   void window.kinora.openAccount()
+}
+
+function restartToUpdate(): void {
+  void window.kinora.restartToUpdate()
 }
 
 function onViewTrace(traceUrl: string): void {
@@ -271,11 +280,13 @@ function viewRerunTrace(): void {
       :user="user"
       :project-path="activePath"
       :highlight-link="highlightLink"
+      :update-ready="updateReady"
       @select="selectProject"
       @open-trace="openTrace"
       @open-account="openAccount"
       @link-folder="linkActiveProject"
       @logout="onLogout"
+      @restart-update="restartToUpdate"
     />
 
     <main class="w-full flex-1 overflow-auto">

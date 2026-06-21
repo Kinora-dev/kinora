@@ -7,11 +7,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { SegmentedControl } from '@kinora/ui/segmented-control'
 import { colorMode } from '@kinora/ui/theme'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@kinora/ui/tooltip'
-import { Check, ChevronsUpDown, ExternalLink, FolderGit2, FolderOpen, LogOut, Monitor, Moon, Settings, Sun } from 'lucide-vue-next'
+import { ArrowUpCircle, Check, ChevronsUpDown, ExternalLink, FolderGit2, FolderOpen, LogOut, Monitor, Moon, Settings, Sun } from 'lucide-vue-next'
 import { computed } from 'vue'
 
-const props = defineProps<{ projects: ProjectEntry[], activeId: string | null, user: SessionUser | null, projectPath: string | null, highlightLink: boolean }>()
-defineEmits<{ select: [id: string], openTrace: [], logout: [], openAccount: [], linkFolder: [] }>()
+const props = defineProps<{ projects: ProjectEntry[], activeId: string | null, user: SessionUser | null, projectPath: string | null, highlightLink: boolean, updateReady: boolean }>()
+defineEmits<{ select: [id: string], openTrace: [], logout: [], openAccount: [], linkFolder: [], restartUpdate: [] }>()
 
 const active = computed(() => props.projects.find(p => p.id === props.activeId))
 const initial = computed(() => (props.user?.name || props.user?.email || '?').charAt(0).toUpperCase())
@@ -80,6 +80,19 @@ function setTheme(value: ColorMode): void {
         </Tooltip>
 
         <div class="ml-auto flex items-center gap-4">
+          <Tooltip v-if="updateReady">
+            <TooltipTrigger as-child>
+              <button
+                type="button"
+                class="flex items-center gap-1.5 rounded-md border border-signal/40 bg-signal/10 px-2.5 py-1.5 font-mono text-xs text-signal transition-colors hover:bg-signal/15"
+                @click="$emit('restartUpdate')"
+              >
+                <ArrowUpCircle class="size-3.5" />
+                Restart to update
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>A new version downloaded. Restart to install it.</TooltipContent>
+          </Tooltip>
           <Tooltip>
             <TooltipTrigger as-child>
               <button

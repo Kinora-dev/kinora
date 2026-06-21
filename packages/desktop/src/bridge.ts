@@ -55,6 +55,10 @@ export interface KinoraBridge {
   openRerunTrace: () => Promise<void>
   // Open the web account settings in the system browser (account mgmt lives in web).
   openAccount: () => Promise<void>
+  // A new version finished downloading in the background and is ready to install.
+  onUpdateReady: (cb: () => void) => void
+  // Quit and install the downloaded update (restarts the app on the new version).
+  restartToUpdate: () => Promise<void>
 }
 
 declare global {
