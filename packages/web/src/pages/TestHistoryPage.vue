@@ -76,8 +76,8 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
             <h1 class="text-xl font-semibold tracking-tight">
               {{ history.title }}
             </h1>
-            <div class="mt-1 font-mono text-xs text-muted-foreground">
-              {{ history.titlePath.slice(0, -1).join(' › ') || history.file }}
+            <div v-if="history.titlePath.length > 2" class="mt-1 font-mono text-xs text-muted-foreground">
+              {{ history.titlePath.slice(1, -1).join(' › ') }}
             </div>
             <div class="mt-0.5 font-mono text-[11px] text-muted-foreground">
               {{ history.file }} · {{ history.projectName }}
@@ -96,7 +96,7 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
             <Separator orientation="vertical" class="h-10" />
             <StatBlock
               label="Pass rate" :value="formatPct(history.passRate)"
-              :tone="history.failed ? 'fail' : history.flaky ? 'flaky' : 'pass'"
+              :tone="history.passRate >= 0.99 ? 'pass' : history.passRate >= 0.9 ? 'flaky' : 'fail'"
             />
             <Separator orientation="vertical" class="h-10" />
             <StatBlock label="Flaky rate" :value="formatPct(history.flakyRate)" :tone="history.flaky ? 'flaky' : 'default'" />
