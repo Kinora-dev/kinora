@@ -91,6 +91,9 @@ const historyMap = computed(() => new Map(props.histories.map(h => [h.testKey, h
 const allTests = computed(() => [...(props.report?.tests ?? [])].sort((a, b) => (RANK[a.status] ?? 9) - (RANK[b.status] ?? 9)))
 const failed = computed(() => allTests.value.filter(isFail))
 const rate = computed(() => (props.report ? passRate(props.report.counts) : 0))
+const runDate = computed(() => (props.report
+  ? new Date(props.report.startedAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+  : ''))
 
 const regressedKeys = computed(() => new Set(
   failed.value.filter(t => regressed(historyMap.value.get(t.testKey))).map(t => t.testKey),
@@ -161,7 +164,7 @@ ${errors || '(no error captured)'}`
             {{ project.name }}
           </h1>
           <p class="mt-0.5 font-mono text-[11px] text-muted-foreground">
-            {{ project.id }} · latest run
+            latest run<span v-if="runDate"> · {{ runDate }}</span>
           </p>
         </div>
         <div v-if="report" class="flex items-center gap-4 font-mono text-xs tabular-nums">
