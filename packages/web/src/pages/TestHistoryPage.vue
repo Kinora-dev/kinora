@@ -11,7 +11,6 @@ import CopyLinkButton from '@/components/app/CopyLinkButton.vue'
 import StatusTimeline from '@/components/viz/StatusTimeline.vue'
 import TestStatusBadge from '@/components/viz/TestStatusBadge.vue'
 import { useProjectHistory } from '@/composables/queries'
-import { passRateTone } from '@/lib/rate'
 
 const props = defineProps<{ projectId: string }>()
 const route = useRoute()
@@ -95,10 +94,7 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
           <div class="flex flex-wrap items-center gap-x-10 gap-y-4">
             <StatBlock label="Runs" :value="history.runs" />
             <Separator orientation="vertical" class="h-10" />
-            <StatBlock
-              label="Pass rate" :value="formatPct(history.passRate)"
-              :tone="passRateTone(history.passRate)"
-            />
+            <StatBlock label="Pass rate" :value="formatPct(history.passRate)" />
             <Separator orientation="vertical" class="h-10" />
             <StatBlock label="Flaky rate" :value="formatPct(history.flakyRate)" :tone="history.flaky ? 'flaky' : 'default'" />
             <Separator orientation="vertical" class="h-10" />

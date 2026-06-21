@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { PwTestStatus } from '@kinora/core'
-import { formatDuration, formatPct, passRate, stripAnsi } from '@kinora/core'
+import { formatDuration, formatPct, passRate, runHealth, stripAnsi } from '@kinora/core'
 import { Button } from '@kinora/ui/button'
 import { Separator } from '@kinora/ui/separator'
 import { Skeleton } from '@kinora/ui/skeleton'
@@ -14,7 +14,6 @@ import CopyLinkButton from '@/components/app/CopyLinkButton.vue'
 import SearchInput from '@/components/app/SearchInput.vue'
 import TestStatusBadge from '@/components/viz/TestStatusBadge.vue'
 import { useManifest, useRun } from '@/composables/queries'
-import { passRateTone } from '@/lib/rate'
 import { testLabel } from '@/lib/test-display'
 import { traceViewerHref } from '@/lib/trace'
 import { httpsUrl } from '@/lib/url'
@@ -27,6 +26,10 @@ const { state: manifest } = useManifest()
 const projectName = computed(
   () => manifest.value?.projects.find(p => p.id === props.projectId)?.name ?? props.projectId,
 )
+
+// A run's pass rate is colored by the run's health, not its value: a run with real failures reads red.
+const HEALTH_TONE = { passing: 'pass', flaky: 'flaky', failing: 'fail', empty: 'default' } as const
+const passTone = computed(() => (report.value ? HEALTH_TONE[runHealth(report.value.counts)] : 'default'))
 
 // The run just before this one (older startedAt) in the same project, for "Compare with previous".
 const previousRunId = computed(() => {
@@ -162,7 +165,7 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
         <div class="flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg border border-border/70 bg-card/80 px-6 py-5">
           <StatBlock
             label="Pass rate" :value="formatPct(passRate(report.counts))"
-            :tone="passRateTone(passRate(report.counts))"
+            :tone="passTone"
           />
           <Separator orientation="vertical" class="h-10" />
           <StatBlock label="Total" :value="report.counts.total" />

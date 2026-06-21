@@ -1,32 +1,24 @@
 <script setup lang="ts">
 import type { ProjectEntry } from '@kinora/core'
-import { formatDuration, formatPct, latestRun, passRate, runHealth, sortedRuns, trend } from '@kinora/core'
+import { formatDuration, formatPct, latestRun, recentPassRate, runHealth, trend } from '@kinora/core'
 import { Card } from '@kinora/ui/card'
 import { HealthBadge } from '@kinora/ui/health-badge'
 import { RunStrip } from '@kinora/ui/run-strip'
 import { Sparkline } from '@kinora/ui/sparkline'
-import { ArrowDownRight, ArrowRight, ArrowUpRight } from 'lucide-vue-next'
+import { ArrowRight } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { passRateTextClass } from '@/lib/rate'
 
 const props = defineProps<{ project: ProjectEntry }>()
 
+const RECENT_RUNS = 20
+
 const router = useRouter()
 
-const runs = computed(() => sortedRuns(props.project))
 const latest = computed(() => latestRun(props.project))
 const health = computed(() => (latest.value ? runHealth(latest.value.counts) : 'empty'))
-const rate = computed(() => (latest.value ? passRate(latest.value.counts) : 0))
-const prevRate = computed(() => {
-  const r = runs.value[1]
-  return r ? passRate(r.counts) : null
-})
-const delta = computed(() => (prevRate.value == null ? null : rate.value - prevRate.value))
+const rate = computed(() => recentPassRate(props.project.runs, RECENT_RUNS))
 const series = computed(() => trend(props.project).map(t => t.passRate))
-
-// The pass-rate number + sparkline tint by the rate's value (the HealthBadge carries pass/fail/flaky state).
-const toneText = computed(() => (latest.value ? passRateTextClass(rate.value) : 'text-muted-foreground'))
 
 const rel = computed(() => {
   if (!latest.value)
@@ -64,23 +56,13 @@ const rel = computed(() => {
     <div class="flex items-end justify-between gap-4 px-5">
       <div class="flex flex-col gap-1">
         <span class="font-mono text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-          Pass rate
+          Pass rate <span class="text-muted-foreground/60">· last {{ RECENT_RUNS }}</span>
         </span>
-        <div class="flex items-baseline gap-2">
-          <span class="font-mono text-3xl font-semibold tabular-nums leading-none" :class="toneText">
-            {{ formatPct(rate) }}
-          </span>
-          <span
-            v-if="delta != null && Math.abs(delta) >= 0.001"
-            class="flex items-center font-mono text-xs tabular-nums"
-            :class="delta >= 0 ? 'text-pass' : 'text-fail'"
-          >
-            <component :is="delta >= 0 ? ArrowUpRight : ArrowDownRight" class="size-3" />
-            {{ formatPct(Math.abs(delta)) }}
-          </span>
-        </div>
+        <span class="font-mono text-3xl font-semibold tabular-nums leading-none">
+          {{ formatPct(rate) }}
+        </span>
       </div>
-      <div class="w-1/2 max-w-[220px]" :class="toneText">
+      <div class="w-1/2 max-w-[220px] text-muted-foreground">
         <Sparkline :values="series" :height="40" />
       </div>
     </div>
@@ -89,7 +71,7 @@ const rel = computed(() => {
     <div class="px-5 pt-4">
       <RunStrip
         :runs="project.runs"
-        :limit="30"
+        :limit="RECENT_RUNS"
         @select="r => router.push({ name: 'run', params: { projectId: r.projectId, runId: r.runId } })"
       />
     </div>

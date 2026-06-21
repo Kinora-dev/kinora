@@ -31,6 +31,18 @@ export function latestRun(p: ProjectEntry): RunSummary | undefined {
   return sortedRuns(p)[0]
 }
 
+// Pooled pass rate over the most recent n runs (sums passed/executed across them, not an average of per-run rates).
+export function recentPassRate(runs: RunSummary[], n: number): number {
+  const recent = [...runs].sort((a, b) => Date.parse(b.startedAt) - Date.parse(a.startedAt)).slice(0, n)
+  let pass = 0
+  let total = 0
+  for (const r of recent) {
+    pass += r.counts.expected + r.counts.flaky
+    total += denom(r.counts)
+  }
+  return total === 0 ? 1 : pass / total
+}
+
 export interface TrendPoint {
   runId: string
   startedAt: string

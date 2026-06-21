@@ -2,7 +2,7 @@
 import {
   formatPct,
   latestRun,
-  passRate,
+  recentPassRate,
   runHealth,
   sortedRuns,
   trend,
@@ -18,9 +18,11 @@ import { RouterLink } from 'vue-router'
 import RunHistoryTable from '@/components/project/RunHistoryTable.vue'
 import { useManifest } from '@/composables/queries'
 import { useOrg } from '@/composables/useOrg'
-import { passRateTextClass, passRateTone } from '@/lib/rate'
 
 const props = defineProps<{ projectId: string }>()
+
+const RECENT_RUNS = 20
+
 const { isAdmin } = useOrg()
 const { state: manifest, isLoading, error } = useManifest()
 
@@ -29,10 +31,9 @@ const project = computed(() =>
 )
 const runs = computed(() => (project.value ? sortedRuns(project.value) : []))
 const latest = computed(() => (project.value ? latestRun(project.value) : undefined))
+const rate = computed(() => recentPassRate(runs.value, RECENT_RUNS))
 const series = computed(() => (project.value ? trend(project.value).map(t => t.passRate) : []))
 const health = computed(() => (latest.value ? runHealth(latest.value.counts) : 'empty'))
-// Sparkline tints by the latest pass-rate value (matches the pass-rate stat); health state is the badge.
-const toneText = computed(() => (latest.value ? passRateTextClass(passRate(latest.value.counts)) : 'text-muted-foreground'))
 </script>
 
 <template>
@@ -92,14 +93,14 @@ const toneText = computed(() => (latest.value ? passRateTextClass(passRate(lates
         <div class="flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg border border-border/70 bg-card/80 px-6 py-5">
           <StatBlock
             label="Pass rate"
-            :value="latest ? formatPct(passRate(latest.counts)) : '-'"
-            :tone="latest ? passRateTone(passRate(latest.counts)) : 'default'"
+            :value="latest ? formatPct(rate) : '-'"
+            :sub="latest ? `last ${RECENT_RUNS} runs` : undefined"
           />
           <Separator orientation="vertical" class="h-10" />
           <StatBlock label="Runs" :value="runs.length" />
           <Separator orientation="vertical" class="h-10" />
           <StatBlock label="Tests" :value="latest?.counts.total ?? 0" />
-          <div class="ml-auto w-40" :class="toneText">
+          <div class="ml-auto w-40 text-muted-foreground">
             <Sparkline :values="series" :height="44" :width="160" />
           </div>
         </div>
