@@ -1,5 +1,4 @@
 import type { KinoraBridge } from './bridge'
-import process from 'node:process'
 import { contextBridge, ipcRenderer } from 'electron'
 // The home renderer talks to the main process through this bridge only. The token and
 // the server live in main; the renderer never sees them.
