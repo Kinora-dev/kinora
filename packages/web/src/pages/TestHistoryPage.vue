@@ -89,17 +89,20 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
           </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg border border-border/70 bg-card/80 px-6 py-5">
-          <StatBlock label="Runs" :value="history.runs" />
-          <Separator orientation="vertical" class="h-10" />
-          <StatBlock
-            label="Pass rate" :value="formatPct(history.passRate)"
-            :tone="history.failed ? 'fail' : history.flaky ? 'flaky' : 'pass'"
-          />
-          <Separator orientation="vertical" class="h-10" />
-          <StatBlock label="Flaky rate" :value="formatPct(history.flakyRate)" :tone="history.flaky ? 'flaky' : 'default'" />
-          <Separator orientation="vertical" class="h-10" />
-          <StatBlock label="Fail rate" :value="formatPct(history.failRate)" :tone="history.failed ? 'fail' : 'default'" />
+        <div class="flex flex-col gap-3 rounded-lg border border-border/70 bg-card/80 px-6 py-5">
+          <span class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">All-time</span>
+          <div class="flex flex-wrap items-center gap-x-10 gap-y-4">
+            <StatBlock label="Runs" :value="history.runs" />
+            <Separator orientation="vertical" class="h-10" />
+            <StatBlock
+              label="Pass rate" :value="formatPct(history.passRate)"
+              :tone="history.failed ? 'fail' : history.flaky ? 'flaky' : 'pass'"
+            />
+            <Separator orientation="vertical" class="h-10" />
+            <StatBlock label="Flaky rate" :value="formatPct(history.flakyRate)" :tone="history.flaky ? 'flaky' : 'default'" />
+            <Separator orientation="vertical" class="h-10" />
+            <StatBlock label="Fail rate" :value="formatPct(history.failRate)" :tone="history.failed ? 'fail' : 'default'" />
+          </div>
         </div>
       </div>
 
