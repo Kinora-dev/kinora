@@ -34,10 +34,10 @@ Desktop (from `packages/desktop`; build the viewer once first - the app serves i
 
 ```bash
 pnpm --filter @kinora/trace-viewer build  # one-time, from repo root
-pnpm dev                          # build CJS + home UI, launch Electron (demo trace renders)
+pnpm dev                          # build main (cjs) + home UI, launch Electron
 pnpm start path/to/trace.zip      # open a specific local trace
 pnpm probe                        # headless self-check, exits 0/1 (VIEWER; HOME via probe:home)
-pnpm dist:mac                     # package dmg + zip (electron-builder; NOT run by CI)
+pnpm dist:mac                     # local package (dmg + zip). The signed+notarized release is the Desktop Release CI workflow
 ```
 
 CI (`.github/workflows/ci.yml`) is three jobs: `check` (lint -> typecheck -> build -> test), `integration_tests` (Postgres service + `@kinora/server test:integration`), and `e2e_tests` (Postgres service; `pnpm test:e2e` self-boots the stack on dedicated ports and resets `kinora_e2e` via `db:reset:e2e`, runs both the viewer and web suites). Build is in CI because cross-package types resolve through each lib's build output for published packages.
@@ -107,7 +107,7 @@ Binary artifacts (trace.zip) go through the `Storage` interface in `src/lib/stor
 
 ### Trace viewer
 
-`packages/trace-viewer` is the Playwright trace replay engine **vendored from microsoft/playwright (Apache-2.0)** under `src/core/` and `src/sw/`, wrapped by kinora's own Vue UI in `src/ui/` (/Users/joris/workspace/playwright )
+`packages/trace-viewer` is the Playwright trace replay engine **vendored from microsoft/playwright (Apache-2.0)** under `src/core/` and `src/sw/`, wrapped by kinora's own Vue UI in `src/ui/`
 
 - **Do not edit or lint the vendored code.** `src/core/**`, `src/sw/**`, `src/sw-main.ts`, and `public/sw.bundle.js` are in eslint's `ignores` (`eslint.config.js`).
 - The service worker is built as a separate step: `build:sw` (`vite.sw.config.ts`) bundles `src/sw-main.ts` into a single IIFE classic script at `public/sw.bundle.js`. `dev` and `build` run `build:sw` first.
@@ -115,13 +115,14 @@ Binary artifacts (trace.zip) go through the `Storage` interface in `src/lib/stor
 
 ### Desktop app
 
-`packages/desktop` is the Electron shell. **It is CommonJS, not ESM** (the only package without `"type": "module"`): Electron's main + sandboxed preload run most reliably as CJS, and ESM would force `sandbox: false`. tsdown builds `src/*.ts` to CJS (`dist/main.cjs`); a separate Vite build compiles the home UI (`home/`) to `home/dist`.
+`packages/desktop` is the Electron shell. **Its main process runs as CommonJS**: Electron's main + sandboxed preload run most reliably as CJS (ESM would force `sandbox: false`), so tsdown emits `dist/main.cjs` - the `.cjs` extension forces CommonJS regardless of the package's `"type": "module"`. A separate Vite build compiles the home UI (`home/`) to `home/dist`.
 
 - **Loopback server** (`src/server.ts`): the main process starts a local HTTP server that serves the home UI under `/home/`, the vendored `@kinora/trace-viewer` `dist/` (unmodified) under `/trace/`, and local zips via `/file?path=` with **Range/206** support (mandatory: the trace SW reads zips via Range GETs). Renderers are loaded from this loopback server, never `file://`, so the SW + Range behave exactly as on the web. Resources come from workspace deps in dev, `resourcesPath/<name>` when packaged.
 - **Entry** (`src/main.ts`): owns the home + viewer `BrowserWindow`s, IPC handlers, and probes. A trace can arrive three ways - File > Open Trace, drag-drop, or a `.zip` path arg / macOS `open-file`.
-- **Account / dashboard**: `account.ts` (email+password sign-in), `device.ts` (device-grant flow, see auth section), `config.ts` (server URL + bearer token persisted with Electron `safeStorage`), `trpc.ts` (typed dashboard client reusing the server's `AppRouter` type). `bridge.ts` defines the IPC contract; `home-preload.ts` exposes it as `window.kinora`.
+- **Account / dashboard**: `account.ts` (email+password sign-in), `device.ts` (device-grant flow, see auth section), `config.ts` (server + web-origin URLs come from the build - `api`/`app.kinora.dev` when packaged, localhost in dev; only the bearer token (via Electron `safeStorage`) and per-project repo paths persist - URLs are never read back from disk), `trpc.ts` (typed dashboard client reusing the server's `AppRouter` type). `bridge.ts` defines the IPC contract; `home-preload.ts` exposes it as `window.kinora`.
 - **Local re-run** (`runner.ts`): re-runs a single test locally with the repo's own Playwright (falls back to `npx --no-install`, never auto-installs) and watches for the produced `trace.zip`. `resolve.ts` maps a Playwright-reported `file` (relative to its `rootDir`, not repo root) to the real file and the nearest `playwright.config.*` dir (the re-run cwd). `editor.ts` opens a file at `line:col` in `code`/forks (override `KINORA_EDITOR_CMD`); GUI launch strips PATH, so it augments PATH with the usual install dirs.
-- **Probes**: `KINORA_DESKTOP_PROBE` / `KINORA_HOME_PROBE` / `KINORA_DEVICE_PROBE` render headless, assert, and exit 0/1 (`pnpm probe`, `pnpm probe:home`). `build`/`typecheck`/`test` run in root CI; packaging (`dist:mac`, electron-builder) is opt-in. Code signing / notarization / auto-update are not wired yet.
+- **Probes**: `KINORA_DESKTOP_PROBE` / `KINORA_HOME_PROBE` / `KINORA_DEVICE_PROBE` render headless, assert, and exit 0/1 (`pnpm probe`, `pnpm probe:home`). `build`/`typecheck`/`test` run in root CI.
+- **Release + auto-update**: the **Desktop Release** workflow (`.github/workflows/desktop-release.yml`, manual `workflow_dispatch`, macOS runner) builds, signs (`CSC_LINK`/`CSC_KEY_PASSWORD`), notarizes (`APPLE_ID`/`APPLE_APP_SPECIFIC_PASSWORD`/`APPLE_TEAM_ID`), and publishes a **draft** GitHub Release for the version in `package.json`. Auto-update is wired via `electron-updater` against that GitHub feed (`publish: github` in `electron-builder.yml`): background download + an in-app "Restart to update" pill (`main.ts` -> bridge -> `AppHeader.vue`), install-on-quit fallback. The branded install DMG (`build/dmg-background.png` + `build/icon.icns` volume icon, laid out in `electron-builder.yml`) needs **electron-builder ≥26** - its `dmgbuild` engine is the one whose `.DS_Store` macOS 26 (Tahoe) actually honors; the v25 writer renders a blank background there.
 
 ### Deployment
 
@@ -139,5 +140,5 @@ Two per-package Dockerfiles, both built from the **repo root** (workspace contex
 ## Conventions
 
 - ESLint is `@antfu/eslint-config` (vue + typescript). No Prettier; lint owns formatting.
-- ESM only (`"type": "module"`), `.ts` extension imports allowed (`allowImportingTsExtensions`). Exception: `packages/desktop` is CommonJS (Electron requirement, see Desktop app).
+- ESM only (`"type": "module"`), `.ts` extension imports allowed (`allowImportingTsExtensions`). Exception: `packages/desktop` emits its main/preload as CommonJS `.cjs` (Electron requirement, see Desktop app) even though the package itself is `"type": "module"`.
 - Libs build with `tsdown`; their published `exports` point at `dist/`, but in-repo `exports` point at `src/` so the workspace consumes TypeScript source directly.
