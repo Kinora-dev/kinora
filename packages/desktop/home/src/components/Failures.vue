@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { NormTest, ProjectEntry, RunComparison, RunReport, TestHistory } from '@kinora/core'
+import type { NormTest, ProjectEntry, RunReport, TestHistory } from '@kinora/core'
 import { formatPct, passRate, stripAnsi } from '@kinora/core'
 import { Button } from '@kinora/ui/button'
 import { Card } from '@kinora/ui/card'
@@ -11,7 +11,6 @@ const props = defineProps<{
   project: ProjectEntry
   report: RunReport | null
   histories: TestHistory[]
-  comparison: RunComparison | null
   loading: boolean
   linked: boolean
 }>()
@@ -28,6 +27,9 @@ const filter = ref<Filter>('failures')
 const copiedKey = ref('')
 
 const RANK: Record<string, number> = { unexpected: 0, flaky: 1, expected: 2, skipped: 3 }
+const STRIP = 14
+// A fresh regression: failing now but passed within the last N runs (broke recently, not chronic).
+const REGRESSION_WINDOW = 5
 
 function color(status: NormTest['status']): string {
   return status === 'unexpected'
@@ -38,52 +40,61 @@ function color(status: NormTest['status']): string {
         ? 'bg-pass'
         : 'bg-muted-foreground/40'
 }
+function isFailingStatus(s: NormTest['status']): boolean {
+  return s === 'unexpected' || s === 'flaky'
+}
 function isFail(t: NormTest): boolean {
-  return t.status === 'unexpected' || t.status === 'flaky'
+  return isFailingStatus(t.status)
 }
 function traceUrl(t: NormTest): string | undefined {
   return t.attachments.find(a => a.url && (a.name === 'trace' || a.contentType === 'application/zip'))?.url
 }
 
-// One label per test: this run's outcome, qualified by the history trend.
+// "Regressed" = failing now AND it passed within the last N runs (broke recently, hasn't recovered).
+// Same notion as the Slack alert's "newly failing"; a test with no pass in the window is chronic, not fresh.
+function regressed(h: TestHistory | undefined): boolean {
+  const pts = h?.points
+  if (!pts?.length || !isFailingStatus(pts[pts.length - 1].status))
+    return false
+  return pts.slice(-REGRESSION_WINDOW).some(p => p.status === 'expected')
+}
+
+// One label per test: this run's outcome, qualified by whether it just regressed.
 function labelFor(t: NormTest, h: TestHistory | undefined): { text: string, cls: string } {
+  const fresh = regressed(h)
   if (t.status === 'unexpected')
-    return { text: h?.newlyBroken ? 'New break' : 'Failing', cls: 'text-fail' }
+    return { text: fresh ? 'New break' : 'Failing', cls: 'text-fail' }
   if (t.status === 'flaky')
-    return { text: h?.newlyFlaky ? 'Newly flaky' : 'Flaky', cls: 'text-flaky' }
+    return { text: fresh ? 'Newly flaky' : 'Flaky', cls: 'text-flaky' }
   if (t.status === 'expected')
     return { text: 'Passed', cls: 'text-pass' }
   return { text: 'Skipped', cls: 'text-muted-foreground' }
 }
-function rateHint(t: NormTest, h: TestHistory | undefined): string {
-  if (!h)
+// Fail/flaky rate over exactly the runs shown in the strip, so the number matches the picture.
+function rateOver(t: NormTest, strip: NormTest['status'][]): string {
+  const executed = strip.filter(s => s !== 'skipped').length
+  if (!executed)
     return ''
-  if (t.status === 'unexpected' && h.recentFailRate > 0)
-    return `${formatPct(h.recentFailRate)} fail`
-  if (t.status === 'flaky' && h.recentFlakyRate > 0)
-    return `${formatPct(h.recentFlakyRate)} flaky`
+  if (t.status === 'unexpected') {
+    const fails = strip.filter(s => s === 'unexpected').length
+    return fails ? `${formatPct(fails / executed)} fail` : ''
+  }
+  if (t.status === 'flaky') {
+    const flaky = strip.filter(s => s === 'flaky').length
+    return flaky ? `${formatPct(flaky / executed)} flaky` : ''
+  }
   return ''
-}
-function relTime(iso: string): string {
-  const h = Math.round((Date.now() - Date.parse(iso)) / 3_600_000)
-  if (h < 1)
-    return 'just now'
-  if (h < 24)
-    return `${h}h ago`
-  return `${Math.round(h / 24)}d ago`
 }
 
 const historyMap = computed(() => new Map(props.histories.map(h => [h.testKey, h])))
-const regressedKeys = computed(() => new Set(
-  (props.comparison?.tests ?? [])
-    .filter(t => t.change === 'broken' || t.change === 'newly-flaky')
-    .map(t => t.testKey),
-))
-const greenRel = computed(() => (props.comparison ? relTime(props.comparison.base.startedAt) : ''))
 
 const allTests = computed(() => [...(props.report?.tests ?? [])].sort((a, b) => (RANK[a.status] ?? 9) - (RANK[b.status] ?? 9)))
 const failed = computed(() => allTests.value.filter(isFail))
 const rate = computed(() => (props.report ? passRate(props.report.counts) : 0))
+
+const regressedKeys = computed(() => new Set(
+  failed.value.filter(t => regressed(historyMap.value.get(t.testKey))).map(t => t.testKey),
+))
 
 const filterOptions = computed(() => {
   const opts: { key: Filter, label: string }[] = []
@@ -108,13 +119,14 @@ const rows = computed(() => {
       : failed.value
   return list.map((test) => {
     const h = historyMap.value.get(test.testKey)
+    const strip = h ? h.points.slice(-STRIP).map(p => p.status) : []
     return {
       test,
       fail: isFail(test),
       errorMsg: test.errors[0] ? stripAnsi(test.errors[0].message) : '',
-      strip: h ? h.points.slice(-14).map(p => p.status) : [],
+      strip,
       label: labelFor(test, h),
-      rate: rateHint(test, h),
+      rate: rateOver(test, strip),
       trace: traceUrl(test),
     }
   })
@@ -171,7 +183,7 @@ ${errors || '(no error captured)'}`
           v-if="regressedKeys.size"
           class="rounded-md border border-fail/30 bg-fail/5 px-3 py-2 font-mono text-[11px] text-fail"
         >
-          {{ regressedKeys.size }} {{ regressedKeys.size === 1 ? 'test' : 'tests' }} broke since the last green run · {{ greenRel }}
+          {{ regressedKeys.size }} {{ regressedKeys.size === 1 ? 'test' : 'tests' }} started failing within the last {{ REGRESSION_WINDOW }} runs
         </div>
 
         <div class="flex items-center gap-1">
@@ -205,12 +217,17 @@ ${errors || '(no error captured)'}`
               <p v-if="row.errorMsg" class="line-clamp-2 font-mono text-[11px] text-fail/80">
                 {{ row.errorMsg }}
               </p>
-              <div v-if="row.strip.length || row.rate" class="flex items-center gap-2 pt-0.5">
-                <div v-if="row.strip.length" class="flex items-center gap-[2px]">
-                  <span v-for="(s, i) in row.strip" :key="i" class="size-1.5 rounded-[1px]" :class="color(s)" />
-                </div>
-                <span v-if="row.rate" class="font-mono text-[10px] text-muted-foreground">{{ row.rate }}</span>
-              </div>
+              <Tooltip v-if="row.strip.length || row.rate">
+                <TooltipTrigger as-child>
+                  <div class="flex w-fit cursor-help items-center gap-2 pt-0.5">
+                    <div v-if="row.strip.length" class="flex items-center gap-[2px]">
+                      <span v-for="(s, i) in row.strip" :key="i" class="size-1.5 rounded-[1px]" :class="color(s)" />
+                    </div>
+                    <span v-if="row.rate" class="font-mono text-[10px] text-muted-foreground">{{ row.rate }}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>Last {{ STRIP }} runs (oldest → newest)</TooltipContent>
+              </Tooltip>
             </div>
             <div class="flex shrink-0 flex-col items-end gap-1.5">
               <span class="font-mono text-[11px] tracking-wider uppercase" :class="row.label.cls">

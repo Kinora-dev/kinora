@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Project, RunComparison, RunReport, SessionUser, TestHistory } from '../../src/bridge'
+import type { Project, RunReport, SessionUser, TestHistory } from '../../src/bridge'
 import { latestRun, stripAnsi } from '@kinora/core'
 import { Button } from '@kinora/ui/button'
 import { Card, CardContent } from '@kinora/ui/card'
@@ -18,7 +18,6 @@ const projects = ref<Project[]>([])
 const activeId = ref<string | null>(null)
 const report = ref<RunReport | null>(null)
 const histories = ref<TestHistory[]>([])
-const comparison = ref<RunComparison | null>(null)
 const reportLoading = ref(false)
 const projectPaths = ref<Record<string, string>>({})
 const highlightLink = ref(false)
@@ -40,16 +39,12 @@ const activePath = computed(() => (activeId.value ? projectPaths.value[activeId.
 async function loadActive(): Promise<void> {
   report.value = null
   histories.value = []
-  comparison.value = null
   const p = activeProject.value
   if (!p)
     return
   const latest = latestRun(p)
   if (!latest)
     return
-  // Most recent earlier run with no hard failures = the "last green" baseline.
-  const green = p.runs.find(r => r.runId !== latest.runId && r.counts.unexpected === 0)
-  const latestHasFails = latest.counts.unexpected > 0 || latest.counts.flaky > 0
   reportLoading.value = true
   try {
     const [run, hist] = await Promise.all([
@@ -58,8 +53,6 @@ async function loadActive(): Promise<void> {
     ])
     report.value = run
     histories.value = hist
-    if (green && latestHasFails)
-      comparison.value = await window.kinora.compareRuns({ projectId: p.id, baseRunId: green.runId, headRunId: latest.runId })
   }
   finally {
     reportLoading.value = false
@@ -295,7 +288,6 @@ function viewRerunTrace(): void {
         :project="activeProject"
         :report="report"
         :histories="histories"
-        :comparison="comparison"
         :loading="reportLoading"
         :linked="!!activePath"
         @view-trace="onViewTrace"
