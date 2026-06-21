@@ -278,23 +278,25 @@ function viewRerunTrace(): void {
       @logout="onLogout"
     />
 
-    <main class="mx-auto w-full max-w-4xl flex-1 overflow-auto px-5 py-8">
-      <p v-if="projects.length === 0" class="py-16 text-center font-mono text-sm text-muted-foreground">
-        No projects yet. Push a run from the reporter or CLI.
-      </p>
-      <Failures
-        v-else-if="activeProject"
-        :key="activeProject.id"
-        :project="activeProject"
-        :report="report"
-        :histories="histories"
-        :loading="reportLoading"
-        :linked="!!activePath"
-        @view-trace="onViewTrace"
-        @open-in-editor="onOpenInEditor"
-        @rerun="onRerun"
-        @request-link="onRequestLink"
-      />
+    <main class="w-full flex-1 overflow-auto">
+      <div class="mx-auto w-full max-w-4xl px-5 py-8">
+        <p v-if="projects.length === 0" class="py-16 text-center font-mono text-sm text-muted-foreground">
+          No projects yet. Push a run from the reporter or CLI.
+        </p>
+        <Failures
+          v-else-if="activeProject"
+          :key="activeProject.id"
+          :project="activeProject"
+          :report="report"
+          :histories="histories"
+          :loading="reportLoading"
+          :linked="!!activePath"
+          @view-trace="onViewTrace"
+          @open-in-editor="onOpenInEditor"
+          @rerun="onRerun"
+          @request-link="onRequestLink"
+        />
+      </div>
     </main>
 
     <!-- local re-run: live output + result -->
