@@ -14,6 +14,7 @@ import CopyLinkButton from '@/components/app/CopyLinkButton.vue'
 import SearchInput from '@/components/app/SearchInput.vue'
 import TestStatusBadge from '@/components/viz/TestStatusBadge.vue'
 import { useManifest, useRun } from '@/composables/queries'
+import { passRateTone } from '@/lib/rate'
 import { testLabel } from '@/lib/test-display'
 import { traceViewerHref } from '@/lib/trace'
 import { httpsUrl } from '@/lib/url'
@@ -161,7 +162,7 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
         <div class="flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg border border-border/70 bg-card/80 px-6 py-5">
           <StatBlock
             label="Pass rate" :value="formatPct(passRate(report.counts))"
-            :tone="report.counts.unexpected ? 'fail' : report.counts.flaky ? 'flaky' : 'pass'"
+            :tone="passRateTone(passRate(report.counts))"
           />
           <Separator orientation="vertical" class="h-10" />
           <StatBlock label="Total" :value="report.counts.total" />

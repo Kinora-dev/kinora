@@ -18,6 +18,7 @@ import { RouterLink } from 'vue-router'
 import RunHistoryTable from '@/components/project/RunHistoryTable.vue'
 import { useManifest } from '@/composables/queries'
 import { useOrg } from '@/composables/useOrg'
+import { passRateTextClass, passRateTone } from '@/lib/rate'
 
 const props = defineProps<{ projectId: string }>()
 const { isAdmin } = useOrg()
@@ -30,9 +31,8 @@ const runs = computed(() => (project.value ? sortedRuns(project.value) : []))
 const latest = computed(() => (project.value ? latestRun(project.value) : undefined))
 const series = computed(() => (project.value ? trend(project.value).map(t => t.passRate) : []))
 const health = computed(() => (latest.value ? runHealth(latest.value.counts) : 'empty'))
-const toneText = computed(() =>
-  health.value === 'passing' ? 'text-pass' : health.value === 'flaky' ? 'text-flaky' : 'text-fail',
-)
+// Sparkline tints by the latest pass-rate value (matches the pass-rate stat); health state is the badge.
+const toneText = computed(() => (latest.value ? passRateTextClass(passRate(latest.value.counts)) : 'text-muted-foreground'))
 </script>
 
 <template>
@@ -93,7 +93,7 @@ const toneText = computed(() =>
           <StatBlock
             label="Pass rate"
             :value="latest ? formatPct(passRate(latest.counts)) : '-'"
-            :tone="health === 'passing' ? 'pass' : health === 'flaky' ? 'flaky' : 'fail'"
+            :tone="latest ? passRateTone(passRate(latest.counts)) : 'default'"
           />
           <Separator orientation="vertical" class="h-10" />
           <StatBlock label="Runs" :value="runs.length" />

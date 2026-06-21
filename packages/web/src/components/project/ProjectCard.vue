@@ -8,6 +8,7 @@ import { Sparkline } from '@kinora/ui/sparkline'
 import { ArrowDownRight, ArrowRight, ArrowUpRight } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
+import { passRateTextClass } from '@/lib/rate'
 
 const props = defineProps<{ project: ProjectEntry }>()
 
@@ -24,15 +25,8 @@ const prevRate = computed(() => {
 const delta = computed(() => (prevRate.value == null ? null : rate.value - prevRate.value))
 const series = computed(() => trend(props.project).map(t => t.passRate))
 
-const toneText = computed(() =>
-  health.value === 'passing'
-    ? 'text-pass'
-    : health.value === 'flaky'
-      ? 'text-flaky'
-      : health.value === 'failing'
-        ? 'text-fail'
-        : 'text-muted-foreground',
-)
+// The pass-rate number + sparkline tint by the rate's value (the HealthBadge carries pass/fail/flaky state).
+const toneText = computed(() => (latest.value ? passRateTextClass(rate.value) : 'text-muted-foreground'))
 
 const rel = computed(() => {
   if (!latest.value)
