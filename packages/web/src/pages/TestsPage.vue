@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { byRecency, formatPct, isUnstable, RECENT_WINDOW } from '@kinora/core'
+import type { TestHistory } from '@kinora/core'
+import { formatPct, RECENT_WINDOW } from '@kinora/core'
 import { Badge } from '@kinora/ui/badge'
 import { Button } from '@kinora/ui/button'
 import {
@@ -38,21 +39,56 @@ const unstableOnly = useRouteQuery<string, boolean>('unstable', 'true', {
   },
 })
 
-const unstableCount = computed(() => histories.value.filter(isUnstable).length)
-const newlyFlakyCount = computed(() => histories.value.filter(h => h.newlyFlaky).length)
-const newlyBrokenCount = computed(() => histories.value.filter(h => h.newlyBroken).length)
+// Everything on this page reads the same window as the timeline: the last WINDOW runs. Rates, the
+// "unstable" count/filter and the sort all derive from it, so the numbers match the bars.
+const WINDOW = 20
 
+interface WindowStats { failRate: number, flakyRate: number, unstable: boolean }
+function windowStats(h: TestHistory): WindowStats {
+  const pts = h.points.slice(-WINDOW)
+  const executed = pts.filter(p => p.status !== 'skipped').length
+  const fails = pts.filter(p => p.status === 'unexpected').length
+  const flakies = pts.filter(p => p.status === 'flaky').length
+  return {
+    failRate: executed ? fails / executed : 0,
+    flakyRate: executed ? flakies / executed : 0,
+    unstable: fails > 0 || flakies > 0,
+  }
+}
+const statsByKey = computed(() => new Map(histories.value.map(h => [h.testKey, windowStats(h)])))
+function stats(h: TestHistory): WindowStats {
+  return statsByKey.value.get(h.testKey) ?? { failRate: 0, flakyRate: 0, unstable: false }
+}
+
+const unstableCount = computed(() => histories.value.filter(h => stats(h).unstable).length)
+const newlyFlakyCount = computed(() => histories.value.filter(h => h.newlyFlaky).length)
+// "New failure" is gated on the test still failing now, so a recovered (green) test isn't badged broken.
+const newlyBrokenCount = computed(() => histories.value.filter(h => h.newlyBroken && h.lastStatus === 'unexpected').length)
+
+// Fresh breaks first (same gating as the badge), then by recent instability over the window.
+function rank(h: TestHistory): number {
+  if (h.newlyBroken && h.lastStatus === 'unexpected')
+    return 2
+  if (h.newlyFlaky)
+    return 1
+  return 0
+}
 const rows = computed(() => {
   const q = search.value.trim().toLowerCase()
   return histories.value
-    .filter(h => (unstableOnly.value ? isUnstable(h) : true))
+    .filter(h => (unstableOnly.value ? stats(h).unstable : true))
     .filter(
       h =>
         !q
         || h.titlePath.join(' ').toLowerCase().includes(q)
         || h.file.toLowerCase().includes(q),
     )
-    .sort(byRecency)
+    .sort((a, b) => {
+      const r = rank(b) - rank(a)
+      if (r)
+        return r
+      return (stats(b).failRate * 2 + stats(b).flakyRate) - (stats(a).failRate * 2 + stats(a).flakyRate)
+    })
 })
 
 const PAGE_SIZE = 25
@@ -104,7 +140,7 @@ function setPage(p: number) {
               Tests
             </h1>
             <p class="mt-1 text-sm text-muted-foreground">
-              Per-test history across {{ project?.runs.length ?? 0 }} runs of {{ project?.name }}. Rates over the last {{ RECENT_WINDOW }} runs.
+              Per-test health over the last {{ WINDOW }} runs of {{ project?.name }}. 'New' = started failing or flaking in the last {{ RECENT_WINDOW }}.
             </p>
           </div>
           <CopyLinkButton class="shrink-0" />
@@ -115,9 +151,9 @@ function setPage(p: number) {
           <Separator orientation="vertical" class="h-10" />
           <StatBlock label="Unstable" :value="unstableCount" :tone="unstableCount ? 'flaky' : 'pass'" />
           <Separator orientation="vertical" class="h-10" />
-          <StatBlock label="Newly flaky" :value="newlyFlakyCount" :tone="newlyFlakyCount ? 'flaky' : 'default'" />
+          <StatBlock label="New flakiness" :value="newlyFlakyCount" :tone="newlyFlakyCount ? 'flaky' : 'default'" />
           <Separator orientation="vertical" class="h-10" />
-          <StatBlock label="Newly broken" :value="newlyBrokenCount" :tone="newlyBrokenCount ? 'fail' : 'default'" />
+          <StatBlock label="New failures" :value="newlyBrokenCount" :tone="newlyBrokenCount ? 'fail' : 'default'" />
         </div>
       </div>
 
@@ -147,11 +183,11 @@ function setPage(p: number) {
             <div class="flex flex-wrap items-center gap-2">
               <TestStatusBadge :status="h.lastStatus" />
               <span class="truncate text-sm font-medium">{{ testLabel(h) }}</span>
-              <Badge v-if="h.newlyBroken" class="border-fail/30 bg-fail/15 text-[10px] text-fail">
-                Newly broken
+              <Badge v-if="h.newlyBroken && h.lastStatus === 'unexpected'" class="border-fail/30 bg-fail/15 text-[10px] text-fail">
+                New failure
               </Badge>
               <Badge v-else-if="h.newlyFlaky" class="border-flaky/30 bg-flaky/15 text-[10px] text-flaky">
-                Newly flaky
+                New flakiness
               </Badge>
             </div>
             <div class="mt-0.5 font-mono text-[11px] text-muted-foreground">
@@ -161,19 +197,19 @@ function setPage(p: number) {
 
           <div class="flex items-center gap-6">
             <div class="hidden w-40 sm:block">
-              <StatusTimeline :points="h.points" :project-id="projectId" :height="18" :link="false" :slots="20" />
+              <StatusTimeline :points="h.points" :project-id="projectId" :height="18" :link="false" :slots="WINDOW" />
             </div>
             <div class="w-14 text-right">
-              <div class="font-mono text-sm tabular-nums" :class="h.recentFlakyRate ? 'text-flaky' : 'text-muted-foreground'">
-                {{ formatPct(h.recentFlakyRate) }}
+              <div class="font-mono text-sm tabular-nums" :class="stats(h).flakyRate ? 'text-flaky' : 'text-muted-foreground'">
+                {{ formatPct(stats(h).flakyRate) }}
               </div>
               <div class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                 flaky
               </div>
             </div>
             <div class="w-14 text-right">
-              <div class="font-mono text-sm tabular-nums" :class="h.recentFailRate ? 'text-fail' : 'text-muted-foreground'">
-                {{ formatPct(h.recentFailRate) }}
+              <div class="font-mono text-sm tabular-nums" :class="stats(h).failRate ? 'text-fail' : 'text-muted-foreground'">
+                {{ formatPct(stats(h).failRate) }}
               </div>
               <div class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                 fail
