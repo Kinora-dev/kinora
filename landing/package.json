@@ -3,9 +3,9 @@
   "type": "module",
   "version": "0.0.1",
   "private": true,
-  "packageManager": "pnpm@10.33.4",
+  "packageManager": "pnpm@11.8.0",
   "engines": {
-    "node": "24.12.0"
+    "node": "26.3.1"
   },
   "scripts": {
     "dev": "astro dev",
@@ -15,15 +15,15 @@
     "typecheck": "astro check"
   },
   "dependencies": {
-    "@astrojs/sitemap": "^3.7.0",
-    "@lucide/astro": "^1.8.0",
-    "@tailwindcss/vite": "^4.3.0",
-    "astro": "^6.1.8",
-    "sharp": "^0.34.5",
-    "tailwindcss": "^4.3.0"
+    "@astrojs/sitemap": "^3.7.3",
+    "@lucide/astro": "^1.21.0",
+    "@tailwindcss/vite": "^4.3.1",
+    "astro": "^6.4.8",
+    "sharp": "^0.35.2",
+    "tailwindcss": "^4.3.1"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.8",
+    "@astrojs/check": "^0.9.9",
     "typescript": "^6.0.3"
   }
 }
