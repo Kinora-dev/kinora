@@ -36,15 +36,15 @@ dmg:
   background: build/dmg-background.png
   window:
     width: 700
-    height: 450
+    height: 520
   iconSize: 120
   iconTextSize: 13
   contents:
     - x: 185
-      y: 200
+      y: 210
       type: file
     - x: 515
-      y: 200
+      y: 210
       type: link
       path: /Applications
 
