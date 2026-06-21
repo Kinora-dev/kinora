@@ -328,7 +328,7 @@ async function main(): Promise<void> {
   homeWin.on('closed', () => {
     homeWin = null
   })
-  buildMenu({ win: homeWin, onOpen: openViewer, onDemo: () => openViewer(null) })
+  buildMenu({ win: homeWin, onOpen: openViewer })
 
   // Auto-update from GitHub Releases. Downloads in the background and surfaces an
   // in-app "Restart to update" pill when ready; installs on quit either way.

@@ -5,11 +5,10 @@ import { dialog, Menu } from 'electron'
 interface MenuOptions {
   win: BrowserWindow
   onOpen: (absPath: string) => void
-  onDemo: () => void
 }
 
 // App menu with native Open dialog. Handlers reload the window with the chosen trace.
-export function buildMenu({ win, onOpen, onDemo }: MenuOptions): void {
+export function buildMenu({ win, onOpen }: MenuOptions): void {
   const openTrace = async (): Promise<void> => {
     const res = await dialog.showOpenDialog(win, {
       title: 'Open Playwright trace',
@@ -27,7 +26,6 @@ export function buildMenu({ win, onOpen, onDemo }: MenuOptions): void {
       label: 'File',
       submenu: [
         { label: 'Open Trace…', accelerator: 'CmdOrCtrl+O', click: () => { void openTrace() } },
-        { label: 'Open Demo Trace', click: () => onDemo() },
         { type: 'separator' },
         { role: isMac ? 'close' : 'quit' },
       ],
