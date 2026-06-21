@@ -12,12 +12,10 @@ export interface Config {
   projectPaths: Record<string, string>
 }
 
-const DEFAULTS: Config = {
-  serverUrl: 'http://localhost:3000',
-  webOrigin: 'http://localhost:5173',
-  token: null,
-  projectPaths: {},
-}
+// Packaged builds target the cloud; dev runs against the local stack.
+const DEFAULTS: Config = app.isPackaged
+  ? { serverUrl: 'https://api.kinora.dev', webOrigin: 'https://app.kinora.dev', token: null, projectPaths: {} }
+  : { serverUrl: 'http://localhost:3000', webOrigin: 'http://localhost:5173', token: null, projectPaths: {} }
 
 function configPath(): string {
   return path.join(app.getPath('userData'), 'kinora-desktop.json')
