@@ -1,8 +1,7 @@
 name: Desktop Release
 
 # Manual: bump packages/desktop/package.json version, then run this workflow.
-# electron-builder publishes a draft GitHub Release (tag v<version>) with the
-# signed + notarized macOS dmg/zip; review it and publish.
+# electron-builder publishes a draft GitHub Release review it and publish.
 on:
   workflow_dispatch:
 
