@@ -2,7 +2,7 @@
 # Build from the REPO ROOT (pnpm workspace):
 #   docker build -f packages/web/Dockerfile \
 #     --build-arg VITE_KINORA_SERVER_URL=https://api.kinora.dev -t kinora-web .
-FROM node:24-alpine AS build
+FROM node:26-alpine AS build
 RUN npm i -g corepack@latest && corepack enable
 WORKDIR /repo
 

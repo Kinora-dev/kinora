@@ -1,3 +1,6 @@
+# transitive (electron-builder), freshly published; exempt from pnpm 11's default release cooldown.
+minimumReleaseAgeExclude:
+  - unzipper@0.12.5
 shellEmulator: true
 
 trustPolicy: no-downgrade
@@ -9,12 +12,17 @@ injectWorkspacePackages: true
 trustPolicyExclude:
   - undici-types
   - semver
+
 packages:
   - packages/*
 
-onlyBuiltDependencies:
-  - esbuild
-  - electron
 peerDependencyRules:
   allowedVersions:
     '@vee-validate/zod>zod': '4'
+
+# pnpm 11 replaces onlyBuiltDependencies with this map. winstaller off: desktop ships mac-only.
+allowBuilds:
+  electron: true
+  electron-winstaller: false
+  esbuild: true
+  vue-demi: true
