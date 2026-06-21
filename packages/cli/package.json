@@ -43,10 +43,10 @@
   },
   "devDependencies": {
     "@kinora/core": "workspace:*",
-    "@types/node": "^24.12.3",
-    "tsdown": "^0.22.2",
+    "@types/node": "^26.0.0",
+    "tsdown": "^0.22.3",
     "tsx": "^4.22.4",
-    "typescript": "~6.0.2",
-    "vitest": "^4.1.8"
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.9"
   }
 }
