@@ -23,16 +23,11 @@ function configPath(): string {
 
 export function loadConfig(): Config {
   try {
-    const raw = JSON.parse(readFileSync(configPath(), 'utf8')) as Partial<{ serverUrl: string, webOrigin: string, token: string, projectPaths: Record<string, string> }>
+    const raw = JSON.parse(readFileSync(configPath(), 'utf8')) as Partial<{ token: string, projectPaths: Record<string, string> }>
     const token = raw.token && safeStorage.isEncryptionAvailable()
       ? safeStorage.decryptString(Buffer.from(raw.token, 'base64'))
       : null
-    return {
-      serverUrl: raw.serverUrl || DEFAULTS.serverUrl,
-      webOrigin: raw.webOrigin || DEFAULTS.webOrigin,
-      token,
-      projectPaths: raw.projectPaths ?? {},
-    }
+    return { ...DEFAULTS, token, projectPaths: raw.projectPaths ?? {} }
   }
   catch {
     return { ...DEFAULTS, projectPaths: {} }
@@ -43,5 +38,5 @@ export function saveConfig(config: Config): void {
   const token = config.token && safeStorage.isEncryptionAvailable()
     ? safeStorage.encryptString(config.token).toString('base64')
     : null
-  writeFileSync(configPath(), JSON.stringify({ serverUrl: config.serverUrl, webOrigin: config.webOrigin, token, projectPaths: config.projectPaths }))
+  writeFileSync(configPath(), JSON.stringify({ token, projectPaths: config.projectPaths }))
 }
