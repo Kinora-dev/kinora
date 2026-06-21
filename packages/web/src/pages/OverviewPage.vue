@@ -24,6 +24,7 @@ import { computed } from 'vue'
 import OverviewEmpty from '@/components/project/OverviewEmpty.vue'
 import ProjectCard from '@/components/project/ProjectCard.vue'
 import { useManifest } from '@/composables/queries'
+import { passRateTone } from '@/lib/rate'
 
 const { state: manifest, isLoading, error } = useManifest()
 
@@ -133,7 +134,7 @@ const stats = computed(() => {
         <StatBlock
           label="Global pass rate"
           :value="formatPct(stats.passRate)"
-          :tone="stats.passRate >= 0.99 ? 'pass' : stats.passRate >= 0.9 ? 'flaky' : 'fail'"
+          :tone="passRateTone(stats.passRate)"
         />
         <Separator orientation="vertical" class="h-10" />
         <StatBlock :label="tag === 'all' ? 'Tests / latest' : `${tag} / latest`" :value="stats.tests" />
