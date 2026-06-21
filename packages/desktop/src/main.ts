@@ -114,7 +114,13 @@ function createHomeWindow(): BrowserWindow {
     height: 760,
     show: false,
     backgroundColor: '#0a0a0b',
-    webPreferences: { contextIsolation: true, nodeIntegration: false, preload: path.join(__dirname, 'home-preload.cjs') },
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+      preload: path.join(__dirname, 'home-preload.cjs'),
+      // Sandboxed preload reads this from process.argv to expose window.kinora.isDev.
+      additionalArguments: [`--kinora-dev=${app.isPackaged ? '0' : '1'}`],
+    },
   })
   // Show only once painted so there's no blank white flash before the app renders.
   win.once('ready-to-show', () => {

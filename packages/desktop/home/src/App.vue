@@ -24,6 +24,7 @@ const highlightLink = ref(false)
 const rerun = ref<{ title: string, status: 'running' | 'passed' | 'failed' | 'error', log: string, hasTrace: boolean, watch: boolean } | null>(null)
 const logEl = ref<HTMLElement | null>(null)
 const updateReady = ref(false)
+const isDev = window.kinora.isDev
 
 const rerunStatusText = computed(() => {
   const s = rerun.value?.status
@@ -238,6 +239,7 @@ function viewRerunTrace(): void {
           aria-hidden="true"
         />
         <span class="font-mono text-xl font-semibold tracking-tight lowercase">kinora</span>
+        <span v-if="isDev" class="rounded border border-amber-400/40 bg-amber-400/10 px-1.5 py-0.5 font-mono text-[10px] font-bold tracking-wider text-amber-400 uppercase">dev</span>
       </div>
       <span class="font-mono text-[10px] font-medium tracking-wider text-muted-foreground uppercase">desktop</span>
     </div>

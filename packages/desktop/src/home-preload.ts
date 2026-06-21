@@ -27,6 +27,7 @@ const bridge: KinoraBridge = {
   openAccount: () => ipcRenderer.invoke('kinora:open-account'),
   onUpdateReady: cb => ipcRenderer.on('kinora:update-ready', () => cb()),
   restartToUpdate: () => ipcRenderer.invoke('kinora:restart-to-update'),
+  isDev: process.argv.includes('--kinora-dev=1'),
 }
 
 contextBridge.exposeInMainWorld('kinora', bridge)

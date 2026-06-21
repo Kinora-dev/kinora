@@ -59,6 +59,8 @@ export interface KinoraBridge {
   onUpdateReady: (cb: () => void) => void
   // Quit and install the downloaded update (restarts the app on the new version).
   restartToUpdate: () => Promise<void>
+  // True for an unpackaged dev run (drives the "DEV" badge).
+  isDev: boolean
 }
 
 declare global {

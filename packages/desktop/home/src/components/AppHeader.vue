@@ -13,6 +13,7 @@ import { computed } from 'vue'
 const props = defineProps<{ projects: ProjectEntry[], activeId: string | null, user: SessionUser | null, projectPath: string | null, highlightLink: boolean, updateReady: boolean }>()
 defineEmits<{ select: [id: string], openTrace: [], logout: [], openAccount: [], linkFolder: [], restartUpdate: [] }>()
 
+const isDev = window.kinora.isDev
 const active = computed(() => props.projects.find(p => p.id === props.activeId))
 const initial = computed(() => (props.user?.name || props.user?.email || '?').charAt(0).toUpperCase())
 const folderName = computed(() => props.projectPath?.replace(/\/$/, '').split('/').pop() ?? '')
@@ -39,6 +40,7 @@ function setTheme(value: ColorMode): void {
           />
           <span class="font-mono text-[15px] font-semibold tracking-tight lowercase">kinora</span>
           <span class="font-mono text-[11px] text-muted-foreground">desktop</span>
+          <span v-if="isDev" class="rounded border border-amber-400/40 bg-amber-400/10 px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-wider text-amber-400 uppercase">dev</span>
         </div>
 
         <DropdownMenu v-if="projects.length">
