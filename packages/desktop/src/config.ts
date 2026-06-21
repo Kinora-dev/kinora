@@ -18,7 +18,7 @@ const DEFAULTS: Config = app.isPackaged
   : { serverUrl: 'http://localhost:3000', webOrigin: 'http://localhost:5173', token: null, projectPaths: {} }
 
 function configPath(): string {
-  return path.join(app.getPath('userData'), 'kinora-desktop.json')
+  return path.join(app.getPath('userData'), `kinora-desktop${app.isPackaged ? '' : '.dev'}.json`)
 }
 
 export function loadConfig(): Config {
