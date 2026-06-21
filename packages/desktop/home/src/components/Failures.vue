@@ -128,6 +128,8 @@ const rows = computed(() => {
       fail: isFail(test),
       errorMsg: test.errors[0] ? stripAnsi(test.errors[0].message) : '',
       strip,
+      // Pad the missing (older) runs with blank slots so every sparkline is STRIP wide.
+      pad: Math.max(0, STRIP - strip.length),
       label: labelFor(test, h),
       rate: rateOver(test, strip),
       trace: traceUrl(test),
@@ -224,6 +226,7 @@ ${errors || '(no error captured)'}`
                 <TooltipTrigger as-child>
                   <div class="flex w-fit cursor-help items-center gap-2 pt-0.5">
                     <div v-if="row.strip.length" class="flex items-center gap-[2px]">
+                      <span v-for="i in row.pad" :key="`pad-${i}`" class="size-1.5 rounded-[1px] bg-muted/40" />
                       <span v-for="(s, i) in row.strip" :key="i" class="size-1.5 rounded-[1px]" :class="color(s)" />
                     </div>
                     <span v-if="row.rate" class="font-mono text-[10px] text-muted-foreground">{{ row.rate }}</span>
