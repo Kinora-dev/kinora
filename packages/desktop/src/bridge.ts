@@ -1,7 +1,7 @@
-import type { Manifest, ProjectEntry, RunComparison, RunReport, TestHistory } from '@kinora/core'
+import type { Manifest, ProjectEntry, RunReport, TestHistory } from '@kinora/core'
 
 // Dashboard payload types come from the shared contract layer (what the server returns).
-export type { Manifest, RunComparison, RunReport, TestHistory }
+export type { Manifest, RunReport, TestHistory }
 export type Project = ProjectEntry
 
 export interface SessionUser {
@@ -30,8 +30,6 @@ export interface KinoraBridge {
   run: (input: { projectId: string, runId: string }) => Promise<RunReport>
   // Per-test history for the active project (flaky / newly-broken signal).
   projectHistory: (input: { projectId: string }) => Promise<TestHistory[]>
-  // Diff two runs (used for "what broke since the last green run").
-  compareRuns: (input: { projectId: string, baseRunId: string, headRunId: string }) => Promise<RunComparison>
   openLocalTrace: () => Promise<void>
   // Open a hosted trace.zip (absolute artifact URL) in the embedded viewer.
   openTraceUrl: (traceUrl: string) => Promise<void>

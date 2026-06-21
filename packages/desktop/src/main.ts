@@ -182,13 +182,6 @@ function registerIpc(): void {
     return history.histories
   })
 
-  ipcMain.handle('kinora:compare-runs', async (_e, input: { projectId: string, baseRunId: string, headRunId: string }) => {
-    if (!config.token)
-      throw new Error('Not signed in')
-    const trpc = makeTrpc(config.serverUrl, config.token, config.webOrigin)
-    return trpc.dashboard.compareRuns.query(input)
-  })
-
   ipcMain.handle('kinora:open-trace-url', (_e, traceUrl: string) => openViewerUrl(traceUrl))
 
   ipcMain.handle('kinora:open-local-trace', async () => {
