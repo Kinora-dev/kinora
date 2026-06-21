@@ -25,17 +25,19 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
   minute: '2-digit',
 })
 
-// Adaptive mode only: cells are min 3px + 3px gap, so render only the most recent points that fit and
-// never overflow the column. Width is unknown until mounted, so show all until measured.
+// Adaptive mode only: render the most recent points that fit the column (cells are min 3px + 3px gap),
+// hard-capped at MAX_CELLS so a long history never mounts hundreds of cells/tooltips. This only bounds
+// what's DISPLAYED; rate/aggregate calcs read the full points elsewhere.
 const CELL_PX = 6
+const MAX_CELLS = 150
 const root = ref<HTMLElement>()
-const maxCells = ref(Number.POSITIVE_INFINITY)
+const maxCells = ref(MAX_CELLS)
 useResizeObserver(root, ([entry]) => {
-  maxCells.value = Math.max(1, Math.floor(entry.contentRect.width / CELL_PX))
+  maxCells.value = Math.min(MAX_CELLS, Math.max(1, Math.floor(entry.contentRect.width / CELL_PX)))
 })
 
 const cells = computed(() => {
-  const limit = props.slots ?? (Number.isFinite(maxCells.value) ? maxCells.value : props.points.length)
+  const limit = props.slots ?? maxCells.value
   return props.points.slice(-limit).map(p => ({
     point: p,
     meta: pwStatusMeta[p.status],
