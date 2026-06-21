@@ -92,9 +92,8 @@ const health = computed(() => (latest.value ? runHealth(latest.value.counts) : '
 
         <div class="flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg border border-border/70 bg-card/80 px-6 py-5">
           <StatBlock
-            label="Pass rate"
+            :label="`Pass rate · last ${RECENT_RUNS}`"
             :value="latest ? formatPct(rate) : '-'"
-            :sub="latest ? `last ${RECENT_RUNS} runs` : undefined"
           />
           <Separator orientation="vertical" class="h-10" />
           <StatBlock label="Runs" :value="runs.length" />
