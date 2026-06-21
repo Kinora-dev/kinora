@@ -33,6 +33,17 @@ jobs:
           pnpm --filter @kinora/trace-viewer build
           pnpm --filter @kinora/desktop build
 
+      # Pre-create the draft so electron-builder's concurrent uploads all find it,
+      # instead of racing to create it
+      - name: Ensure draft release exists
+        working-directory: packages/desktop
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
+            || gh release create "v$VERSION" --repo "$GITHUB_REPOSITORY" --draft --title "v$VERSION" --notes "kinora desktop v$VERSION"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Package, sign, notarize, publish
         working-directory: packages/desktop
         run: pnpm exec electron-builder --mac --publish always
