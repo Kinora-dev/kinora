@@ -14,6 +14,7 @@ const props = defineProps<{ projects: ProjectEntry[], activeId: string | null, u
 defineEmits<{ select: [id: string], openTrace: [], logout: [], openAccount: [], linkFolder: [], restartUpdate: [] }>()
 
 const isDev = window.kinora.isDev
+const isMac = window.kinora.platform === 'darwin'
 const active = computed(() => props.projects.find(p => p.id === props.activeId))
 const initial = computed(() => (props.user?.name || props.user?.email || '?').charAt(0).toUpperCase())
 const folderName = computed(() => props.projectPath?.replace(/\/$/, '').split('/').pop() ?? '')
@@ -29,9 +30,9 @@ function setTheme(value: ColorMode): void {
 </script>
 
 <template>
-  <header class="sticky top-0 z-30 shrink-0 border-b border-border/80 bg-background/80 backdrop-blur-md">
+  <header class="app-drag sticky top-0 z-30 shrink-0 border-b border-border/80 bg-background/80 backdrop-blur-md">
     <TooltipProvider :delay-duration="150">
-      <div class="mx-auto flex h-14 max-w-5xl items-center gap-3 px-5">
+      <div class="flex h-12 items-center gap-3 pr-5" :class="isMac ? 'pl-28' : 'pl-5'">
         <div class="flex items-center gap-2.5">
           <span
             class="size-2.5 rounded-full bg-signal"

@@ -230,7 +230,8 @@ function viewRerunTrace(): void {
 
 <template>
   <!-- login: single device flow (signs in via the system browser: github/google/email) -->
-  <div v-if="view === 'login'" class="app-grid flex h-full flex-col items-center justify-center gap-7 bg-background p-6">
+  <div v-if="view === 'login'" class="app-grid relative flex h-full flex-col items-center justify-center gap-7 bg-background p-6">
+    <div class="app-drag absolute inset-x-0 top-0 h-10" />
     <div class="flex flex-col items-center gap-2 text-center">
       <div class="flex items-center gap-2.5">
         <span
@@ -270,7 +271,8 @@ function viewRerunTrace(): void {
   </div>
 
   <!-- loading -->
-  <div v-else-if="view === 'loading'" class="flex h-full items-center justify-center bg-background text-sm text-muted-foreground">
+  <div v-else-if="view === 'loading'" class="relative flex h-full items-center justify-center bg-background text-sm text-muted-foreground">
+    <div class="app-drag absolute inset-x-0 top-0 h-10" />
     Loading…
   </div>
 

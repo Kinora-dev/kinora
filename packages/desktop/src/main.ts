@@ -114,6 +114,11 @@ function createHomeWindow(): BrowserWindow {
     height: 760,
     show: false,
     backgroundColor: '#0a0a0b',
+    // Integrated title bar on macOS (traffic lights inset over our themed header).
+    // Other platforms keep native controls ('hidden' there would drop the close button).
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+    // Vertically center the traffic lights in the 48px (h-12) header.
+    trafficLightPosition: { x: 18, y: 17 },
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,

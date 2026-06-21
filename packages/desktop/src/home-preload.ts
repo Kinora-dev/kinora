@@ -1,6 +1,6 @@
 import type { KinoraBridge } from './bridge'
+import process from 'node:process'
 import { contextBridge, ipcRenderer } from 'electron'
-
 // The home renderer talks to the main process through this bridge only. The token and
 // the server live in main; the renderer never sees them.
 const bridge: KinoraBridge = {
@@ -28,6 +28,7 @@ const bridge: KinoraBridge = {
   onUpdateReady: cb => ipcRenderer.on('kinora:update-ready', () => cb()),
   restartToUpdate: () => ipcRenderer.invoke('kinora:restart-to-update'),
   isDev: process.argv.includes('--kinora-dev=1'),
+  platform: process.platform,
 }
 
 contextBridge.exposeInMainWorld('kinora', bridge)

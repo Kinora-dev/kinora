@@ -61,6 +61,8 @@ export interface KinoraBridge {
   restartToUpdate: () => Promise<void>
   // True for an unpackaged dev run (drives the "DEV" badge).
   isDev: boolean
+  // process.platform ('darwin' | 'win32' | 'linux'); drives the macOS title-bar inset.
+  platform: string
 }
 
 declare global {

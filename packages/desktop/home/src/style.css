@@ -34,6 +34,10 @@ body {
   animation: link-pulse 0.9s ease-out 2;
 }
 
+/* Custom title bar: marked regions drag the window; interactive controls opt back out. */
+.app-drag { -webkit-app-region: drag; }
+.app-drag :where(button, a, input, select, [role="button"]) { -webkit-app-region: no-drag; }
+
 .app-grid {
   background-image:
     linear-gradient(to right, color-mix(in oklch, var(--border) 40%, transparent) 1px, transparent 1px),
