@@ -21,6 +21,12 @@ const HOME_PROBE = process.env.KINORA_HOME_PROBE === '1'
 const DEVICE_PROBE = process.env.KINORA_DEVICE_PROBE === '1'
 const PROBE_TRACE = process.env.KINORA_DESKTOP_TRACE || null
 
+// Dev gets its own userData dir so it doesn't share Chromium storage (service-worker
+// DBs, cache) or the saved token with an installed prod app. Must run before any
+// storage access (loadConfig below, app ready).
+if (!app.isPackaged)
+  app.setPath('userData', `${app.getPath('userData')}-dev`)
+
 let port = 0
 let homeWin: BrowserWindow | null = null
 let viewerWin: BrowserWindow | null = null
@@ -67,8 +73,13 @@ function ensureViewerWindow(): BrowserWindow {
     viewerWin = new BrowserWindow({
       width: 1280,
       height: 860,
-      show: !VIEWER_PROBE,
+      show: false,
+      backgroundColor: '#0a0a0b',
       webPreferences: { contextIsolation: true, nodeIntegration: false, preload: path.join(__dirname, 'preload.cjs') },
+    })
+    viewerWin.once('ready-to-show', () => {
+      if (!VIEWER_PROBE)
+        viewerWin?.show()
     })
     viewerWin.webContents.on('console-message', ({ level, message }) => console.log(`[viewer:${level}] ${message}`))
     viewerWin.on('closed', () => {
@@ -101,8 +112,14 @@ function createHomeWindow(): BrowserWindow {
   const win = new BrowserWindow({
     width: 1100,
     height: 760,
-    show: !HOME_PROBE,
+    show: false,
+    backgroundColor: '#0a0a0b',
     webPreferences: { contextIsolation: true, nodeIntegration: false, preload: path.join(__dirname, 'home-preload.cjs') },
+  })
+  // Show only once painted so there's no blank white flash before the app renders.
+  win.once('ready-to-show', () => {
+    if (!HOME_PROBE)
+      win.show()
   })
   win.webContents.on('console-message', ({ level, message }) => console.log(`[home:${level}] ${message}`))
   void win.loadURL(`http://127.0.0.1:${port}/home/index.html`)

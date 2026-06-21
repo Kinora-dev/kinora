@@ -18,7 +18,8 @@ const DEFAULTS: Config = app.isPackaged
   : { serverUrl: 'http://localhost:3000', webOrigin: 'http://localhost:5173', token: null, projectPaths: {} }
 
 function configPath(): string {
-  return path.join(app.getPath('userData'), `kinora-desktop${app.isPackaged ? '' : '.dev'}.json`)
+  // Dev/prod isolation is handled by a separate userData dir in dev (see main.ts).
+  return path.join(app.getPath('userData'), 'kinora-desktop.json')
 }
 
 export function loadConfig(): Config {
