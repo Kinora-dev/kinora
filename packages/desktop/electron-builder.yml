@@ -32,18 +32,19 @@ mac:
 
 dmg:
   title: kinora ${version}
+  icon: build/icon.icns
   background: build/dmg-background.png
   window:
-    width: 600
-    height: 400
+    width: 700
+    height: 450
   iconSize: 120
   iconTextSize: 13
   contents:
-    - x: 150
-      y: 190
+    - x: 185
+      y: 200
       type: file
-    - x: 450
-      y: 190
+    - x: 515
+      y: 200
       type: link
       path: /Applications
 
