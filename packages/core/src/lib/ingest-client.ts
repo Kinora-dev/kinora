@@ -78,7 +78,10 @@ async function toIngestError(res: Response, fallback: string): Promise<IngestErr
 }
 
 export function createIngestClient(opts: IngestClientOptions) {
-  const base = opts.baseUrl.replace(/\/+$/, '')
+  let end = opts.baseUrl.length
+  while (end > 0 && opts.baseUrl[end - 1] === '/')
+    end--
+  const base = opts.baseUrl.slice(0, end)
   const doFetch = opts.fetch ?? globalThis.fetch
   const auth = `Bearer ${opts.token}`
   const runsUrl = `${base}/api/v1/runs${opts.backfill ? '?backfill=1' : ''}`

@@ -41,4 +41,18 @@ describe('createIngestClient.uploadRun', () => {
     )
     await expect(client.uploadRun(PAYLOAD)).resolves.toEqual({ projectId: 'p1', runId: 'r1', tests: 3 })
   })
+
+  it('strips trailing slashes from baseUrl when building the request url', async () => {
+    let calledUrl = ''
+    const client = createIngestClient({
+      baseUrl: 'http://test///',
+      token: 't',
+      fetch: async (url) => {
+        calledUrl = String(url)
+        return new Response(JSON.stringify({ projectId: 'p1', runId: 'r1', tests: 0 }), { status: 201 })
+      },
+    })
+    await client.uploadRun(PAYLOAD)
+    expect(calledUrl).toBe('http://test/api/v1/runs')
+  })
 })

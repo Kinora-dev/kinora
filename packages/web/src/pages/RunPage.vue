@@ -45,8 +45,13 @@ const previousRunId = computed(() => {
 // repoUrl is only trusted as an href if it's https; a bad value yields no link (guards stored XSS).
 const commitHref = computed(() => {
   const g = report.value?.meta.git
-  const base = httpsUrl(g?.repoUrl)?.replace(/\/$/, '')
-  return base && g?.sha ? `${base}/${base.includes('bitbucket.org') ? 'commits' : 'commit'}/${g.sha}` : undefined
+  const url = httpsUrl(g?.repoUrl)
+  if (!url || !g?.sha)
+    return undefined
+  const base = url.replace(/\/$/, '')
+
+  const seg = new URL(url).hostname === 'bitbucket.org' ? 'commits' : 'commit'
+  return `${base}/${seg}/${g.sha}`
 })
 const ciRunHref = computed(() => httpsUrl(report.value?.meta.ci?.runUrl))
 
