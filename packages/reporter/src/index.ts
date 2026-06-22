@@ -2,7 +2,7 @@ import type { CiMeta, Counts, GitMeta, IngestRun, NormTest } from '@kinora/core'
 import type { FullConfig, FullResult, Reporter, Suite, TestCase } from '@playwright/test/reporter'
 import { readFile } from 'node:fs/promises'
 import process from 'node:process'
-import { createIngestClient, DEFAULT_KINORA_URL, IngestError, isTraceAttachment, makeTestKey } from '@kinora/core'
+import { createIngestClient, DEFAULT_KINORA_URL, effectiveAttachments, IngestError, isTraceAttachment, makeTestKey } from '@kinora/core'
 
 export interface KinoraReporterOptions {
   /** kinora server base URL. Defaults to env KINORA_URL, then the hosted cloud. Set for self-host. */
@@ -55,7 +55,7 @@ function toNormTest(test: TestCase): NormTest {
     errors: (last?.errors ?? []).flatMap(e =>
       e.message ? [{ message: e.message, stack: e.stack, location: e.location }] : [],
     ),
-    attachments: (last?.attachments ?? []).map(a => ({
+    attachments: effectiveAttachments(test.results).map(a => ({
       name: a.name,
       contentType: a.contentType,
       path: a.path,

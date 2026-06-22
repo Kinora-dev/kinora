@@ -2,6 +2,7 @@ import type { Counts, NormTest, RunReport, RunSummary } from '../contracts/kinor
 import type { PlaywrightReport, PwSpec } from '../contracts/playwright'
 import { SCHEMA_VERSION } from '../contracts/kinora'
 import { playwrightReportSchema } from '../contracts/playwright'
+import { effectiveAttachments } from './attachments'
 import { makeTestKey } from './test-key'
 
 // Provided by the CLI (which has fs access): copies a Playwright attachment
@@ -65,7 +66,7 @@ function normalizeSpec(spec: PwSpec, ctx: WalkCtx, out: NormTest[], meta: Ingest
       errors: (last?.errors ?? []).flatMap(e =>
         e.message ? [{ message: e.message, stack: e.stack, location: e.location }] : [],
       ),
-      attachments: (last?.attachments ?? []).map(a => ({
+      attachments: effectiveAttachments(test.results).map(a => ({
         name: a.name,
         contentType: a.contentType,
         path: a.path,
