@@ -321,6 +321,9 @@ function launchRerun(input: RerunInput): void {
 }
 
 async function main(): Promise<void> {
+  // Re-read now that the app is ready: safeStorage only works post-ready, so the
+  // module-load loadConfig() above can't decrypt the saved token.
+  config = loadConfig()
   const started = await startServer({ viewerDir: resolveViewerDir(), homeDir: resolveHomeDir() })
   port = started.port
   registerIpc()
