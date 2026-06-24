@@ -35,8 +35,7 @@ function setTheme(value: ColorMode): void {
       <div class="flex h-12 items-center gap-3 pr-5" :class="isMac ? 'pl-28' : 'pl-5'">
         <div class="flex items-center gap-2.5">
           <span
-            class="size-2.5 rounded-full bg-signal"
-            style="animation: rec-pulse 2s ease-in-out infinite"
+            class="rec-dot size-2.5 rounded-full bg-signal"
             aria-hidden="true"
           />
           <span class="font-mono text-[15px] font-semibold tracking-tight lowercase">kinora</span>

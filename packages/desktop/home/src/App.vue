@@ -78,6 +78,14 @@ async function refresh(): Promise<void> {
 
 onMounted(refresh)
 
+// Pause the decorative pulse while the window is backgrounded so an idle app does no compositing.
+function syncWindowFocus(): void {
+  document.documentElement.classList.toggle('win-blurred', !document.hasFocus())
+}
+onMounted(syncWindowFocus)
+window.addEventListener('focus', syncWindowFocus)
+window.addEventListener('blur', syncWindowFocus)
+
 window.kinora.onDevicePending((info) => {
   deviceCode.value = info.userCode
 })
@@ -235,8 +243,7 @@ function viewRerunTrace(): void {
     <div class="flex flex-col items-center gap-2 text-center">
       <div class="flex items-center gap-2.5">
         <span
-          class="size-2.5 rounded-full bg-signal"
-          style="animation: rec-pulse 2s ease-in-out infinite"
+          class="rec-dot size-2.5 rounded-full bg-signal"
           aria-hidden="true"
         />
         <span class="font-mono text-xl font-semibold tracking-tight lowercase">kinora</span>

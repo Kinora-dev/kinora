@@ -22,6 +22,14 @@ body {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.35; }
 }
+/* will-change isolates the dot to its own layer so the opacity tick never dirties the
+   backdrop-blur header (which would re-run the blur every frame). Pause it when the
+   window is backgrounded so an idle app does no compositing. */
+.rec-dot {
+  animation: rec-pulse 2s ease-in-out infinite;
+  will-change: opacity;
+}
+.win-blurred .rec-dot { animation-play-state: paused; }
 
 /* Draw the eye to "Link folder" when a disabled Re-run/Open is clicked. */
 @keyframes link-pulse {
