@@ -32,7 +32,7 @@ import Wordmark from './Wordmark.astro';
         target="_blank"
         rel="noopener noreferrer"
         data-umami-event="github-header"
-        class="grid size-9 place-items-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        class="grid size-9 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         aria-label="kinora on GitHub"
       >
         <GithubIcon class="size-4" />
@@ -94,28 +94,30 @@ import Wordmark from './Wordmark.astro';
 </header>
 
 <script is:inline>
-  const btn = document.getElementById('mobile-menu-btn')
-  const panel = document.getElementById('mobile-nav')
-  if (btn && panel) {
-    const close = () => {
-      panel.setAttribute('hidden', '')
-      btn.setAttribute('aria-expanded', 'false')
-      btn.setAttribute('aria-label', 'Open menu')
-    }
-    btn.addEventListener('click', () => {
-      if (panel.hasAttribute('hidden')) {
-        panel.removeAttribute('hidden')
-        btn.setAttribute('aria-expanded', 'true')
-        btn.setAttribute('aria-label', 'Close menu')
-      }
-      else {
-        close()
-      }
-    })
-    panel.querySelectorAll('a').forEach(a => a.addEventListener('click', close))
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !panel.hasAttribute('hidden'))
-        close()
-    })
+const btn = document.getElementById('mobile-menu-btn')
+const panel = document.getElementById('mobile-nav')
+if (btn && panel) {
+  const close = () => {
+    panel.setAttribute('hidden', '')
+    btn.setAttribute('aria-expanded', 'false')
+    btn.setAttribute('aria-label', 'Open menu')
   }
+  btn.addEventListener('click', () => {
+    if (panel.hasAttribute('hidden')) {
+      panel.removeAttribute('hidden')
+      btn.setAttribute('aria-expanded', 'true')
+      btn.setAttribute('aria-label', 'Close menu')
+    }
+    else {
+      close()
+    }
+  })
+  panel
+    .querySelectorAll('a')
+    .forEach(a => a.addEventListener('click', close))
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !panel.hasAttribute('hidden'))
+      close()
+  })
+}
 </script>
