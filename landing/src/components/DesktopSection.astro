@@ -1,8 +1,9 @@
 ---
-import { FolderOpen, Play, Sparkles, SquarePen, SquarePlay } from '@lucide/astro'
+import { Download, FolderOpen, Play, Sparkles, SquarePen, SquarePlay } from '@lucide/astro'
 import { Image } from 'astro:assets'
 import desktopDark from '../assets/screenshots/desktop-dark.png'
 import desktopLight from '../assets/screenshots/desktop-light.png'
+import { SITE } from '../lib/site'
 
 const chips = [
   { icon: Play, label: 'Re-run locally' },
@@ -65,6 +66,24 @@ const chips = [
           )
         })
       }
+    </div>
+
+    <div
+      class="reveal mt-9 flex flex-col items-center gap-3"
+      style="--reveal-delay: 240ms"
+    >
+      <a
+        href={SITE.download}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex h-11 items-center gap-2 rounded-md bg-signal px-6 font-mono text-sm font-semibold text-background transition-opacity hover:opacity-90"
+      >
+        <Download class="size-4" aria-hidden="true" />
+        Download for macOS
+      </a>
+      <p class="font-mono text-xs text-muted-foreground">
+        Apple Silicon &middot; free &middot; open source
+      </p>
     </div>
 
     <div class="reveal mt-14" style="--reveal-delay: 120ms">

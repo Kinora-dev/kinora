@@ -5,6 +5,7 @@ export const SITE = {
   login: 'https://app.kinora.dev/login',
   signup: 'https://app.kinora.dev/signup',
   repo: 'https://github.com/Kinora-dev/kinora',
+  download: 'https://github.com/Kinora-dev/kinora/releases/latest',
   tagline: 'Playwright test intelligence',
   description:
     'A dashboard for your Playwright tests, across projects and over time, with an embedded trace viewer. Track pass rates, spot trends, surface flaky tests, and open the full trace inline.',

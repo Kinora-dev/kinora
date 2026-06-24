@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Avatar, AvatarFallback, AvatarImage } from '@kinora/ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@kinora/ui/dropdown-menu'
-import { Check, ChevronsUpDown, LogOut, Settings, SlidersHorizontal } from 'lucide-vue-next'
+import { Check, ChevronsUpDown, LogOut, MonitorDown, Settings, SlidersHorizontal } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { resetOrgState, useOrg } from '@/composables/useOrg'
@@ -100,6 +100,12 @@ async function signOut(): Promise<void> {
                 <Settings class="size-4" />
                 Settings
               </RouterLink>
+            </DropdownMenuItem>
+            <DropdownMenuItem as-child>
+              <a href="https://github.com/Kinora-dev/kinora/releases/latest" target="_blank" rel="noopener noreferrer">
+                <MonitorDown class="size-4" />
+                Desktop app
+              </a>
             </DropdownMenuItem>
             <DropdownMenuItem @click="signOut">
               <LogOut class="size-4" />
