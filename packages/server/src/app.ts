@@ -1,5 +1,6 @@
 import { serveStatic } from '@hono/node-server/serve-static'
 import { trpcServer } from '@hono/trpc-server'
+import * as Sentry from '@sentry/node'
 import { sql } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
@@ -8,6 +9,7 @@ import { secureHeaders } from 'hono/secure-headers'
 import { db } from './db'
 import { auth } from './lib/auth'
 import { env } from './lib/env'
+import { logger } from './lib/logger'
 import { clientIp, rateLimit } from './lib/rate-limit'
 import { getTrustedOrigins } from './lib/utils'
 import { publicApi } from './public-api/index'
@@ -55,5 +57,11 @@ app.use('/api/v1/*', bodyLimit({
 }))
 app.route('/api/v1', publicApi)
 app.route('/api/slack', slackOAuth)
+
+app.onError((err, c) => {
+  logger.error({ err }, 'unhandled request error')
+  Sentry.captureException(err)
+  return c.json({ error: 'Internal Server Error' }, 500)
+})
 
 export { app }

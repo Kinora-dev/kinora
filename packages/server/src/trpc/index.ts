@@ -1,4 +1,5 @@
 import type { Context } from './context'
+import * as Sentry from '@sentry/node'
 import { initTRPC, TRPCError } from '@trpc/server'
 import { and, eq } from 'drizzle-orm'
 import { db } from '../db'
@@ -12,10 +13,15 @@ const loggedProcedure = t.procedure.use(async (opts) => {
   const result = await opts.next()
   const ms = Date.now() - start
   const line = ` ${result.ok ? 'OK' : 'ERROR'} ${opts.type} ${opts.path} - ${ms}ms`
-  if (result.ok)
+  if (result.ok) {
     logger.info(line)
-  else
+  }
+  else {
     logger.error({ error: result.error.message }, line)
+    // Only unexpected failures; expected TRPCErrors (auth, validation) would be noise.
+    if (result.error.code === 'INTERNAL_SERVER_ERROR')
+      Sentry.captureException(result.error.cause ?? result.error)
+  }
   return result
 })
 

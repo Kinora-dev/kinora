@@ -36,4 +36,5 @@ export const TEST_ENV: Record<keyof Env, string> = {
   SMTP_USER: '',
   SMTP_PASS: '',
   SMTP_FROM: '',
+  SENTRY_DSN: '',
 }

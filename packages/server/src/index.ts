@@ -1,5 +1,7 @@
-import process from 'node:process'
+/* eslint-disable perfectionist/sort-imports -- ./instrument must load first so Sentry inits before other modules */
+import './instrument'
 import { serve } from '@hono/node-server'
+import process from 'node:process'
 import { app } from './app'
 import { db } from './db'
 import { env } from './lib/env'
