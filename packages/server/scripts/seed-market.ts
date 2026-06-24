@@ -35,10 +35,10 @@ const rng = mulberry32(0xC0FFEE)
 const jitter = (n: number): number => Math.floor(rng() * n)
 
 type Status = NormTest['status']
-type Profile =
-  | 'solid' | 'mostlyGreen' | 'flakyHistory' | 'chronicFlaky' | 'flakyCluster'
-  | 'degrading' | 'outage' | 'recovering' | 'intermittent' | 'chronicFail'
-  | 'newlyFlaky' | 'newlyBroken' | 'newlyFailing' | 'fixed' | 'fixmeSkip'
+type Profile
+  = | 'solid' | 'mostlyGreen' | 'flakyHistory' | 'chronicFlaky' | 'flakyCluster'
+    | 'degrading' | 'outage' | 'recovering' | 'intermittent' | 'chronicFail'
+    | 'newlyFlaky' | 'newlyBroken' | 'newlyFailing' | 'fixed' | 'fixmeSkip'
 
 // Status sequence per profile across run ordinals (0 = oldest, LATEST = newest).
 // Events are spread across the timeline (not just the tail) so per-run pass rates
