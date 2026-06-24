@@ -1,5 +1,5 @@
 ---
-import { Download, FolderOpen, Play, Sparkles, SquarePen, SquarePlay } from '@lucide/astro'
+import { Download, Play, Sparkles, SquarePen, SquarePlay } from '@lucide/astro'
 import { Image } from 'astro:assets'
 import desktopDark from '../assets/screenshots/desktop-dark.png'
 import desktopLight from '../assets/screenshots/desktop-light.png'
@@ -10,14 +10,10 @@ const chips = [
   { icon: SquarePen, label: 'Open in editor' },
   { icon: Sparkles, label: 'Copy AI prompt' },
   { icon: SquarePlay, label: 'Inline trace' },
-  { icon: FolderOpen, label: 'Local traces, no account' },
 ];
 ---
 
-<section
-  id="desktop"
-  class="relative overflow-hidden border-b border-border"
->
+<section id="desktop" class="relative overflow-hidden border-b border-border">
   <div
     class="app-grid pointer-events-none absolute inset-0 [mask-image:radial-gradient(100%_60%_at_50%_0%,black,transparent)]"
     aria-hidden="true"
@@ -43,12 +39,13 @@ const chips = [
       style="--reveal-delay: 140ms"
     >
       The kinora desktop app signs into your account and opens straight on the
-      latest run's failures. <span class="font-medium text-foreground">Re-run</span> a
-      failing test locally with your repo's own Playwright, jump to the
-      <span class="font-medium text-foreground">source in your editor</span>, copy a
-      ready-to-paste <span class="font-medium text-foreground">AI prompt</span>, or
-      open the full <span class="font-medium text-foreground">trace inline</span>. It also
-      opens any local <code class="font-mono text-sm">trace.zip</code> with no account at all.
+      latest run's failures. <span class="font-medium text-foreground">Re-run</span
+      > a failing test locally with your repo's own Playwright, jump to the
+      <span class="font-medium text-foreground">source in your editor</span>,
+      copy a ready-to-paste <span class="font-medium text-foreground">AI prompt</span
+      >, or open the full <span class="font-medium text-foreground">trace inline</span
+      >. It also opens any local <code class="font-mono text-sm">trace.zip</code
+      > with no account at all.
     </p>
 
     <div
