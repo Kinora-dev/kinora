@@ -132,120 +132,124 @@ const alignEnd = new Set(['size', 'duration', 'status'])
       @layout="(s: number[]) => { if (selected) netCols = s }"
     >
       <!-- table -->
-      <ResizablePanel id="net-table" :order="1" :default-size="selected ? netCols[0] : 100" class="overflow-auto">
-        <table class="w-full text-xs">
-          <thead class="sticky top-0 bg-background">
-            <tr class="border-b border-border">
-              <th
-                v-for="header in table.getHeaderGroups()[0].headers"
-                :key="header.id"
+      <ResizablePanel id="net-table" :order="1" :default-size="selected ? netCols[0] : 100">
+        <div class="h-full overflow-auto">
+          <table class="w-full text-xs">
+            <thead class="sticky top-0 bg-background">
+              <tr class="border-b border-border">
+                <th
+                  v-for="header in table.getHeaderGroups()[0].headers"
+                  :key="header.id"
+                  :class="cn(
+                    'cursor-pointer px-3 py-1.5 font-medium text-muted-foreground select-none hover:text-foreground',
+                    alignEnd.has(header.column.id) ? 'text-right' : 'text-left',
+                  )"
+                  @click="header.column.toggleSorting()"
+                >
+                  <span class="inline-flex items-center gap-1">
+                    {{ header.column.columnDef.header }}
+                    <ChevronUp v-if="header.column.getIsSorted() === 'asc'" class="size-3" />
+                    <ChevronDown v-else-if="header.column.getIsSorted() === 'desc'" class="size-3" />
+                  </span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="row in table.getRowModel().rows"
+                :key="row.original.id"
+                data-testid="net-row"
                 :class="cn(
-                  'cursor-pointer px-3 py-1.5 font-medium text-muted-foreground select-none hover:text-foreground',
-                  alignEnd.has(header.column.id) ? 'text-right' : 'text-left',
+                  'cursor-pointer border-b border-border/40 transition-colors',
+                  selectedId === row.original.id ? 'bg-signal/10' : 'hover:bg-muted/40',
                 )"
-                @click="header.column.toggleSorting()"
+                @click="selectedId = row.original.id"
               >
-                <span class="inline-flex items-center gap-1">
-                  {{ header.column.columnDef.header }}
-                  <ChevronUp v-if="header.column.getIsSorted() === 'asc'" class="size-3" />
-                  <ChevronDown v-else-if="header.column.getIsSorted() === 'desc'" class="size-3" />
-                </span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="row in table.getRowModel().rows"
-              :key="row.original.id"
-              data-testid="net-row"
-              :class="cn(
-                'cursor-pointer border-b border-border/40 transition-colors',
-                selectedId === row.original.id ? 'bg-signal/10' : 'hover:bg-muted/40',
-              )"
-              @click="selectedId = row.original.id"
-            >
-              <td class="max-w-0 px-3 py-1 font-mono text-foreground/90">
-                <TextTooltip :text="row.original.name" :tip="row.original.url" class="block" />
-              </td>
-              <td class="px-3 py-1 text-muted-foreground">
-                {{ row.original.method }}
-              </td>
-              <td class="px-3 py-1 text-right font-mono tabular-nums" :class="statusClass(row.original.status)">
-                {{ row.original.status || '-' }}
-              </td>
-              <td class="px-3 py-1 text-muted-foreground">
-                {{ row.original.category }}
-              </td>
-              <td class="px-3 py-1 text-right font-mono tabular-nums text-muted-foreground">
-                {{ formatSize(row.original.size) }}
-              </td>
-              <td class="px-3 py-1 text-right font-mono tabular-nums text-muted-foreground">
-                {{ Math.round(row.original.duration) }}ms
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                <td class="max-w-0 px-3 py-1 font-mono text-foreground/90">
+                  <TextTooltip :text="row.original.name" :tip="row.original.url" class="block" />
+                </td>
+                <td class="px-3 py-1 text-muted-foreground">
+                  {{ row.original.method }}
+                </td>
+                <td class="px-3 py-1 text-right font-mono tabular-nums" :class="statusClass(row.original.status)">
+                  {{ row.original.status || '-' }}
+                </td>
+                <td class="px-3 py-1 text-muted-foreground">
+                  {{ row.original.category }}
+                </td>
+                <td class="px-3 py-1 text-right font-mono tabular-nums text-muted-foreground">
+                  {{ formatSize(row.original.size) }}
+                </td>
+                <td class="px-3 py-1 text-right font-mono tabular-nums text-muted-foreground">
+                  {{ Math.round(row.original.duration) }}ms
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </ResizablePanel>
 
       <!-- detail -->
       <template v-if="selected">
         <ResizableHandle with-handle />
-        <ResizablePanel id="net-detail" :order="2" :default-size="netCols[1]" :min-size="20" :max-size="60" class="overflow-auto p-3 text-xs">
-          <div class="mb-2 flex items-start gap-2">
-            <div class="min-w-0 flex-1 font-mono break-all text-foreground/90">
-              {{ selected.url }}
+        <ResizablePanel id="net-detail" :order="2" :default-size="netCols[1]" :min-size="20" :max-size="60">
+          <div class="h-full overflow-auto p-3 text-xs">
+            <div class="mb-2 flex items-start gap-2">
+              <div class="min-w-0 flex-1 font-mono break-all text-foreground/90">
+                {{ selected.url }}
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  class="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  title="Copy"
+                >
+                  <Copy class="size-3.5" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem @click="copy(selected.url)">
+                    Copy URL
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="copy(toCurl(selected.resource))">
+                    Copy as cURL
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="copy(toFetch(selected.resource))">
+                    Copy as fetch
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                class="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                title="Copy"
-              >
-                <Copy class="size-3.5" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem @click="copy(selected.url)">
-                  Copy URL
-                </DropdownMenuItem>
-                <DropdownMenuItem @click="copy(toCurl(selected.resource))">
-                  Copy as cURL
-                </DropdownMenuItem>
-                <DropdownMenuItem @click="copy(toFetch(selected.resource))">
-                  Copy as fetch
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          <div class="mb-3 flex gap-3 text-muted-foreground">
-            <span>{{ selected.method }}</span>
-            <span :class="statusClass(selected.status)">{{ selected.status || '-' }}</span>
-            <span>{{ formatSize(selected.size) }}</span>
-          </div>
+            <div class="mb-3 flex gap-3 text-muted-foreground">
+              <span>{{ selected.method }}</span>
+              <span :class="statusClass(selected.status)">{{ selected.status || '-' }}</span>
+              <span>{{ formatSize(selected.size) }}</span>
+            </div>
 
-          <template v-if="body.kind !== 'none' || body.url">
+            <template v-if="body.kind !== 'none' || body.url">
+              <div class="mb-1 font-semibold tracking-wide text-muted-foreground uppercase">
+                Response body
+              </div>
+              <div class="mb-3">
+                <img v-if="body.kind === 'image'" :src="body.url" class="max-h-48 rounded border border-border">
+                <pre v-else-if="body.kind === 'text'" class="max-h-48 overflow-auto rounded bg-muted/40 p-2 font-mono whitespace-pre-wrap">{{ body.text }}</pre>
+                <a v-else-if="body.url" :href="body.url" download class="text-muted-foreground hover:text-foreground">download body</a>
+              </div>
+            </template>
+
             <div class="mb-1 font-semibold tracking-wide text-muted-foreground uppercase">
-              Response body
+              Response headers
             </div>
-            <div class="mb-3">
-              <img v-if="body.kind === 'image'" :src="body.url" class="max-h-48 rounded border border-border">
-              <pre v-else-if="body.kind === 'text'" class="max-h-48 overflow-auto rounded bg-muted/40 p-2 font-mono whitespace-pre-wrap">{{ body.text }}</pre>
-              <a v-else-if="body.url" :href="body.url" download class="text-muted-foreground hover:text-foreground">download body</a>
+            <div class="mb-3 flex flex-col gap-0.5 font-mono">
+              <div v-for="(h, i) in selected.resource.response?.headers ?? []" :key="i" class="break-all">
+                <span class="text-muted-foreground">{{ h.name }}:</span> {{ h.value }}
+              </div>
             </div>
-          </template>
-
-          <div class="mb-1 font-semibold tracking-wide text-muted-foreground uppercase">
-            Response headers
-          </div>
-          <div class="mb-3 flex flex-col gap-0.5 font-mono">
-            <div v-for="(h, i) in selected.resource.response?.headers ?? []" :key="i" class="break-all">
-              <span class="text-muted-foreground">{{ h.name }}:</span> {{ h.value }}
+            <div class="mb-1 font-semibold tracking-wide text-muted-foreground uppercase">
+              Request headers
             </div>
-          </div>
-          <div class="mb-1 font-semibold tracking-wide text-muted-foreground uppercase">
-            Request headers
-          </div>
-          <div class="flex flex-col gap-0.5 font-mono">
-            <div v-for="(h, i) in selected.resource.request?.headers ?? []" :key="i" class="break-all">
-              <span class="text-muted-foreground">{{ h.name }}:</span> {{ h.value }}
+            <div class="flex flex-col gap-0.5 font-mono">
+              <div v-for="(h, i) in selected.resource.request?.headers ?? []" :key="i" class="break-all">
+                <span class="text-muted-foreground">{{ h.name }}:</span> {{ h.value }}
+              </div>
             </div>
           </div>
         </ResizablePanel>
