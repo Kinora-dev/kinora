@@ -34,6 +34,21 @@ export function resourceCategory(resource: ResourceEntry): ResourceCategory {
   return 'Other'
 }
 
+// content.size can be 0 even with a body (e.g. vite dev server), so treat 0 as
+// missing and fall back to transfer size, then the Content-Length header.
+function responseSize(r: ResourceEntry): number {
+  const candidates = [
+    r.response?.content?.size,
+    r.response?._transferSize,
+    Number(r.response?.headers?.find(h => h.name.toLowerCase() === 'content-length')?.value),
+  ]
+  for (const n of candidates) {
+    if (typeof n === 'number' && Number.isFinite(n) && n > 0)
+      return n
+  }
+  return 0
+}
+
 function resourceName(url: string): string {
   try {
     const u = new URL(url)
@@ -67,7 +82,7 @@ export function resourcesForAction(
       method: r.request.method,
       status: r.response?.status ?? 0,
       category: resourceCategory(r),
-      size: r.response?.content?.size ?? r.response?._transferSize ?? 0,
+      size: responseSize(r),
       duration: r.time ?? 0,
       resource: r,
     })

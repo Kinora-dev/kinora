@@ -3,8 +3,10 @@ import type { ColumnDef, SortingState } from '@tanstack/vue-table'
 import type { NetworkRow, ResourceCategory } from '../lib/network'
 import { cn } from '@kinora/ui'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@kinora/ui/dropdown-menu'
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@kinora/ui/resizable'
 import { valueUpdater } from '@kinora/ui/table/utils'
 import { getCoreRowModel, getSortedRowModel, useVueTable } from '@tanstack/vue-table'
+import { useStorage } from '@vueuse/core'
 import { ChevronDown, ChevronUp, Copy } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 import { bodyUrl, formatSize, RESOURCE_CATEGORIES, resourcesForAction, statusClass, toCurl, toFetch } from '../lib/network'
@@ -13,6 +15,9 @@ import FilterInput from './FilterInput.vue'
 import TextTooltip from './TextTooltip.vue'
 
 const store = useTraceStore()
+
+// Persisted [table, detail] widths (percentages); applied only while a row is selected.
+const netCols = useStorage('kinora-tv-net-cols', [62, 38])
 
 const search = ref('')
 const activeCats = ref<Set<ResourceCategory>>(new Set())
@@ -120,9 +125,14 @@ const alignEnd = new Set(['size', 'duration', 'status'])
       No network for this action
     </div>
 
-    <div v-else class="flex min-h-0 flex-1">
+    <ResizablePanelGroup
+      v-else
+      direction="horizontal"
+      class="min-h-0 flex-1"
+      @layout="(s: number[]) => { if (selected) netCols = s }"
+    >
       <!-- table -->
-      <div class="min-w-0 flex-1 overflow-auto">
+      <ResizablePanel id="net-table" :order="1" :default-size="selected ? netCols[0] : 100" class="overflow-auto">
         <table class="w-full text-xs">
           <thead class="sticky top-0 bg-background">
             <tr class="border-b border-border">
@@ -175,68 +185,71 @@ const alignEnd = new Set(['size', 'duration', 'status'])
             </tr>
           </tbody>
         </table>
-      </div>
+      </ResizablePanel>
 
       <!-- detail -->
-      <div v-if="selected" class="w-80 shrink-0 overflow-auto border-l border-border p-3 text-xs">
-        <div class="mb-2 flex items-start gap-2">
-          <div class="min-w-0 flex-1 font-mono break-all text-foreground/90">
-            {{ selected.url }}
+      <template v-if="selected">
+        <ResizableHandle with-handle />
+        <ResizablePanel id="net-detail" :order="2" :default-size="netCols[1]" :min-size="20" :max-size="60" class="overflow-auto p-3 text-xs">
+          <div class="mb-2 flex items-start gap-2">
+            <div class="min-w-0 flex-1 font-mono break-all text-foreground/90">
+              {{ selected.url }}
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                class="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                title="Copy"
+              >
+                <Copy class="size-3.5" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem @click="copy(selected.url)">
+                  Copy URL
+                </DropdownMenuItem>
+                <DropdownMenuItem @click="copy(toCurl(selected.resource))">
+                  Copy as cURL
+                </DropdownMenuItem>
+                <DropdownMenuItem @click="copy(toFetch(selected.resource))">
+                  Copy as fetch
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              class="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              title="Copy"
-            >
-              <Copy class="size-3.5" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem @click="copy(selected.url)">
-                Copy URL
-              </DropdownMenuItem>
-              <DropdownMenuItem @click="copy(toCurl(selected.resource))">
-                Copy as cURL
-              </DropdownMenuItem>
-              <DropdownMenuItem @click="copy(toFetch(selected.resource))">
-                Copy as fetch
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-        <div class="mb-3 flex gap-3 text-muted-foreground">
-          <span>{{ selected.method }}</span>
-          <span :class="statusClass(selected.status)">{{ selected.status || '-' }}</span>
-          <span>{{ formatSize(selected.size) }}</span>
-        </div>
+          <div class="mb-3 flex gap-3 text-muted-foreground">
+            <span>{{ selected.method }}</span>
+            <span :class="statusClass(selected.status)">{{ selected.status || '-' }}</span>
+            <span>{{ formatSize(selected.size) }}</span>
+          </div>
 
-        <template v-if="body.kind !== 'none' || body.url">
+          <template v-if="body.kind !== 'none' || body.url">
+            <div class="mb-1 font-semibold tracking-wide text-muted-foreground uppercase">
+              Response body
+            </div>
+            <div class="mb-3">
+              <img v-if="body.kind === 'image'" :src="body.url" class="max-h-48 rounded border border-border">
+              <pre v-else-if="body.kind === 'text'" class="max-h-48 overflow-auto rounded bg-muted/40 p-2 font-mono whitespace-pre-wrap">{{ body.text }}</pre>
+              <a v-else-if="body.url" :href="body.url" download class="text-muted-foreground hover:text-foreground">download body</a>
+            </div>
+          </template>
+
           <div class="mb-1 font-semibold tracking-wide text-muted-foreground uppercase">
-            Response body
+            Response headers
           </div>
-          <div class="mb-3">
-            <img v-if="body.kind === 'image'" :src="body.url" class="max-h-48 rounded border border-border">
-            <pre v-else-if="body.kind === 'text'" class="max-h-48 overflow-auto rounded bg-muted/40 p-2 font-mono whitespace-pre-wrap">{{ body.text }}</pre>
-            <a v-else-if="body.url" :href="body.url" download class="text-muted-foreground hover:text-foreground">download body</a>
+          <div class="mb-3 flex flex-col gap-0.5 font-mono">
+            <div v-for="(h, i) in selected.resource.response?.headers ?? []" :key="i" class="break-all">
+              <span class="text-muted-foreground">{{ h.name }}:</span> {{ h.value }}
+            </div>
           </div>
-        </template>
-
-        <div class="mb-1 font-semibold tracking-wide text-muted-foreground uppercase">
-          Response headers
-        </div>
-        <div class="mb-3 flex flex-col gap-0.5 font-mono">
-          <div v-for="(h, i) in selected.resource.response?.headers ?? []" :key="i" class="break-all">
-            <span class="text-muted-foreground">{{ h.name }}:</span> {{ h.value }}
+          <div class="mb-1 font-semibold tracking-wide text-muted-foreground uppercase">
+            Request headers
           </div>
-        </div>
-        <div class="mb-1 font-semibold tracking-wide text-muted-foreground uppercase">
-          Request headers
-        </div>
-        <div class="flex flex-col gap-0.5 font-mono">
-          <div v-for="(h, i) in selected.resource.request?.headers ?? []" :key="i" class="break-all">
-            <span class="text-muted-foreground">{{ h.name }}:</span> {{ h.value }}
+          <div class="flex flex-col gap-0.5 font-mono">
+            <div v-for="(h, i) in selected.resource.request?.headers ?? []" :key="i" class="break-all">
+              <span class="text-muted-foreground">{{ h.name }}:</span> {{ h.value }}
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
+        </ResizablePanel>
+      </template>
+    </ResizablePanelGroup>
   </div>
 </template>
