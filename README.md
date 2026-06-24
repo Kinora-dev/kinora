@@ -2,25 +2,43 @@
 
 A dashboard for your Playwright tests - across projects and over time - with an embedded trace viewer.
 
-Playwright ships a great HTML report for a single run. kinora sits one level up: push every CI run to a kinora server and get one place to track pass rates, spot trends, and surface flaky tests over time. Failing tests get a **View trace** button that opens the full Playwright trace (DOM / timeline / network / console) right in the dashboard - no separate tooling.
-
-> Status: in active development, pre-release.
+Playwright ships a great HTML report for a single run. kinora sits one level up: push every CI run to a kinora server and get one place to track pass rates, spot trends, and surface flaky tests over time. Failing tests get a **View trace** button that opens the full Playwright trace (DOM / timeline / network / console) right in the dashboard, no separate tooling.
 
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="docs/screenshots/overview-light.png">
   <img alt="Overview" src="docs/screenshots/overview-dark.png">
 </picture>
 
-## Embedded trace viewer
+## Features
 
-Failing tests get a **View trace** button that opens the full Playwright trace inline - DOM, timeline, network, console - plus a **Copy prompt** to hand the failure to an LLM.
+### Trends over time
+
+Push from CI and kinora keeps the history: pass rate, run count and duration per project, a sparkline trend, and one colored strip per run, so a slow drift shows long before it breaks the build.
 
 <picture>
-  <source media="(prefers-color-scheme: light)" srcset="docs/screenshots/trace-viewer-light.png">
-  <img alt="Embedded Playwright trace viewer" src="docs/screenshots/trace-viewer-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/screenshots/project-light.png">
+  <img alt="Per-project page with pass rate, trend sparkline and per-run history strips" src="docs/screenshots/project-dark.png">
 </picture>
 
-## Run-to-run compare
+### Flakiness
+
+Every test gets a flaky rate and a fail rate computed across its run history. Flip on **Unstable only** to see what is quietly costing you retries, and spot the tests newly broken or newly flaky since the last run.
+
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/screenshots/tests-light.png">
+  <img alt="Tests page listing per-test flaky rate and fail rate across runs with an unstable-only filter" src="docs/screenshots/tests-dark.png">
+</picture>
+
+### Per-test history
+
+Each test keeps a stable identity however it was uploaded, so you can follow one test run-to-run: when it started flaking, when it was fixed, and how long it has been green.
+
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/screenshots/test-history-light.png">
+  <img alt="Per-test history with a status timeline, pass and flaky rates, and a list of failures and flakes" src="docs/screenshots/test-history-dark.png">
+</picture>
+
+### Run-to-run compare
 
 Diff any two runs: newly failing, fixed, newly flaky, and still failing, grouped for you.
 
@@ -29,9 +47,29 @@ Diff any two runs: newly failing, fixed, newly flaky, and still failing, grouped
   <img alt="Run-to-run comparison" src="docs/screenshots/compare-dark.png">
 </picture>
 
+### Embedded trace viewer
+
+Failing tests get a **View trace** button that opens the full Playwright trace inline - DOM, timeline, network, console - plus a **Copy prompt** to hand the failure to an LLM.
+
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/screenshots/trace-viewer-light.png">
+  <img alt="Embedded Playwright trace viewer" src="docs/screenshots/trace-viewer-dark.png">
+</picture>
+
 ## Alerts
 
 Get notified when a run brings new failures or regressions. Each project can post to Slack, an email address, or a custom webhook, with an every-run / on-failure / on-regression policy.
+
+## Desktop app
+
+A macOS app that signs into your account and opens straight on the latest run's failures. Re-run a failing test locally with your repo's own Playwright, jump to the source in your editor, copy a ready-to-paste AI prompt, or open the full trace inline. It also opens any local `trace.zip` with no account at all, a self-contained replacement for `playwright show-trace`.
+
+[Download for macOS](https://github.com/Kinora-dev/kinora/releases/latest) (Apple Silicon). Auto-updates from there.
+
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/screenshots/desktop-light.png">
+  <img alt="kinora desktop app showing a project's failing tests with re-run, open-in-editor, copy-prompt and view-trace actions" src="docs/screenshots/desktop-dark.png">
+</picture>
 
 ## Packages
 
@@ -108,20 +146,10 @@ pnpm dev:viewer                 # trace viewer on :5174
 
 Open http://localhost:5173 and sign in with the seeded credentials (`demo@kinora.dev` / `password123`). Use the printed API token to push real runs from a project via the reporter or CLI.
 
-Workspace scripts (from the root):
-
-```bash
-pnpm build        # build every package
-pnpm typecheck    # vue-tsc / tsc across the workspace
-pnpm lint         # eslint
-pnpm test         # unit tests
-pnpm test:e2e     # trace-viewer and web e2e (Playwright)
-```
-
 ## Self-hosting
 
 Run the whole stack with one `docker compose` (Postgres + server + dashboard, single origin, local-FS artifacts, no S3). See [`selfhost/README.md`](selfhost/README.md) for the quickstart, configuration, sending tests, custom domains, upgrades, and backups.
 
 ## Licensing
 
-kinora is fair source. The deployable product (`server`, `web`) is **FSL-1.1-MIT**: source-available, free to self-host, and each release converts to **MIT** on its second anniversary. The libraries you embed in your own test suite (`reporter`, `cli`, `core`, `ui`) and the trace viewer are **MIT**. The trace engine under `packages/trace-viewer/src/core` and `src/sw` is vendored from [microsoft/playwright](https://github.com/microsoft/playwright) (Apache-2.0).
+kinora is fair source, the deployable product (`server`, `web`) is **FSL-1.1-MIT**, the libraries you embed in your own test suite (`reporter`, `cli`, `core`, `ui`) and the trace viewer are **MIT**. The trace engine under `packages/trace-viewer/src/core` and `src/sw` is vendored from [microsoft/playwright](https://github.com/microsoft/playwright) (Apache-2.0).
