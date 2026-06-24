@@ -3,7 +3,6 @@ import { ArrowRight } from '@lucide/astro'
 import overviewDark from '../assets/screenshots/overview-dark.png'
 import overviewLight from '../assets/screenshots/overview-light.png'
 import { SITE } from '../lib/site'
-import CopyCommand from './CopyCommand.astro'
 import GithubIcon from './GithubIcon.astro'
 import Screenshot from './Screenshot.astro';
 ---
@@ -80,12 +79,6 @@ import Screenshot from './Screenshot.astro';
         View on GitHub
       </a>
     </div>
-
-    <CopyCommand
-      command="pnpm add -D @kinora/reporter"
-      event="copy-install-hero"
-      class="reveal mx-auto mt-6 max-w-sm"
-    />
 
     <div class="reveal mt-16 sm:mt-20" style="--reveal-delay: 120ms">
       <Screenshot
