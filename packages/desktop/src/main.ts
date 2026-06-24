@@ -124,12 +124,14 @@ function createHomeWindow(): BrowserWindow {
       nodeIntegration: false,
       preload: path.join(__dirname, 'home-preload.cjs'),
       // Sandboxed preload reads this from process.argv to expose window.kinora.isDev.
-      additionalArguments: [`--kinora-dev=${app.isPackaged ? '0' : '1'}`],
+      // Suppressed during screenshot capture so landing shots look like a prod build.
+      additionalArguments: [`--kinora-dev=${app.isPackaged || process.env.KINORA_SHOT ? '0' : '1'}`],
     },
   })
   // Show only once painted so there's no blank white flash before the app renders.
+  // Also show during capture: a hidden window's capturePage renders at 1x, not retina.
   win.once('ready-to-show', () => {
-    if (!HOME_PROBE)
+    if (!HOME_PROBE || process.env.KINORA_SHOT)
       win.show()
   })
   win.webContents.on('console-message', ({ level, message }) => console.log(`[home:${level}] ${message}`))
@@ -401,8 +403,12 @@ async function probeHome(): Promise<void> {
     return { failuresView: text.includes('latest run'), body: text.slice(0, 160).replace(/\\s+/g, ' ').trim() }
   })()`) as { failuresView: boolean, body: string }
   if (process.env.KINORA_SHOT) {
-    if (process.env.KINORA_SHOT_PROJECT) {
-      await homeWin!.webContents.executeJavaScript(`localStorage.setItem('kinora-desktop-project', ${JSON.stringify(process.env.KINORA_SHOT_PROJECT)})`)
+    const proj = process.env.KINORA_SHOT_PROJECT
+    const theme = process.env.KINORA_SHOT_THEME
+    if (proj || theme) {
+      await homeWin!.webContents.executeJavaScript(
+        `${proj ? `localStorage.setItem('kinora-desktop-project', ${JSON.stringify(proj)});` : ''}${theme ? `localStorage.setItem('kinora-theme', ${JSON.stringify(theme)});` : ''}`,
+      )
       await homeWin!.webContents.reload()
       await new Promise<void>(resolve => setTimeout(resolve, 4000))
     }
