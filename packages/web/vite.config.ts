@@ -12,6 +12,8 @@ export default defineConfig({
       schema: {
         VITE_KINORA_SERVER_URL: z.url(),
         VITE_KINORA_VIEWER_URL: z.string().optional(),
+        VITE_KINORA_CLOUD: z.string().optional(),
+        VITE_KINORA_SENTRY_DSN: z.string().optional(),
       },
     }),
     vue(),

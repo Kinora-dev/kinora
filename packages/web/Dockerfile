@@ -10,6 +10,12 @@ WORKDIR /repo
 ARG VITE_KINORA_SERVER_URL
 ENV VITE_KINORA_SERVER_URL=$VITE_KINORA_SERVER_URL
 
+# Cloud-only: Sentry stays off unless both are passed (self-host omits them).
+ARG VITE_KINORA_CLOUD
+ENV VITE_KINORA_CLOUD=$VITE_KINORA_CLOUD
+ARG VITE_KINORA_SENTRY_DSN
+ENV VITE_KINORA_SENTRY_DSN=$VITE_KINORA_SENTRY_DSN
+
 COPY . .
 RUN pnpm install --frozen-lockfile --filter @kinora/web... --filter @kinora/trace-viewer...
 RUN pnpm --filter @kinora/web build

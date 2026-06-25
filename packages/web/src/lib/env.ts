@@ -5,4 +5,5 @@ export const env = {
   serverUrl: import.meta.env.VITE_KINORA_SERVER_URL,
   // Trace viewer: own dev server in dev, served under /trace/ in prod.
   viewerBaseUrl: import.meta.env.VITE_KINORA_VIEWER_URL || (DEV ? 'http://localhost:5174/' : '/trace/'),
+  sentryDsn: import.meta.env.VITE_KINORA_SENTRY_DSN,
 }

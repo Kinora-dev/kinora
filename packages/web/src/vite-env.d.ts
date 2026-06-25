@@ -9,6 +9,8 @@ interface ViteTypeOptions {
 interface ImportMetaEnv {
   readonly VITE_KINORA_SERVER_URL: string
   readonly VITE_KINORA_VIEWER_URL?: string
+  readonly VITE_KINORA_CLOUD?: string
+  readonly VITE_KINORA_SENTRY_DSN?: string
 }
 
 interface ImportMeta {
