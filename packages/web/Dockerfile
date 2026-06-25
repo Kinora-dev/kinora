@@ -16,9 +16,18 @@ ENV VITE_KINORA_CLOUD=$VITE_KINORA_CLOUD
 ARG VITE_KINORA_SENTRY_DSN
 ENV VITE_KINORA_SENTRY_DSN=$VITE_KINORA_SENTRY_DSN
 
+# Source-map upload (cloud only): org/project are non-secret; the auth token comes via a
+# BuildKit secret so it never lands in an image layer. Absent token = upload skipped.
+ARG SENTRY_ORG
+ENV SENTRY_ORG=$SENTRY_ORG
+ARG SENTRY_PROJECT
+ENV SENTRY_PROJECT=$SENTRY_PROJECT
+
 COPY . .
 RUN pnpm install --frozen-lockfile --filter @kinora/web... --filter @kinora/trace-viewer...
-RUN pnpm --filter @kinora/web build
+RUN --mount=type=secret,id=sentry_auth_token \
+    SENTRY_AUTH_TOKEN="$(cat /run/secrets/sentry_auth_token 2>/dev/null || true)" \
+    pnpm --filter @kinora/web build
 RUN pnpm --filter @kinora/trace-viewer build
 
 FROM nginx:1.27-alpine AS runtime

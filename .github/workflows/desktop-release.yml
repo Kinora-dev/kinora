@@ -32,6 +32,10 @@ jobs:
         run: |
           pnpm --filter @kinora/trace-viewer build
           pnpm --filter @kinora/desktop build
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_DESKTOP_PROJECT }}
 
       # Pre-create the draft so electron-builder's concurrent uploads all find it,
       # instead of racing to create it

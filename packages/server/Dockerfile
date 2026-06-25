@@ -23,4 +23,5 @@ COPY --from=builder --chown=kinora:nodejs /prod /app
 USER kinora
 EXPOSE 3000
 
-CMD ["node", "dist/src/index.mjs"]
+# --enable-source-maps so Sentry stack traces map back to TS source.
+CMD ["node", "--enable-source-maps", "dist/src/index.mjs"]

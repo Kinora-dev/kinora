@@ -26,6 +26,8 @@ peerDependencyRules:
 
 # pnpm 11 replaces onlyBuiltDependencies with this map. winstaller off: desktop ships mac-only.
 allowBuilds:
+  # @sentry/vite-plugin shells out to sentry-cli to upload source maps; needs its binary downloaded.
+  '@sentry/cli': true
   electron: true
   electron-winstaller: false
   esbuild: true
