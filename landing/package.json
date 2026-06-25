@@ -16,6 +16,8 @@
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
+    "@fontsource-variable/hanken-grotesk": "^5.2.8",
+    "@fontsource-variable/jetbrains-mono": "^5.2.8",
     "@lucide/astro": "^1.21.0",
     "@tailwindcss/vite": "^4.3.1",
     "astro": "^6.4.8",
