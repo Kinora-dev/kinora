@@ -22,6 +22,7 @@
     "@kinora/core": "workspace:*",
     "@kinora/trace-viewer": "workspace:*",
     "@kinora/ui": "workspace:*",
+    "@sentry/electron": "^7.14.0",
     "@trpc/client": "^11.18.0",
     "@trpc/server": "11.18.0",
     "electron-updater": "^6.8.9",

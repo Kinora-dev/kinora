@@ -2,6 +2,7 @@
 import type { ChildProcess } from 'node:child_process'
 import path from 'node:path'
 import process from 'node:process'
+import * as Sentry from '@sentry/electron/main'
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import { signIn } from './account'
@@ -31,6 +32,17 @@ let port = 0
 let homeWin: BrowserWindow | null = null
 let viewerWin: BrowserWindow | null = null
 let config = loadConfig()
+
+// Packaged builds target the cloud; dev/probe runs stay off (sentryDsn null).
+if (app.isPackaged && config.sentryDsn) {
+  Sentry.init({
+    dsn: config.sentryDsn,
+    environment: 'production',
+    release: `@kinora/desktop@${app.getVersion()}`,
+    tracesSampleRate: 0.1,
+    sendDefaultPii: false,
+  })
+}
 // Aborts the in-flight device-flow poll when the user cancels.
 let deviceAbort: AbortController | null = null
 // The current local test re-run + its produced trace (for "View trace").

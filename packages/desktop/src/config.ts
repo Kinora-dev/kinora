@@ -10,12 +10,26 @@ export interface Config {
   token: string | null
   // Maps a cloud project id to its local repo root (for open-in-editor / re-run).
   projectPaths: Record<string, string>
+  // Public Sentry DSN; only baked into packaged builds (dev = null = off).
+  sentryDsn: string | null
 }
 
 // Packaged builds target the cloud; dev runs against the local stack.
 const DEFAULTS: Config = app.isPackaged
-  ? { serverUrl: 'https://api.kinora.dev', webOrigin: 'https://app.kinora.dev', token: null, projectPaths: {} }
-  : { serverUrl: 'http://localhost:3000', webOrigin: 'http://localhost:5173', token: null, projectPaths: {} }
+  ? {
+      serverUrl: 'https://api.kinora.dev',
+      webOrigin: 'https://app.kinora.dev',
+      token: null,
+      projectPaths: {},
+      sentryDsn: 'https://c310f2e5a017909d63b1977ea90149a9@o1155685.ingest.us.sentry.io/4511622840451072',
+    }
+  : {
+      serverUrl: 'http://localhost:3000',
+      webOrigin: 'http://localhost:5173',
+      token: null,
+      projectPaths: {},
+      sentryDsn: null,
+    }
 
 function configPath(): string {
   // Dev/prod isolation is handled by a separate userData dir in dev (see main.ts).
