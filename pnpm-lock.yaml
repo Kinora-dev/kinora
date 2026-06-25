@@ -266,6 +266,9 @@ importers:
       '@lezer/highlight':
         specifier: ^1.2.3
         version: 1.2.3
+      '@sentry/vue':
+        specifier: ^10.60.0
+        version: 10.60.0(vue@3.5.38(typescript@6.0.3))
       '@tanstack/vue-table':
         specifier: ^8.21.3
         version: 8.21.3(vue@3.5.38(typescript@6.0.3))
