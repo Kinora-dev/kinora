@@ -21,6 +21,14 @@ test('shows the test source code', async ({ page }) => {
   await expect(page.getByText('@playwright/test').first()).toBeVisible()
 })
 
+test('syntax highlights the source', async ({ page }) => {
+  await page.getByRole('button', { name: 'Source', exact: true }).click()
+  // A duplicate @codemirror/view silently drops highlight decorations, leaving plain monochrome text.
+  const tokens = page.locator('.cm-content span')
+  await expect(tokens.first()).toBeVisible()
+  expect(await tokens.count()).toBeGreaterThan(20)
+})
+
 test('network tab lists requests and previews a response body', async ({ page }) => {
   await page.getByRole('button', { name: /^Network/ }).click()
   const rows = page.getByTestId('net-row')
