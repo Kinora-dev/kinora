@@ -5,6 +5,7 @@ export const SITE = {
   login: 'https://app.kinora.dev/login',
   signup: 'https://app.kinora.dev/signup',
   repo: 'https://github.com/Kinora-dev/kinora',
+  selfhost: 'https://github.com/Kinora-dev/kinora/tree/main/selfhost',
   download: 'https://github.com/Kinora-dev/kinora/releases/latest',
   tagline: 'Playwright test intelligence',
   description:
