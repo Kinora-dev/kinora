@@ -50,6 +50,33 @@ jobs:
       - name: Test
         run: pnpm test
 
+  # landing is a standalone Astro workspace (own lockfile), so pnpm -r above never touches it.
+  # Lint is already covered by the root eslint .; this catches astro type errors + a broken build.
+  landing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: landing
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version-file: package.json
+          cache: pnpm
+          cache-dependency-path: landing/pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build
+        run: pnpm build
+
   integration_tests:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -126,8 +153,21 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@2c8a9bd7457de244a408f35966fab2fb45fda9c8 # v6.0.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
+
+      # On a cache hit the browser binary is restored; OS deps live system-wide and aren't cached.
       - name: Install Playwright browser
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm --filter @kinora/web exec playwright install --with-deps chromium
+
+      - name: Install Playwright OS deps
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm --filter @kinora/web exec playwright install-deps chromium
 
       # test:e2e resets kinora_e2e + self-boots the stack on dedicated ports (same as local).
       - name: E2E (viewer + web suites)
