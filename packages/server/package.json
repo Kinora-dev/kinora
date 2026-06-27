@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1073.0",
+    "@aws-sdk/lib-storage": "^3.1075.0",
     "@aws-sdk/s3-request-presigner": "^3.1073.0",
     "@better-auth/api-key": "^1.6.20",
     "@hono/node-server": "^2.0.5",
@@ -41,6 +42,7 @@
     "@sentry/node": "^10.60.0",
     "@trpc/server": "^11.18.0",
     "better-auth": "^1.6.20",
+    "busboy": "^1.6.0",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.12.26",
@@ -53,6 +55,7 @@
   },
   "devDependencies": {
     "@kinora/core": "workspace:*",
+    "@types/busboy": "^1.5.4",
     "@types/node": "^26.0.0",
     "@types/nodemailer": "^8.0.1",
     "@types/pg": "^8.20.0",

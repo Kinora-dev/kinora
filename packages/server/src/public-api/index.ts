@@ -1,7 +1,9 @@
-import { Buffer } from 'node:buffer'
+import type { Context } from 'hono'
 import { randomUUID } from 'node:crypto'
+import { Readable, Transform } from 'node:stream'
 import { zValidator } from '@hono/zod-validator'
 import { countsByTagFrom, ingestRunSchema } from '@kinora/core'
+import busboy from 'busboy'
 import { and, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
@@ -19,6 +21,8 @@ import { storage } from '../lib/storage'
 
 const BEARER_PREFIX = 'Bearer '
 const INGEST_MAX_JSON_MB = 25
+// Matches the /api/v1 bodyLimit; busboy truncates the file part past this so RAM/disk stay bounded.
+const MAX_ARTIFACT_BYTES = 100 * 1024 * 1024
 
 // Public ingest API (api-key authed) - the reporter / cli upload here. The token's
 // referenceId is the owning organization id.
@@ -179,6 +183,82 @@ publicApi.post('/runs', ingestJsonLimit, zValidator('json', ingestRunSchema), as
   return c.json(result, 201)
 })
 
+interface StreamedArtifact {
+  key: string
+  name: string
+  contentType: string
+  testKey: string
+  size: number
+}
+
+// Parse the multipart upload and stream the file part straight to storage so a large trace.zip is
+// never fully buffered. null = no file part; { tooLarge } = file part exceeded the byte cap.
+async function streamArtifact(c: Context, projectId: string, runId: string): Promise<StreamedArtifact | { tooLarge: true } | null> {
+  const contentType = c.req.header('content-type') ?? ''
+  const reqBody = c.req.raw.body
+  if (!reqBody || !contentType.includes('multipart/form-data'))
+    return null
+
+  return new Promise((resolve, reject) => {
+    const bb = busboy({ headers: { 'content-type': contentType }, limits: { files: 1, fields: 10, fileSize: MAX_ARTIFACT_BYTES } })
+    let testKey = ''
+    let nameField = ''
+    let fileContentType = 'application/zip'
+    let key = ''
+    let size = 0
+    let tooLarge = false
+    let putPromise: Promise<void> | null = null
+    let putError: unknown
+
+    bb.on('field', (field, value) => {
+      if (field === 'testKey')
+        testKey = value
+      else if (field === 'name')
+        nameField = value
+    })
+
+    bb.on('file', (_field, fileStream, info) => {
+      fileContentType = info.mimeType || 'application/zip'
+      // The reporter sends the file part before the name field, so derive the key from its filename.
+      const safeName = (info.filename || 'trace').replace(/[^\w.-]/g, '_').slice(0, 100) || 'trace'
+      key = `${projectId}/${runId}/${randomUUID()}-${safeName}.zip`
+      fileStream.on('limit', () => {
+        tooLarge = true
+      })
+      // Transform buffers + backpressures (unlike a raw 'data' listener), so counting loses no bytes.
+      const counted = fileStream.pipe(new Transform({
+        transform(chunk, _enc, cb) {
+          size += chunk.length
+          cb(null, chunk)
+        },
+      }))
+      fileStream.on('error', err => counted.destroy(err))
+      // Capture rather than reject here so a busboy 'error' before 'close' can't leave this unhandled.
+      putPromise = storage.put(key, counted).catch((err) => {
+        putError = err
+      })
+    })
+
+    bb.on('error', reject)
+    bb.on('close', () => {
+      void (async () => {
+        if (!putPromise)
+          return resolve(null)
+        await putPromise
+        if (putError)
+          return reject(putError)
+        if (tooLarge) {
+          await storage.delete(key).catch(() => {}) // drop the truncated object
+          return resolve({ tooLarge: true })
+        }
+        resolve({ key, name: nameField || 'trace', contentType: fileContentType, testKey, size })
+      })()
+    })
+
+    Readable.fromWeb(reqBody as Parameters<typeof Readable.fromWeb>[0]).pipe(bb)
+  })
+}
+
 // Upload a trace.zip (or other binary artifact) for a run, linked to a test.
 publicApi.post('/runs/:runId/artifacts', async (c) => {
   const orgId = c.get('orgId')
@@ -198,22 +278,15 @@ publicApi.post('/runs/:runId/artifacts', async (c) => {
   if (!owner)
     return c.json({ error: 'Run not found' }, 404)
 
-  const body = await c.req.parseBody()
-  const file = body.file
-  if (!(file instanceof File))
+  const uploaded = await streamArtifact(c, r.projectId, runId)
+  if (!uploaded)
     return c.json({ error: 'file is required' }, 400)
-  const testKey = typeof body.testKey === 'string' ? body.testKey : ''
-  const name = typeof body.name === 'string' ? body.name : 'trace'
+  if ('tooLarge' in uploaded)
+    return c.json({ error: 'Artifact too large' }, 413)
 
-  const buf = Buffer.from(await file.arrayBuffer())
-  // name is client-controlled; sanitize before it enters the storage path so it can't traverse.
-  const safeName = name.replace(/[^\w.-]/g, '_').slice(0, 100) || 'trace'
-  const key = `${r.projectId}/${runId}/${randomUUID()}-${safeName}.zip`
-  await storage.put(key, buf)
-
-  const t = testKey
+  const t = uploaded.testKey
     ? await db.query.test.findFirst({
-        where: and(eq(test.runId, runId), eq(test.testKey, testKey)),
+        where: and(eq(test.runId, runId), eq(test.testKey, uploaded.testKey)),
         columns: { id: true },
       })
     : undefined
@@ -223,11 +296,11 @@ publicApi.post('/runs/:runId/artifacts', async (c) => {
     projectId: r.projectId,
     runId,
     testId: t?.id,
-    name,
-    contentType: file.type || 'application/zip',
-    storageKey: key,
-    size: buf.length,
+    name: uploaded.name,
+    contentType: uploaded.contentType,
+    storageKey: uploaded.key,
+    size: uploaded.size,
   })
 
-  return c.json({ url: await storage.url(key) }, 201)
+  return c.json({ url: await storage.url(uploaded.key) }, 201)
 })

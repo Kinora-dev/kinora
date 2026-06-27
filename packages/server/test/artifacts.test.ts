@@ -19,7 +19,8 @@ async function uploadArtifact(name: string) {
   const run = (await db.query.run.findMany())[0]
 
   const form = new FormData()
-  form.set('file', new File([new Uint8Array([0x50, 0x4B, 0x03, 0x04])], 'trace.zip'))
+  // The key derives from the file part's filename, so the traversal payload rides there.
+  form.set('file', new File([new Uint8Array([0x50, 0x4B, 0x03, 0x04])], name))
   form.set('name', name)
   const res = await app.request(`/api/v1/runs/${run.id}/artifacts`, {
     method: 'POST',
@@ -39,6 +40,130 @@ describe('artifact upload', () => {
     expect(a.storageKey.startsWith(`${run.projectId}/${run.id}/`)).toBe(true)
     expect(a.storageKey.split('/')).toHaveLength(3)
     expect(resolve(root, a.storageKey).startsWith(root + sep)).toBe(true)
+  })
+
+  it('streams the uploaded bytes verbatim and records the size', async () => {
+    const bytes = new Uint8Array([0x50, 0x4B, 0x03, 0x04, 1, 2, 3, 4, 5, 6, 7])
+    const user = await createUser()
+    const apiKey = await createApiKey(user.id)
+    await ingest(apiKey)
+    const run = (await db.query.run.findMany())[0]
+
+    const form = new FormData()
+    form.set('file', new File([bytes], 'trace.zip'))
+    form.set('name', 'trace')
+    const res = await app.request(`/api/v1/runs/${run.id}/artifacts`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}` },
+      body: form,
+    })
+    expect(res.status).toBe(201)
+
+    const a = (await db.query.artifact.findMany())[0]
+    expect(a.size).toBe(bytes.length)
+
+    // Round-trip: fetch it back through the signed URL and compare bytes.
+    const url = new URL((await res.json() as { url: string }).url)
+    const got = await app.request(url.pathname + url.search)
+    expect(got.status).toBe(200)
+    expect([...new Uint8Array(await got.arrayBuffer())]).toEqual([...bytes])
+  })
+
+  it('rejects an empty (no file part) upload', async () => {
+    const user = await createUser()
+    const apiKey = await createApiKey(user.id)
+    await ingest(apiKey)
+    const run = (await db.query.run.findMany())[0]
+
+    const form = new FormData()
+    form.set('name', 'trace')
+    const res = await app.request(`/api/v1/runs/${run.id}/artifacts`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}` },
+      body: form,
+    })
+    expect(res.status).toBe(400)
+  })
+})
+
+async function postArtifact(runId: string, apiKey: string | null, opts: { testKey?: string, body?: string } = {}) {
+  const headers: Record<string, string> = {}
+  if (apiKey)
+    headers.Authorization = `Bearer ${apiKey}`
+  let body: string | FormData | undefined = opts.body
+  if (!body) {
+    const form = new FormData()
+    form.set('file', new File([new Uint8Array([0x50, 0x4B, 0x03, 0x04])], 'trace.zip'))
+    form.set('name', 'trace')
+    if (opts.testKey !== undefined)
+      form.set('testKey', opts.testKey)
+    body = form
+  }
+  else {
+    headers['content-type'] = 'application/json'
+  }
+  return app.request(`/api/v1/runs/${runId}/artifacts`, { method: 'POST', headers, body })
+}
+
+describe('artifact upload - access + linking', () => {
+  it('rejects an upload with no API key (401)', async () => {
+    const res = await postArtifact('any-run', null)
+    expect(res.status).toBe(401)
+  })
+
+  it('returns 404 for an unknown run', async () => {
+    const user = await createUser()
+    const apiKey = await createApiKey(user.id)
+    const res = await postArtifact('does-not-exist', apiKey)
+    expect(res.status).toBe(404)
+  })
+
+  it('returns 404 when the run belongs to another org (no cross-org upload)', async () => {
+    const owner = await createUser('owner@test.dev')
+    const ownerKey = await createApiKey(owner.id)
+    await ingest(ownerKey)
+    const run = (await db.query.run.findMany())[0]
+
+    const stranger = await createUser('stranger@test.dev')
+    const strangerKey = await createApiKey(stranger.id)
+    const res = await postArtifact(run.id, strangerKey)
+    expect(res.status).toBe(404)
+    expect(await db.query.artifact.findMany()).toHaveLength(0)
+  })
+
+  it('links the artifact to the test matching the testKey', async () => {
+    const user = await createUser()
+    const apiKey = await createApiKey(user.id)
+    await ingest(apiKey)
+    const run = (await db.query.run.findMany())[0]
+    const t = (await db.query.test.findMany())[0]
+
+    const res = await postArtifact(run.id, apiKey, { testKey: t.testKey })
+    expect(res.status).toBe(201)
+    const a = (await db.query.artifact.findMany())[0]
+    expect(a.testId).toBe(t.id)
+  })
+
+  it('stores a run-level artifact (testId null) for an unknown testKey', async () => {
+    const user = await createUser()
+    const apiKey = await createApiKey(user.id)
+    await ingest(apiKey)
+    const run = (await db.query.run.findMany())[0]
+
+    const res = await postArtifact(run.id, apiKey, { testKey: 'no-such-test' })
+    expect(res.status).toBe(201)
+    const a = (await db.query.artifact.findMany())[0]
+    expect(a.testId).toBeNull()
+  })
+
+  it('rejects a non-multipart body (400)', async () => {
+    const user = await createUser()
+    const apiKey = await createApiKey(user.id)
+    await ingest(apiKey)
+    const run = (await db.query.run.findMany())[0]
+
+    const res = await postArtifact(run.id, apiKey, { body: JSON.stringify({ not: 'multipart' }) })
+    expect(res.status).toBe(400)
   })
 })
 

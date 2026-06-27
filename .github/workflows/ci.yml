@@ -104,6 +104,14 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # MinIO can't run as a GH service (needs the `server /data` arg), so run it as a step.
+      - name: Start MinIO
+        run: |
+          docker run -d --name minio -p 9000:9000 \
+            -e MINIO_ROOT_USER=minio -e MINIO_ROOT_PASSWORD=minio12345 \
+            minio/minio server /data
+          timeout 30 sh -c 'until curl -sf http://localhost:9000/minio/health/ready; do sleep 1; done'
+
       # test-env falls back to the dev-compose defaults (kinora @ localhost:5436), which match the service.
       - name: Integration tests
         run: pnpm --filter @kinora/server test:integration
