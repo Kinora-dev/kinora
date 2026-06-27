@@ -11,5 +11,12 @@ export default defineConfig({
     setupFiles: ['./test/setup-env.ts', './test/setup-db.ts'],
     // One shared DB + truncate-per-test: keep files serial to avoid cross-test races.
     fileParallelism: false,
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.ts'],
+      // Declarative/entrypoint/non-test-graph files: can't or shouldn't be unit-covered.
+      exclude: ['src/db/schemas/**', 'src/index.ts', 'src/instrument.ts', 'src/**/*.d.ts'],
+      reporter: ['text-summary', 'text', 'html'],
+    },
   },
 })

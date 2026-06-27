@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
 import { db } from '../src/db'
-import { project, run } from '../src/db/schemas/index'
+import { artifact, project, run, test } from '../src/db/schemas/index'
 import { MAX_DASHBOARD_RUNS } from '../src/router/dashboard'
 import { caller, createApiKey, createUser, ingest, runPayload } from './helpers'
 
@@ -80,5 +80,72 @@ describe('dashboard scoping', () => {
     await expect((await caller(b)).dashboard.compareRuns({ projectId: 'web-app', baseRunId: base.runId, headRunId: head.runId }))
       .rejects
       .toThrow()
+  })
+})
+
+describe('dashboard reads', () => {
+  it('run returns the report with the run tests', async () => {
+    const a = await createUser('a@test.dev')
+    const { runId } = await (await ingest(await createApiKey(a.id))).json() as { runId: string }
+
+    const report = await (await caller(a)).dashboard.run({ projectId: 'web-app', runId })
+    expect(report.runId).toBe(runId)
+    expect(report.tests).toHaveLength(1)
+    expect(report.tests[0].title).toBe('completes a purchase')
+  })
+
+  it('run merges a signed artifact url onto the matching test attachment', async () => {
+    const a = await createUser('a@test.dev')
+    const key = await createApiKey(a.id)
+    const payload = runPayload('web-app')
+    payload.tests[0].attachments = [{ name: 'trace', contentType: 'application/zip', hasBody: true }]
+    const { runId } = await (await ingest(key, payload)).json() as { runId: string }
+
+    const p = await db.query.project.findFirst({ where: eq(project.slug, 'web-app') })
+    const t = await db.query.test.findFirst({ where: eq(test.runId, runId) })
+    await db.insert(artifact).values({
+      id: randomUUID(),
+      projectId: p!.id,
+      runId,
+      testId: t!.id,
+      name: 'trace',
+      contentType: 'application/zip',
+      storageKey: `${p!.id}/${runId}/trace.zip`,
+      size: 4,
+    })
+
+    const report = await (await caller(a)).dashboard.run({ projectId: 'web-app', runId })
+    const att = report.tests[0].attachments.find(x => x.name === 'trace')
+    expect(att?.url).toBeDefined()
+    expect(att!.url).toContain('sig=') // resolved to a signed absolute URL at read time
+  })
+
+  it('run throws NOT_FOUND for an unknown run on an owned project', async () => {
+    const a = await createUser('a@test.dev')
+    await ingest(await createApiKey(a.id))
+
+    await expect((await caller(a)).dashboard.run({ projectId: 'web-app', runId: 'nope' })).rejects.toThrow(/not found/i)
+  })
+
+  it('projectHistory returns per-test histories across the project runs', async () => {
+    const a = await createUser('a@test.dev')
+    const key = await createApiKey(a.id)
+    await ingest(key, runPayload('web-app', '@smoke', 'expected'))
+    await ingest(key, runPayload('web-app', '@smoke', 'unexpected'))
+
+    const h = await (await caller(a)).dashboard.projectHistory({ projectId: 'web-app' })
+    expect(h.project?.id).toBe('web-app')
+    expect(h.histories.length).toBeGreaterThan(0)
+    expect(h.histories[0].points).toHaveLength(2)
+  })
+
+  it('compareRuns throws NOT_FOUND when a run id is unknown', async () => {
+    const a = await createUser('a@test.dev')
+    const key = await createApiKey(a.id)
+    const base = await (await ingest(key, runPayload('web-app'))).json() as { runId: string }
+
+    await expect((await caller(a)).dashboard.compareRuns({ projectId: 'web-app', baseRunId: base.runId, headRunId: 'nope' }))
+      .rejects
+      .toThrow(/not found/i)
   })
 })

@@ -29,6 +29,8 @@ packages/trace-viewer/public/sw.bundle.js
 
 .playwright-mcp
 
+coverage/
+
 # Playwright e2e (any package)
 test-results/
 playwright-report/
