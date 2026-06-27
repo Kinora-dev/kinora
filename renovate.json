@@ -1,11 +1,14 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "mode": "full",
   "extends": [
     "config:recommended",
     "helpers:pinGitHubActionDigests"
   ],
   "rangeStrategy": "bump",
   "automergeType": "branch",
+  "postUpdateOptions": ["pnpmDedupe"],
+  "lockFileMaintenance": { "enabled": true },
   "packageRules": [
     {
       "matchUpdateTypes": ["minor", "patch"],
