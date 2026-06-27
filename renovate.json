@@ -6,7 +6,7 @@
     "helpers:pinGitHubActionDigests"
   ],
   "rangeStrategy": "bump",
-  "automergeType": "branch",
+  "platformAutomerge": true,
   "postUpdateOptions": ["pnpmDedupe"],
   "lockFileMaintenance": { "enabled": true },
   "packageRules": [
