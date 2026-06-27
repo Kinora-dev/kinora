@@ -7,6 +7,7 @@ import { bodyLimit } from 'hono/body-limit'
 import { cors } from 'hono/cors'
 import { secureHeaders } from 'hono/secure-headers'
 import { db } from './db'
+import { verifyArtifactSignature } from './lib/artifact-url'
 import { auth } from './lib/auth'
 import { env } from './lib/env'
 import { logger } from './lib/logger'
@@ -23,6 +24,13 @@ const app = new Hono()
 // secureHeaders/global-cors so its CORP doesn't block the viewer's cross-origin
 // service-worker fetch. serveStatic ends the chain when the file exists.
 app.use('/artifacts/*', cors({ origin: '*' }))
+// CORS stays permissive (the viewer's SW fetches cross-origin); the HMAC signature is the gate.
+app.use('/artifacts/*', async (c, next) => {
+  const key = c.req.path.slice('/artifacts/'.length)
+  if (!verifyArtifactSignature(key, c.req.query('exp'), c.req.query('sig')))
+    return c.json({ error: 'Forbidden' }, 403)
+  return next()
+})
 app.use('/artifacts/*', serveStatic({
   root: env.STORAGE_DIR,
   rewriteRequestPath: path => path.replace(/^\/artifacts/, ''),

@@ -3,6 +3,7 @@ import { resolve, sep } from 'node:path'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { app } from '../src/app'
 import { db } from '../src/db'
+import { artifactSignature, verifyArtifactSignature } from '../src/lib/artifact-url'
 import { env } from '../src/lib/env'
 import { storage } from '../src/lib/storage'
 import { createApiKey, createUser, ingest, resetDb } from './helpers'
@@ -48,5 +49,24 @@ describe('local storage guard', () => {
 
   it('rejects an absolute key', async () => {
     await expect(storage.put('/tmp/escape.zip', Buffer.from('x'))).rejects.toThrow('invalid storage key')
+  })
+})
+
+describe('artifact signature', () => {
+  it('accepts a fresh signature and rejects tampering, cross-key reuse, expiry, and absence', () => {
+    const key = 'proj/run/abc-trace.zip'
+    const params = new URLSearchParams(artifactSignature(key))
+    const exp = params.get('exp')
+    const sig = params.get('sig')
+    expect(verifyArtifactSignature(key, exp, sig)).toBe(true)
+    expect(verifyArtifactSignature(key, exp, `${sig}x`)).toBe(false)
+    expect(verifyArtifactSignature('proj/run/other.zip', exp, sig)).toBe(false)
+    expect(verifyArtifactSignature(key, String(Date.now() - 1), sig)).toBe(false)
+    expect(verifyArtifactSignature(key, undefined, undefined)).toBe(false)
+  })
+
+  it('the /artifacts route rejects an unsigned request with 403', async () => {
+    const res = await app.request('/artifacts/proj/run/whatever.zip')
+    expect(res.status).toBe(403)
   })
 })

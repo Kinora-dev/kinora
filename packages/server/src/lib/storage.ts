@@ -4,6 +4,7 @@ import { mkdir, rm, writeFile } from 'node:fs/promises'
 import { dirname, resolve, sep } from 'node:path'
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { artifactSignature } from './artifact-url'
 import { env, s3 } from './env'
 
 // Local FS (dev/self-host) or any S3-compatible store. url() returns a presigned
@@ -30,7 +31,7 @@ function localStorage(): Storage {
       await writeFile(dest, body)
     },
     async url(key) {
-      return `${env.BASE_URL}/artifacts/${key}`
+      return `${env.BASE_URL}/artifacts/${key}?${artifactSignature(key)}`
     },
     async delete(key) {
       // force ignores a missing file, so retention purge stays idempotent.
