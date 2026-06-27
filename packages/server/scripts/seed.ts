@@ -9,6 +9,7 @@ import { and, eq } from 'drizzle-orm'
 import { db } from '../src/db'
 import { apikey, artifact, member, project, run, test, user as userTable } from '../src/db/schemas/index'
 import { auth } from '../src/lib/auth'
+import { env } from '../src/lib/env'
 import { logger } from '../src/lib/logger'
 import { storage } from '../src/lib/storage'
 
@@ -211,6 +212,12 @@ async function seedProjects(orgId: string, defs: typeof PROJECTS, failTrace: Buf
 }
 
 async function main(): Promise<void> {
+  // Seeds a known-credentials demo account; refuse on prod unless explicitly forced.
+  if (env.NODE_ENV === 'production' && !process.argv.includes('--force')) {
+    logger.error(`Refusing to seed known credentials (${EMAIL}) in production. Re-run with --force if intended.`)
+    process.exit(1)
+  }
+
   const failTrace = await readFile(FAIL_TRACE)
   const passTrace = await readFile(PASS_TRACE)
 
