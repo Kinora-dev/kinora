@@ -1,9 +1,14 @@
+import { Buffer } from 'node:buffer'
 import { randomUUID } from 'node:crypto'
+import { existsSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { eq } from 'drizzle-orm'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { purgeScope } from '../src/billing/retention'
+import { purgeExpiredRuns, purgeScope } from '../src/billing/retention'
 import { db } from '../src/db'
-import { project, run } from '../src/db/schemas/index'
+import { artifact, project, run } from '../src/db/schemas/index'
+import { env } from '../src/lib/env'
+import { storage } from '../src/lib/storage'
 import { createUser, ownedOrgId, resetDb } from './helpers'
 
 const DAY = 24 * 60 * 60 * 1000
@@ -64,5 +69,29 @@ describe('purgeScope', () => {
     await purgeScope(new Date(), { includeOrgs: [] })
 
     expect(await exists(old)).toBeTruthy()
+  })
+
+  it('deletes the artifact blobs of purged runs', async () => {
+    const u = await createUser()
+    const runId = await seedRun(u.id, new Date(Date.now() - 100 * DAY))
+    const projectId = (await db.query.run.findFirst({ where: eq(run.id, runId) }))!.projectId
+    const key = `${projectId}/${runId}/trace.zip`
+    await storage.put(key, Buffer.from('zip'))
+    await db.insert(artifact).values({ id: randomUUID(), projectId, runId, name: 'trace', contentType: 'application/zip', storageKey: key, size: 3 })
+    const dest = resolve(env.STORAGE_DIR, key)
+    expect(existsSync(dest)).toBe(true)
+
+    const deleted = await purgeScope(new Date(), {})
+    expect(deleted).toBe(1)
+    expect(await exists(runId)).toBeFalsy()
+    expect(existsSync(dest)).toBe(false) // blob removed
+  })
+})
+
+describe('purgeExpiredRuns', () => {
+  it('is a no-op on self-host (cloud off)', async () => {
+    const a = await createUser()
+    await seedRun(a.id, new Date(Date.now() - 1000 * DAY))
+    expect(await purgeExpiredRuns(new Date())).toEqual({ deleted: 0 })
   })
 })

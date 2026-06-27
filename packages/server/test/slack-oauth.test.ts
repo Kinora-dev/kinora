@@ -75,3 +75,23 @@ describe('slack oauth install role gate', () => {
     expect(res.headers.get('location')).toContain('slack.com/oauth/v2/authorize')
   })
 })
+
+describe('slack oauth callback', () => {
+  beforeEach(resetDb)
+
+  it('400 when code or state is missing', async () => {
+    const res = await app.request('/api/slack/callback')
+    expect(res.status).toBe(400)
+  })
+
+  it('400 on an invalid state', async () => {
+    const res = await app.request('/api/slack/callback?code=x&state=not-a-valid-state')
+    expect(res.status).toBe(400)
+  })
+
+  it('401 when the callback session is not the user who started the flow', async () => {
+    const state = encodeState({ projectId: randomUUID(), userId: randomUUID(), slug: 'web-app' })
+    const res = await app.request(`/api/slack/callback?code=x&state=${encodeURIComponent(state)}`)
+    expect(res.status).toBe(401)
+  })
+})

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { currentPeriodResults } from '../src/billing/usage'
+import { currentPeriodResults, projectCount } from '../src/billing/usage'
 import { db } from '../src/db'
 import { project, run, test as testRow } from '../src/db/schemas/index'
 import { createUser, ownedOrgId, resetDb } from './helpers'
@@ -69,5 +69,23 @@ describe('currentPeriodResults', () => {
     await seedTests(user.id, 2)
     await seedTests(other.id, 4)
     expect(await currentPeriodResults(await ownedOrgId(user.id))).toBe(2)
+  })
+})
+
+describe('projectCount', () => {
+  it('counts the org projects', async () => {
+    const user = await createUser()
+    const org = await ownedOrgId(user.id)
+    expect(await projectCount(org)).toBe(0)
+    await seedTests(user.id, 1)
+    await seedTests(user.id, 1)
+    expect(await projectCount(org)).toBe(2)
+  })
+
+  it('scopes the count to the org', async () => {
+    const a = await createUser('a@test.dev')
+    const b = await createUser('b@test.dev')
+    await seedTests(a.id, 1)
+    expect(await projectCount(await ownedOrgId(b.id))).toBe(0)
   })
 })

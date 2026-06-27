@@ -114,7 +114,7 @@ jobs:
 
       # test-env falls back to the dev-compose defaults (kinora @ localhost:5436), which match the service.
       - name: Integration tests
-        run: pnpm --filter @kinora/server test:integration
+        run: pnpm --filter @kinora/server test:coverage
 
   e2e_tests:
     runs-on: ubuntu-latest

@@ -14,9 +14,16 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/**/*.ts'],
-      // Declarative/entrypoint/non-test-graph files: can't or shouldn't be unit-covered.
-      exclude: ['src/db/schemas/**', 'src/index.ts', 'src/instrument.ts', 'src/**/*.d.ts'],
+      // Declarative/entrypoint/non-test-graph + cloud-SDK glue that needs a live Polar to exercise.
+      exclude: ['src/db/schemas/**', 'src/index.ts', 'src/instrument.ts', 'src/billing/polar.ts', 'src/**/*.d.ts'],
       reporter: ['text-summary', 'text', 'html'],
+      // Regression floor (a few points under current); ratchet up as coverage grows.
+      thresholds: {
+        statements: 78,
+        branches: 67,
+        functions: 78,
+        lines: 78,
+      },
     },
   },
 })
