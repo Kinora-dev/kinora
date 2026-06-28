@@ -17,12 +17,12 @@ export default defineConfig({
       // Declarative/entrypoint/non-test-graph + cloud-SDK glue that needs a live Polar to exercise.
       exclude: ['src/db/schemas/**', 'src/index.ts', 'src/instrument.ts', 'src/billing/polar.ts', 'src/**/*.d.ts'],
       reporter: ['text-summary', 'text', 'html'],
-      // Regression floor (a few points under current); ratchet up as coverage grows.
+      // Regression floor, ~1-2pt under current (81/72/84/81); ratchet up as coverage grows.
       thresholds: {
-        statements: 78,
-        branches: 67,
-        functions: 78,
-        lines: 78,
+        statements: 80,
+        branches: 70,
+        functions: 82,
+        lines: 80,
       },
     },
   },
