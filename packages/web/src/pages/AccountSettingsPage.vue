@@ -272,7 +272,7 @@ async function deleteAccount(): Promise<void> {
       <CardContent>
         <AlertDialog>
           <AlertDialogTrigger as-child>
-            <Button type="button" variant="destructive" size="sm" class="w-fit font-mono text-xs">
+            <Button type="button" variant="destructive" size="sm" :disabled="isDemo" class="w-fit font-mono text-xs">
               Delete account
             </Button>
           </AlertDialogTrigger>
