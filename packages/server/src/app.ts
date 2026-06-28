@@ -7,6 +7,7 @@ import { bodyLimit } from 'hono/body-limit'
 import { cors } from 'hono/cors'
 import { secureHeaders } from 'hono/secure-headers'
 import { db } from './db'
+import { accessLog } from './lib/access-log'
 import { verifyArtifactSignature } from './lib/artifact-url'
 import { auth } from './lib/auth'
 import { env } from './lib/env'
@@ -54,6 +55,8 @@ app.on(['POST', 'GET'], '/api/auth/*', c => auth.handler(c.req.raw))
 app.use('/trpc/*', rateLimit({ windowMs: 60_000, limit: 300 }))
 app.use('/trpc/*', trpcServer({ router: appRouter, createContext }))
 
+// Access log first in the chain so rate-limit (429) / body-limit (413) rejections are logged too.
+app.use('/api/v1/*', accessLog)
 // Per-IP, before the body is read, so a flood is cheap to reject. Keyed by IP (not token) so
 // sharded CI spreads across runner IPs instead of summing into one bucket. Real throttle is
 // nginx limit_req (unspoofable IP); this is the backstop.
@@ -64,6 +67,8 @@ app.use('/api/v1/*', bodyLimit({
   onError: c => c.json({ error: 'Payload too large' }, 413),
 }))
 app.route('/api/v1', publicApi)
+
+app.use('/api/slack/*', accessLog)
 app.route('/api/slack', slackOAuth)
 
 app.onError((err, c) => {
