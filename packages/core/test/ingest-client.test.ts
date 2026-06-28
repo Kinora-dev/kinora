@@ -1,6 +1,6 @@
 import type { IngestRun } from '../src/index'
 import { describe, expect, it } from 'vitest'
-import { createIngestClient, IngestError } from '../src/index'
+import { buildIngestRun, createIngestClient, IngestError } from '../src/index'
 
 const PAYLOAD: IngestRun = {
   project: { slug: 'web-app', name: 'web-app' },
@@ -54,5 +54,67 @@ describe('createIngestClient.uploadRun', () => {
     })
     await client.uploadRun(PAYLOAD)
     expect(calledUrl).toBe('http://test/api/v1/runs')
+  })
+})
+
+describe('buildIngestRun', () => {
+  const RAW = {
+    config: { version: '1.60.0' },
+    stats: { startTime: '2026-01-01T00:00:00.000Z', duration: 1000, expected: 1, unexpected: 1, flaky: 0, skipped: 0 },
+    suites: [{
+      title: 'a.spec.ts',
+      file: 'a.spec.ts',
+      specs: [
+        { title: 'passes', ok: true, tags: [], file: 'a.spec.ts', line: 3, column: 1, tests: [{ status: 'expected', projectName: 'chromium', results: [{ status: 'passed', duration: 5 }] }] },
+        { title: 'fails', ok: false, tags: [], file: 'a.spec.ts', line: 7, column: 1, tests: [{ status: 'unexpected', projectName: 'chromium', results: [{ status: 'failed', duration: 9, errors: [{ message: 'boom' }] }] }] },
+      ],
+    }],
+  }
+
+  it('maps a raw playwright report to the wire payload', () => {
+    const run = buildIngestRun(RAW, { project: { slug: 'web-app', name: 'web-app' } })
+    expect(run.project).toEqual({ slug: 'web-app', name: 'web-app' })
+    expect(run.run.counts).toMatchObject({ total: 2, expected: 1, unexpected: 1 })
+    expect(run.run.playwrightVersion).toBe('1.60.0')
+    expect(run.tests).toHaveLength(2)
+  })
+})
+
+describe('createIngestClient.uploadArtifact', () => {
+  it('posts a multipart form to the run and returns the parsed url', async () => {
+    let calledUrl = ''
+    let captured: Request | undefined
+    const client = createIngestClient({
+      baseUrl: 'http://test',
+      token: 't',
+      fetch: async (url, init) => {
+        calledUrl = String(url)
+        captured = new Request(String(url), init as RequestInit)
+        return new Response(JSON.stringify({ url: 'http://test/artifacts/x.zip?sig=abc' }), { status: 201 })
+      },
+    })
+
+    const res = await client.uploadArtifact({ runId: 'r 1', testKey: 'k', name: 'trace', contentType: 'application/zip', body: new Uint8Array([1, 2, 3]) })
+    expect(res).toEqual({ url: 'http://test/artifacts/x.zip?sig=abc' })
+    expect(calledUrl).toBe('http://test/api/v1/runs/r%201/artifacts') // runId is url-encoded
+    const form = await captured!.formData()
+    expect(form.get('testKey')).toBe('k')
+    expect(form.get('name')).toBe('trace')
+    expect(form.get('file')).toBeInstanceOf(File)
+  })
+
+  it('throws IngestError on a non-ok response', async () => {
+    const client = clientWith(new Response(JSON.stringify({ error: 'too big' }), { status: 413 }))
+    const err = await client.uploadArtifact({ runId: 'r', testKey: 'k', name: 'trace', contentType: 'application/zip', body: new Uint8Array([1]) }).catch((e: unknown) => e)
+    expect(err).toBeInstanceOf(IngestError)
+    expect((err as IngestError).status).toBe(413)
+    expect((err as IngestError).message).toBe('too big')
+  })
+
+  it('accepts a Blob body', async () => {
+    const client = clientWith(new Response(JSON.stringify({ url: 'http://test/a.zip' }), { status: 201 }))
+    await expect(
+      client.uploadArtifact({ runId: 'r', testKey: 'k', name: 'trace', contentType: 'application/zip', body: new Blob([new Uint8Array([1])]) }),
+    ).resolves.toEqual({ url: 'http://test/a.zip' })
   })
 })

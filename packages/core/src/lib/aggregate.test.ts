@@ -1,6 +1,6 @@
 import type { Counts, ProjectEntry, RunSummary } from '../contracts/kinora'
 import { describe, expect, it } from 'vitest'
-import { collectBranches, collectTags, denom, filterRuns, passRate, runHealth } from './aggregate'
+import { collectBranches, collectTags, denom, filterRuns, formatDuration, formatPct, latestRun, passRate, recentPassRate, runHealth, sortedRuns, trend } from './aggregate'
 
 function counts(o: Partial<Counts>): Counts {
   return { total: 0, expected: 0, unexpected: 0, flaky: 0, skipped: 0, ...o }
@@ -82,5 +82,74 @@ describe('collectBranches / collectTags', () => {
 
   it('collects unique sorted tags', () => {
     expect(collectTags([project])).toEqual(['@critical', '@smoke'])
+  })
+})
+
+describe('sortedRuns / latestRun', () => {
+  const p: ProjectEntry = {
+    id: 'p',
+    name: 'P',
+    runs: [
+      makeRun({ runId: 'old', startedAt: '2026-01-01T00:00:00Z' }),
+      makeRun({ runId: 'new', startedAt: '2026-01-03T00:00:00Z' }),
+      makeRun({ runId: 'mid', startedAt: '2026-01-02T00:00:00Z' }),
+    ],
+  }
+
+  it('sorts runs newest-first', () => {
+    expect(sortedRuns(p).map(r => r.runId)).toEqual(['new', 'mid', 'old'])
+  })
+
+  it('latestRun is the most recent', () => {
+    expect(latestRun(p)?.runId).toBe('new')
+  })
+
+  it('latestRun is undefined for a project with no runs', () => {
+    expect(latestRun({ id: 'e', name: 'E', runs: [] })).toBeUndefined()
+  })
+})
+
+describe('recentPassRate', () => {
+  it('pools passed/executed across the most recent n runs', () => {
+    const runs = [
+      makeRun({ runId: 'a', startedAt: '2026-01-01T00:00:00Z', counts: counts({ total: 10, expected: 10 }) }),
+      makeRun({ runId: 'b', startedAt: '2026-01-02T00:00:00Z', counts: counts({ total: 10, expected: 5, unexpected: 5 }) }),
+      makeRun({ runId: 'c', startedAt: '2026-01-03T00:00:00Z', counts: counts({ total: 10, expected: 8, flaky: 2 }) }),
+    ]
+    // recent 2 = c (10/10) + b (5/10) = 15/20
+    expect(recentPassRate(runs, 2)).toBeCloseTo(15 / 20)
+  })
+
+  it('is 1 when nothing executed in the window', () => {
+    expect(recentPassRate([makeRun({ runId: 'x', counts: counts({ total: 2, skipped: 2 }) })], 5)).toBe(1)
+  })
+})
+
+describe('trend', () => {
+  it('returns per-run points oldest-first with pass rates', () => {
+    const p: ProjectEntry = {
+      id: 'p',
+      name: 'P',
+      runs: [
+        makeRun({ runId: 'new', startedAt: '2026-01-02T00:00:00Z', counts: counts({ total: 4, expected: 2, unexpected: 2 }) }),
+        makeRun({ runId: 'old', startedAt: '2026-01-01T00:00:00Z', counts: counts({ total: 4, expected: 4 }) }),
+      ],
+    }
+    const pts = trend(p)
+    expect(pts.map(t => t.runId)).toEqual(['old', 'new'])
+    expect(pts[1].passRate).toBeCloseTo(0.5)
+    expect(pts[1].unexpected).toBe(2)
+  })
+})
+
+describe('formatDuration / formatPct', () => {
+  it('formats sub-second, seconds, and minutes', () => {
+    expect(formatDuration(500)).toBe('500ms')
+    expect(formatDuration(1500)).toBe('1.5s')
+    expect(formatDuration(90_000)).toBe('1m 30s')
+  })
+
+  it('formats a fraction as a percentage', () => {
+    expect(formatPct(0.1234)).toBe('12.3%')
   })
 })

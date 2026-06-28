@@ -40,7 +40,7 @@
   "scripts": {
     "build": "tsdown",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --coverage",
     "prepublishOnly": "tsdown"
   },
   "dependencies": {
@@ -48,6 +48,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.0.0",
+    "@vitest/coverage-v8": "^4.1.9",
     "tsdown": "^0.22.3",
     "typescript": "~6.0.3",
     "vitest": "^4.1.9"
