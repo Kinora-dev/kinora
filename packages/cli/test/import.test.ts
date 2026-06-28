@@ -37,7 +37,7 @@ describe('importReports', () => {
   it('uploads every results.json under the dir as backfill runs', async () => {
     await writeFile(join(dir, 'a.json'), JSON.stringify(RAW))
     await writeFile(join(dir, 'b.json'), JSON.stringify(RAW))
-    const fetchMock = vi.fn(async () => okResponse())
+    const fetchMock = vi.fn(async (_url: string | URL | Request, _init?: RequestInit) => okResponse())
     vi.stubGlobal('fetch', fetchMock)
 
     const res = await importReports({ dir, project: { slug: 'web-app' }, url: 'https://api.example.com', token: 't' })

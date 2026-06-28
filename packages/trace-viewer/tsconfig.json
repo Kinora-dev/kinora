@@ -19,5 +19,5 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true
   },
-  "include": ["src/**/*.ts", "src/**/*.vue", "e2e/**/*.ts"]
+  "include": ["src/**/*.ts", "src/**/*.vue", "test/**/*.ts", "e2e/**/*.ts"]
 }
