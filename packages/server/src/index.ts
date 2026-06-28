@@ -16,7 +16,7 @@ process.on('uncaughtException', (err) => {
 })
 
 const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
-  logger.info(`kinora server running on port ${info.port}`)
+  logger.info(`${env.KINORA_DEMO ? '[DEMO] ' : ''}kinora server running on port ${info.port}`)
 })
 
 let shuttingDown = false

@@ -7,6 +7,7 @@ import { bodyLimit } from 'hono/body-limit'
 import { cors } from 'hono/cors'
 import { secureHeaders } from 'hono/secure-headers'
 import { db } from './db'
+import { demoApp } from './demo/session'
 import { accessLog } from './lib/access-log'
 import { verifyArtifactSignature } from './lib/artifact-url'
 import { auth } from './lib/auth'
@@ -74,6 +75,9 @@ app.route('/api/v1', publicApi)
 
 app.use('/api/slack/*', accessLog)
 app.route('/api/slack', slackOAuth)
+
+// Demo-only: establishes the shared read-only session cookie (no-op otherwise).
+app.route('/api/demo', demoApp)
 
 app.onError((err, c) => {
   logger.error({ err }, 'unhandled request error')

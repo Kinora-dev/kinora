@@ -1,4 +1,5 @@
 import { ref, shallowRef } from 'vue'
+import { env } from '@/lib/env'
 import { trpc } from '@/lib/trpc'
 
 export type SessionUser = Awaited<ReturnType<typeof trpc.user.me.query>>
@@ -10,6 +11,8 @@ let booting: Promise<void> | undefined
 async function ensure(): Promise<void> {
   if (!booting) {
     booting = (async () => {
+      // Demo deployments hand the browser a shared read-only session cookie here (no-op elsewhere).
+      await fetch(`${env.serverUrl}/api/demo/session`, { credentials: 'include' }).catch(() => {})
       try {
         user.value = await trpc.user.me.query()
       }

@@ -2,6 +2,7 @@
 import { Toaster } from '@kinora/ui/sonner'
 import { RouterView } from 'vue-router'
 import AppHeader from '@/components/app/AppHeader.vue'
+import DemoBanner from '@/components/app/DemoBanner.vue'
 import LoadingScreen from '@/components/app/LoadingScreen.vue'
 import { session } from '@/lib/session'
 // Boot useColorMode at startup so system/dark applies before any page mounts
@@ -24,6 +25,7 @@ const ready = session.ready
         </Transition>
         <!-- App pages get the header + control-room grid shell. -->
         <div v-else class="min-h-svh bg-background app-grid">
+          <DemoBanner />
           <AppHeader />
           <main class="mx-auto max-w-7xl px-5 py-8">
             <!-- Settings tabs share one layout: collapse their key so switching tabs swaps

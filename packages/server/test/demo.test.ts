@@ -50,4 +50,12 @@ describe('demo mode', () => {
     const res = await app.request('/api/auth/sign-up/email', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })
     expect(res.status).toBe(403)
   })
+
+  it('/api/demo/session signs in the seeded owner and sets a cookie', async () => {
+    await createUser() // seeded with the demo password
+
+    const res = await app.request('/api/demo/session')
+    expect(res.status).toBe(204)
+    expect(res.headers.get('set-cookie')).toBeTruthy()
+  })
 })
