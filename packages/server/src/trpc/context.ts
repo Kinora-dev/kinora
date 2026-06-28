@@ -1,26 +1,11 @@
 import type { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch'
 import type { AuthType } from '../lib/auth'
-import { and, asc, eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { db } from '../db'
-import { member, user as userTable } from '../db/schemas/index'
+import { member } from '../db/schemas/index'
+import { resolveDemoOwner } from '../demo/owner'
 import { auth } from '../lib/auth'
 import { demo } from '../lib/env'
-
-// Public demo: resolve the seeded primary account (earliest owner) so visitors browse with no login.
-// Looked up per-request (not cached) so the daily reseed's new ids are picked up without a restart.
-async function demoSession() {
-  const [owner] = await db
-    .select({ userId: member.userId, organizationId: member.organizationId })
-    .from(member)
-    .innerJoin(userTable, eq(member.userId, userTable.id))
-    .where(eq(member.role, 'owner'))
-    .orderBy(asc(userTable.createdAt))
-    .limit(1)
-  if (!owner)
-    return null
-  const u = await db.query.user.findFirst({ where: eq(userTable.id, owner.userId) })
-  return u ? { user: u, organizationId: owner.organizationId } : null
-}
 
 export async function createContext({ req }: FetchCreateContextFnOptions) {
   const session = await auth.api.getSession({ headers: req.headers })
@@ -37,7 +22,7 @@ export async function createContext({ req }: FetchCreateContextFnOptions) {
   }
 
   if (!user && demo) {
-    const d = await demoSession()
+    const d = await resolveDemoOwner()
     // db row is structurally the session user; cast to the auth user type for ctx consistency.
     if (d)
       return { user: d.user as unknown as AuthType['user'], organizationId: d.organizationId, req }

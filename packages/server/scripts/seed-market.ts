@@ -8,6 +8,7 @@ import { countsByTagFrom, makeTestKey } from '@kinora/core'
 import { eq } from 'drizzle-orm'
 import { db } from '../src/db'
 import { apikey, artifact, member, project, run, test, user as userTable } from '../src/db/schemas/index'
+import { DEMO_PASSWORD } from '../src/demo/owner'
 import { auth } from '../src/lib/auth'
 import { env } from '../src/lib/env'
 import { logger } from '../src/lib/logger'
@@ -16,7 +17,8 @@ import { storage } from '../src/lib/storage'
 // Curated, DETERMINISTIC marketing data: same output every reseed so screenshots
 // stay reproducible. Separate account from the dev demo seed (scripts/seed.ts).
 const EMAIL = 'market@kinora.dev'
-const PASSWORD = 'password123'
+// The demo auto-session signs in with this; shared so the two never drift apart.
+const PASSWORD = DEMO_PASSWORD
 const NAME = 'Kinora'
 
 const RUNS = 30

@@ -13,7 +13,7 @@ const signupUrl = 'https://app.kinora.dev/signup'
       <div class="mx-auto flex max-w-7xl items-center gap-2.5 px-5 py-2 font-mono text-xs">
         <span class="size-1.5 shrink-0 rounded-full bg-signal" aria-hidden="true" />
         <span class="font-semibold text-foreground">Read-only demo</span>
-        <span class="hidden text-muted-foreground sm:inline">— explore freely, changes are disabled.</span>
+        <span class="hidden text-muted-foreground sm:inline">explore freely, changes are disabled.</span>
         <a
           :href="signupUrl"
           class="ml-auto inline-flex shrink-0 items-center gap-1 text-signal underline-offset-4 hover:underline"
