@@ -3,7 +3,7 @@ import { Button } from '@kinora/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kinora/ui/card'
 import { Input } from '@kinora/ui/input'
 import { SegmentedControl } from '@kinora/ui/segmented-control'
-import { Send } from 'lucide-vue-next'
+import { ArrowUpRight, Send } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 import Icon from '@/components/Icon.vue'
 import { useServerConfig } from '@/composables/queries'
@@ -66,6 +66,7 @@ function onSave(): void {
           Slack alerts are a Team feature.
         </p>
         <Button type="button" size="sm" class="font-mono text-xs" :disabled="!!billingPending" @click="checkout('team')">
+          <ArrowUpRight class="size-3.5" />
           {{ billingPending === 'team' ? 'Redirecting…' : 'Upgrade to Team' }}
         </Button>
       </div>
