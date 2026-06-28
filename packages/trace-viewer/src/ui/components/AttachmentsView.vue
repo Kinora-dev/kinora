@@ -2,7 +2,9 @@
 import type { Attachment } from '@isomorphic/trace/traceModel'
 import { Download, Paperclip } from 'lucide-vue-next'
 import { computed, reactive, watchEffect } from 'vue'
+import { groupImageDiffs } from '../lib/attachments'
 import { useTraceStore } from '../store'
+import ImageDiff from './ImageDiff.vue'
 
 const store = useTraceStore()
 
@@ -24,8 +26,19 @@ function attachmentUrl(att: Attachment): string | undefined {
   return undefined
 }
 
+const grouped = computed(() => groupImageDiffs(store.model.value?.visibleAttachments ?? []))
+
+const diffs = computed(() =>
+  grouped.value.diffs.map(g => ({
+    name: g.name,
+    expected: g.expected && attachmentUrl(g.expected),
+    actual: g.actual && attachmentUrl(g.actual),
+    diff: g.diff && attachmentUrl(g.diff),
+  })),
+)
+
 const attachments = computed<AttachmentView[]>(() =>
-  (store.model.value?.visibleAttachments ?? []).map((att, i) => ({
+  grouped.value.rest.map((att, i) => ({
     key: `${i}-${att.name}`,
     name: att.name,
     contentType: att.contentType,
@@ -59,10 +72,19 @@ watchEffect(() => {
 
 <template>
   <div class="h-full overflow-auto p-3">
-    <div v-if="!attachments.length" class="flex h-full items-center justify-center text-sm text-muted-foreground">
+    <div v-if="!attachments.length && !diffs.length" class="flex h-full items-center justify-center text-sm text-muted-foreground">
       No attachments
     </div>
     <div v-else class="flex flex-col gap-3">
+      <div v-for="d in diffs" :key="`diff-${d.name}`" class="overflow-hidden rounded-md border border-border">
+        <div class="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-1.5">
+          <Paperclip class="size-3.5 text-muted-foreground" />
+          <span class="text-xs font-medium">{{ d.name }}</span>
+          <span class="font-mono text-[10px] text-muted-foreground">image diff</span>
+        </div>
+        <ImageDiff :name="d.name" :expected="d.expected" :actual="d.actual" :diff="d.diff" />
+      </div>
+
       <div v-for="a in attachments" :key="a.key" class="overflow-hidden rounded-md border border-border">
         <div class="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-1.5">
           <Paperclip class="size-3.5 text-muted-foreground" />
