@@ -38,6 +38,15 @@ import Wordmark from './Wordmark.astro';
         <GithubIcon class="size-4" />
       </a>
       <a
+        href={SITE.demo}
+        target="_blank"
+        rel="noopener noreferrer"
+        data-umami-event="live-demo-header"
+        class="hidden h-9 items-center rounded-md px-3 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:inline-flex"
+      >
+        Demo
+      </a>
+      <a
         href={SITE.login}
         data-umami-event="signin-header"
         class="inline-flex h-9 items-center rounded-md px-3 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"

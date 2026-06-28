@@ -4,6 +4,7 @@ export const SITE = {
   app: 'https://app.kinora.dev',
   login: 'https://app.kinora.dev/login',
   signup: 'https://app.kinora.dev/signup',
+  demo: 'https://demo.kinora.dev',
   repo: 'https://github.com/Kinora-dev/kinora',
   selfhost: 'https://github.com/Kinora-dev/kinora/tree/main/selfhost',
   download: 'https://github.com/Kinora-dev/kinora/releases/latest',
