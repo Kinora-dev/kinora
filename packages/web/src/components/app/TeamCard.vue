@@ -7,6 +7,7 @@ import { SegmentedControl } from '@kinora/ui/segmented-control'
 import { Check, Copy, Mail, ShieldCheck, Trash2, UserPlus } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { z } from 'zod'
+import { useDemo } from '@/composables/queries'
 import { useOrg } from '@/composables/useOrg'
 import { session } from '@/lib/session'
 
@@ -18,6 +19,7 @@ const ROLES = [
 ] as const
 
 const { members, invitations, loading, inviting, myRole, isAdmin, invite, removeMember, updateRole, cancelInvitation } = useOrg()
+const isDemo = useDemo()
 
 const myUserId = computed(() => session.user.value?.id)
 
@@ -93,6 +95,7 @@ function initialOf(m: { user?: { name?: string | null, email?: string | null } }
                 variant="ghost"
                 size="sm"
                 class="font-mono text-[11px] text-muted-foreground"
+                :disabled="isDemo"
                 @click="updateRole(m.id, m.role === 'admin' ? 'member' : 'admin')"
               >
                 {{ m.role === 'admin' ? 'Make member' : 'Make admin' }}
@@ -105,6 +108,7 @@ function initialOf(m: { user?: { name?: string | null, email?: string | null } }
                     size="icon"
                     class="size-8 text-muted-foreground hover:text-fail"
                     aria-label="Remove member"
+                    :disabled="isDemo"
                   >
                     <Trash2 class="size-4" />
                   </Button>
@@ -152,7 +156,7 @@ function initialOf(m: { user?: { name?: string | null, email?: string | null } }
                 :options="ROLES"
                 @update:model-value="(v) => inviteRole = v as 'member' | 'admin'"
               />
-              <Button type="button" size="sm" class="font-mono text-xs" :disabled="inviting || !emailValid" @click="onInvite">
+              <Button type="button" size="sm" class="font-mono text-xs" :disabled="inviting || !emailValid || isDemo" @click="onInvite">
                 <UserPlus class="size-3.5" />
                 {{ inviting ? 'Inviting…' : 'Invite' }}
               </Button>
@@ -170,7 +174,7 @@ function initialOf(m: { user?: { name?: string | null, email?: string | null } }
                 <Mail class="size-4 shrink-0 text-muted-foreground" />
                 <span class="min-w-0 flex-1 truncate text-sm">{{ inv.email }}</span>
                 <span class="font-mono text-[11px] tracking-wider text-muted-foreground uppercase">{{ inv.role }}</span>
-                <Button type="button" variant="ghost" size="sm" class="font-mono text-[11px] text-muted-foreground hover:text-fail" @click="cancelInvitation(inv.id)">
+                <Button type="button" variant="ghost" size="sm" class="font-mono text-[11px] text-muted-foreground hover:text-fail" :disabled="isDemo" @click="cancelInvitation(inv.id)">
                   Cancel
                 </Button>
               </li>

@@ -51,6 +51,11 @@ describe('demo mode', () => {
     expect(res.status).toBe(403)
   })
 
+  it('blocks the Slack OAuth flow (its callback writes outside tRPC)', async () => {
+    const res = await app.request('/api/slack/install?projectId=web-app')
+    expect(res.status).toBe(403)
+  })
+
   it('/api/demo/session signs in the seeded owner and sets a cookie', async () => {
     await createUser() // seeded with the demo password
 

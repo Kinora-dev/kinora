@@ -9,12 +9,13 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import AlertChannelsCard from '@/components/project/AlertChannelsCard.vue'
 import SlackAlertsCard from '@/components/project/SlackAlertsCard.vue'
-import { useManifest } from '@/composables/queries'
+import { useDemo, useManifest } from '@/composables/queries'
 import { useOrg } from '@/composables/useOrg'
 import { useProjectAdmin } from '@/composables/useProjectAdmin'
 
 const props = defineProps<{ projectId: string }>()
 
+const isDemo = useDemo()
 const { isAdmin } = useOrg()
 
 const router = useRouter()
@@ -101,7 +102,7 @@ async function onDelete(): Promise<void> {
             <label :class="labelClass" for="project-description">Description</label>
             <Input id="project-description" v-model="description" placeholder="What this suite covers" />
           </div>
-          <Button type="submit" size="sm" class="w-fit font-mono text-xs" :disabled="savingGeneral || !name.trim()">
+          <Button type="submit" size="sm" class="w-fit font-mono text-xs" :disabled="savingGeneral || !name.trim() || isDemo">
             {{ savingGeneral ? 'Saving…' : 'Save' }}
           </Button>
         </form>
@@ -122,7 +123,7 @@ async function onDelete(): Promise<void> {
       <CardContent>
         <AlertDialog>
           <AlertDialogTrigger as-child>
-            <Button type="button" variant="destructive" size="sm" class="w-fit font-mono text-xs">
+            <Button type="button" variant="destructive" size="sm" class="w-fit font-mono text-xs" :disabled="isDemo">
               Delete project
             </Button>
           </AlertDialogTrigger>
@@ -143,7 +144,7 @@ async function onDelete(): Promise<void> {
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 class="bg-destructive text-white hover:bg-destructive/90"
-                :disabled="!canDelete || deleting"
+                :disabled="!canDelete || deleting || isDemo"
                 @click="onDelete"
               >
                 {{ deleting ? 'Deleting…' : 'Delete' }}

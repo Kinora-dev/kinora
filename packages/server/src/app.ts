@@ -74,6 +74,8 @@ app.use('/api/v1/*', bodyLimit({
 app.route('/api/v1', publicApi)
 
 app.use('/api/slack/*', accessLog)
+// Read-only demo: the Slack OAuth callback writes the integration (bypassing tRPC), so block it here.
+app.use('/api/slack/*', blockInDemo)
 app.route('/api/slack', slackOAuth)
 
 // Demo-only: establishes the shared read-only session cookie (no-op otherwise).

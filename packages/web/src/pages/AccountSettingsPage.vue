@@ -15,7 +15,7 @@ import { computed, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { z } from 'zod'
-import { useServerConfig } from '@/composables/queries'
+import { useDemo, useServerConfig } from '@/composables/queries'
 import { authClient } from '@/lib/auth'
 import { session } from '@/lib/session'
 
@@ -56,6 +56,7 @@ async function updateEmail(): Promise<void> {
 
 const { state: serverConfig } = useServerConfig()
 const mailerEnabled = computed(() => serverConfig.value?.mailerEnabled ?? false)
+const isDemo = useDemo()
 const emailVerified = computed(() => session.user.value?.emailVerified ?? false)
 const resending = ref(false)
 
@@ -189,7 +190,7 @@ async function deleteAccount(): Promise<void> {
               {{ emailError }}
             </p>
           </div>
-          <Button type="submit" :disabled="emailSaving || !canSaveEmail" size="sm" class="self-start font-mono text-xs">
+          <Button type="submit" :disabled="emailSaving || !canSaveEmail || isDemo" size="sm" class="self-start font-mono text-xs">
             {{ emailSaving ? 'Saving…' : 'Update email' }}
           </Button>
         </form>
@@ -202,7 +203,7 @@ async function deleteAccount(): Promise<void> {
             type="button"
             variant="outline"
             size="sm"
-            :disabled="resending || cooldown > 0"
+            :disabled="resending || cooldown > 0 || isDemo"
             class="self-start font-mono text-xs"
             @click="resendVerification"
           >
@@ -253,7 +254,7 @@ async function deleteAccount(): Promise<void> {
               <FormMessage />
             </FormItem>
           </FormField>
-          <Button type="submit" :disabled="pwSubmitting || !pwMeta.valid" size="sm" class="self-start font-mono text-xs">
+          <Button type="submit" :disabled="pwSubmitting || !pwMeta.valid || isDemo" size="sm" class="self-start font-mono text-xs">
             {{ pwSubmitting ? 'Saving…' : 'Change password' }}
           </Button>
         </form>
@@ -298,7 +299,7 @@ async function deleteAccount(): Promise<void> {
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 class="bg-destructive text-white hover:bg-destructive/90"
-                :disabled="!canDelete || deleting"
+                :disabled="!canDelete || deleting || isDemo"
                 @click="deleteAccount"
               >
                 {{ deleting ? 'Deleting…' : 'Delete account' }}

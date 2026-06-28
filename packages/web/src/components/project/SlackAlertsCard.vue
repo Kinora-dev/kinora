@@ -6,7 +6,7 @@ import { SegmentedControl } from '@kinora/ui/segmented-control'
 import { ArrowUpRight, Send } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 import Icon from '@/components/Icon.vue'
-import { useServerConfig } from '@/composables/queries'
+import { useDemo, useServerConfig } from '@/composables/queries'
 import { useAlerts } from '@/composables/useAlerts'
 import { useBilling } from '@/composables/useBilling'
 import { env } from '@/lib/env'
@@ -26,6 +26,7 @@ const { config, saving, testing, save, updateSettings, disconnect, sendTest } = 
 
 const { state: serverConfig } = useServerConfig()
 const oauthEnabled = computed(() => serverConfig.value?.slackOauthEnabled ?? false)
+const isDemo = useDemo()
 
 const webhookUrl = ref('')
 const policy = ref<typeof POLICIES[number]['value']>('on-failure')
@@ -65,7 +66,7 @@ function onSave(): void {
         <p class="text-sm text-muted-foreground">
           Slack alerts are a Team feature.
         </p>
-        <Button type="button" size="sm" class="font-mono text-xs" :disabled="!!billingPending" @click="checkout('team')">
+        <Button type="button" size="sm" class="font-mono text-xs" :disabled="!!billingPending || isDemo" @click="checkout('team')">
           <ArrowUpRight class="size-3.5" />
           {{ billingPending === 'team' ? 'Redirecting…' : 'Upgrade to Team' }}
         </Button>
@@ -74,8 +75,8 @@ function onSave(): void {
       <div v-else-if="billing" class="flex flex-col gap-5">
         <!-- Connection source: OAuth button, OAuth connected header, or manual webhook input. -->
         <template v-if="oauthEnabled">
-          <a v-if="!connected" :href="installUrl" class="w-fit">
-            <Button type="button" size="sm" class="gap-2 font-mono text-xs">
+          <a v-if="!connected" :href="isDemo ? undefined : installUrl" class="w-fit" :class="{ 'pointer-events-none': isDemo }">
+            <Button type="button" size="sm" :disabled="isDemo" class="gap-2 font-mono text-xs">
               <Icon name="slack" class="size-3.5" />
               Connect Slack
             </Button>
@@ -87,7 +88,7 @@ function onSave(): void {
                 {{ config?.channel ?? 'Connected' }}<template v-if="config?.teamName"> · {{ config.teamName }}</template>
               </span>
             </div>
-            <Button type="button" variant="ghost" size="sm" class="font-mono text-xs text-muted-foreground" @click="disconnect">
+            <Button type="button" variant="ghost" size="sm" class="font-mono text-xs text-muted-foreground" :disabled="isDemo" @click="disconnect">
               Disconnect
             </Button>
           </div>
@@ -122,10 +123,10 @@ function onSave(): void {
           </Button>
 
           <div class="flex gap-2">
-            <Button type="button" size="sm" class="font-mono text-xs" :disabled="saving || !canSave" @click="onSave">
+            <Button type="button" size="sm" class="font-mono text-xs" :disabled="saving || !canSave || isDemo" @click="onSave">
               {{ saving ? 'Saving…' : 'Save' }}
             </Button>
-            <Button type="button" variant="outline" size="sm" class="font-mono text-xs" :disabled="testing || !config" @click="sendTest">
+            <Button type="button" variant="outline" size="sm" class="font-mono text-xs" :disabled="testing || !config || isDemo" @click="sendTest">
               <Send class="size-3.5" />
               {{ testing ? 'Sending…' : 'Send test' }}
             </Button>

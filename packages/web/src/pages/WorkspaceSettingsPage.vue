@@ -7,12 +7,14 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import TeamCard from '@/components/app/TeamCard.vue'
+import { useDemo } from '@/composables/queries'
 import { useApiTokens } from '@/composables/useApiTokens'
 import { useBilling } from '@/composables/useBilling'
 import { useOrg } from '@/composables/useOrg'
 
 const labelClass = 'font-mono text-[11px] tracking-wider text-muted-foreground uppercase'
 
+const isDemo = useDemo()
 const { org, isOwner, isAdmin, rename, renaming } = useOrg()
 const orgName = computed(() => org.value?.name ?? 'Workspace')
 
@@ -160,7 +162,7 @@ function fmtDate(d: Date | string | null | undefined): string {
             <label :class="labelClass" for="ws-name">Name</label>
             <Input id="ws-name" v-model="nameInput" @keydown.enter.prevent="onRename" />
           </div>
-          <Button type="button" size="sm" class="font-mono text-xs" :disabled="renaming || !canRename" @click="onRename">
+          <Button type="button" size="sm" class="font-mono text-xs" :disabled="renaming || !canRename || isDemo" @click="onRename">
             {{ renaming ? 'Saving…' : 'Rename' }}
           </Button>
         </div>
@@ -182,7 +184,7 @@ function fmtDate(d: Date | string | null | undefined): string {
               <span v-if="planNote" class="font-mono text-[11px]" :class="planNote.tone">{{ planNote.text }}</span>
             </div>
           </div>
-          <Button v-if="isPaid && isOwner" type="button" variant="outline" size="sm" class="font-mono text-xs" :disabled="!!billingPending" @click="openPortal">
+          <Button v-if="isPaid && isOwner" type="button" variant="outline" size="sm" class="font-mono text-xs" :disabled="!!billingPending || isDemo" @click="openPortal">
             <CreditCard class="size-3.5" />
             {{ billingPending === 'portal' ? 'Opening…' : 'Manage' }}
           </Button>
@@ -218,7 +220,7 @@ function fmtDate(d: Date | string | null | undefined): string {
             size="sm"
             :variant="opt.featured ? 'default' : 'outline'"
             class="font-mono text-xs"
-            :disabled="!!billingPending"
+            :disabled="!!billingPending || isDemo"
             @click="checkout(opt.slug)"
           >
             <ArrowUpRight class="size-3.5" />
@@ -329,7 +331,7 @@ function fmtDate(d: Date | string | null | undefined): string {
             </label>
             <Input id="token-name" v-model="newTokenName" placeholder="ci-github-actions" @keydown.enter.prevent="createToken" />
           </div>
-          <Button type="button" :disabled="creating || !newTokenName.trim()" size="sm" class="font-mono text-xs" @click="createToken">
+          <Button type="button" :disabled="creating || !newTokenName.trim() || isDemo" size="sm" class="font-mono text-xs" @click="createToken">
             <Plus class="size-3.5" />
             {{ creating ? 'Creating…' : 'Create' }}
           </Button>
@@ -363,6 +365,7 @@ function fmtDate(d: Date | string | null | undefined): string {
               size="icon"
               class="size-8 shrink-0 text-muted-foreground hover:text-fail"
               aria-label="Delete token"
+              :disabled="isDemo"
               @click="deleteToken(token.id)"
             >
               <Trash2 class="size-4" />
