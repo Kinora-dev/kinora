@@ -1,15 +1,21 @@
 <script setup lang="ts">
 import { Toaster } from '@kinora/ui/sonner'
+import { useTitle } from '@vueuse/core'
+import { computed } from 'vue'
 import { RouterView } from 'vue-router'
 import AppHeader from '@/components/app/AppHeader.vue'
 import DemoBanner from '@/components/app/DemoBanner.vue'
 import LoadingScreen from '@/components/app/LoadingScreen.vue'
+import { useDemo } from '@/composables/queries'
 import { session } from '@/lib/session'
 // Boot useColorMode at startup so system/dark applies before any page mounts
 import '@kinora/ui/theme'
 import 'vue-sonner/style.css'
 
 const ready = session.ready
+
+const isDemo = useDemo()
+useTitle(computed(() => (isDemo.value ? 'kinora · demo' : 'kinora')))
 </script>
 
 <template>
