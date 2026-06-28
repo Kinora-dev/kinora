@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsdown'
 
 export default defineConfig({
-  entry: ['src/index.ts', 'scripts/migrate.ts', 'scripts/purge-expired-runs.ts', 'migrations/*.ts'],
+  entry: ['src/index.ts', 'scripts/migrate.ts', 'scripts/purge-expired-runs.ts', 'scripts/reset-demo.ts', 'scripts/seed-market.ts', 'migrations/*.ts'],
   platform: 'node',
   format: 'esm',
   // Source maps so Sentry stack traces map back to TS (run with node --enable-source-maps).
