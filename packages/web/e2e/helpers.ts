@@ -1,6 +1,14 @@
+import type { AppRouter } from '@kinora/server'
 import type { Page } from '@playwright/test'
+import type { inferRouterOutputs } from '@trpc/server'
 import process from 'node:process'
 import { expect } from '@playwright/test'
+
+type Outputs = inferRouterOutputs<AppRouter>
+type Me = NonNullable<Outputs['user']['me']>
+type ServerConfig = Outputs['config']['get']
+type Manifest = Outputs['dashboard']['manifest']
+type RunReport = Outputs['dashboard']['run']
 
 export const DEMO = { email: 'demo@kinora.dev', password: 'password123' }
 // Owns the "Acme QA" workspace; demo is a member of it (set up by the seed).
@@ -18,11 +26,10 @@ export async function login(page: Page, creds = DEMO): Promise<void> {
   await expect(page).toHaveURL('/')
 }
 
-// Rewrite the user.me tRPC response so a test drives server-derived flags
-// (mailerEnabled, emailVerified) instead of depending on the server's config.
 export async function stubMe(page: Page, flags: { mailerEnabled?: boolean, emailVerified?: boolean }): Promise<void> {
   await page.route('**/trpc/**', async (route) => {
-    if (!route.request().url().includes('user.me')) {
+    const url = route.request().url()
+    if (!url.includes('user.me') && !url.includes('config.get')) {
       await route.continue()
       return
     }
@@ -30,22 +37,15 @@ export async function stubMe(page: Page, flags: { mailerEnabled?: boolean, email
     const body = await res.json() as { result?: { data?: Record<string, unknown> } }[]
     for (const entry of body) {
       const data = entry?.result?.data
-      if (data && typeof data === 'object' && 'emailVerified' in data) {
-        if (flags.mailerEnabled !== undefined)
-          data.mailerEnabled = flags.mailerEnabled
-        if (flags.emailVerified !== undefined)
-          data.emailVerified = flags.emailVerified
-      }
+      if (!data || typeof data !== 'object')
+        continue
+      if (flags.emailVerified !== undefined && 'emailVerified' in data)
+        (data as Me).emailVerified = flags.emailVerified
+      if (flags.mailerEnabled !== undefined && 'mailerEnabled' in data)
+        (data as ServerConfig).mailerEnabled = flags.mailerEnabled
     }
     await route.fulfill({ response: res, json: body })
   })
-}
-
-interface Manifest {
-  projects: { id: string, runs: { runId: string }[] }[]
-}
-interface RunReport {
-  tests: { attachments: { url?: string }[], annotations: { type: string }[] }[]
 }
 
 // Hit a tRPC query with the logged-in session cookie.
