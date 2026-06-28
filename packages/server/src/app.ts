@@ -10,6 +10,7 @@ import { db } from './db'
 import { accessLog } from './lib/access-log'
 import { verifyArtifactSignature } from './lib/artifact-url'
 import { auth } from './lib/auth'
+import { blockAuthWritesInDemo, blockInDemo } from './lib/demo-guard'
 import { env } from './lib/env'
 import { logger } from './lib/logger'
 import { clientIp, rateLimit } from './lib/rate-limit'
@@ -50,6 +51,7 @@ app.get('/healthcheck', async (c) => {
   }
 })
 
+app.use('/api/auth/*', blockAuthWritesInDemo)
 app.on(['POST', 'GET'], '/api/auth/*', c => auth.handler(c.req.raw))
 
 app.use('/trpc/*', rateLimit({ windowMs: 60_000, limit: 300 }))
@@ -57,6 +59,8 @@ app.use('/trpc/*', trpcServer({ router: appRouter, createContext }))
 
 // Access log first in the chain so rate-limit (429) / body-limit (413) rejections are logged too.
 app.use('/api/v1/*', accessLog)
+// Read-only demo: reject all ingest writes (logged by accessLog above).
+app.use('/api/v1/*', blockInDemo)
 // Per-IP, before the body is read, so a flood is cheap to reject. Keyed by IP (not token) so
 // sharded CI spreads across runner IPs instead of summing into one bucket. Real throttle is
 // nginx limit_req (unspoofable IP); this is the backstop.
