@@ -9,7 +9,7 @@ import { getCoreRowModel, getSortedRowModel, useVueTable } from '@tanstack/vue-t
 import { useStorage } from '@vueuse/core'
 import { ChevronDown, ChevronUp, Copy } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
-import { bodyUrl, formatSize, prettyJson, RESOURCE_CATEGORIES, resourcesForAction, statusClass, toCurl, toFetch } from '../lib/network'
+import { bodyUrl, formatSize, prettyJson, RESOURCE_CATEGORIES, resourcesForAction, resourcesInWindow, statusClass, toCurl, toFetch } from '../lib/network'
 import { useTraceStore } from '../store'
 import FilterInput from './FilterInput.vue'
 import TextTooltip from './TextTooltip.vue'
@@ -25,7 +25,11 @@ const sorting = ref<SortingState>([])
 const selectedId = ref<string | null>(null)
 
 const rows = computed(() => {
-  const all = resourcesForAction(store.model.value?.resources ?? [], store.selectedAction.value)
+  const resources = store.model.value?.resources ?? []
+  const range = store.timeRange.value
+  const all = range
+    ? resourcesInWindow(resources, range)
+    : resourcesForAction(resources, store.selectedAction.value)
   const q = search.value.trim().toLowerCase()
   return all.filter(r =>
     (!q || r.url.toLowerCase().includes(q))
@@ -126,7 +130,7 @@ const alignEnd = new Set(['size', 'duration', 'status'])
     </div>
 
     <div v-if="!rows.length" class="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-      No network for this action
+      {{ store.timeRange.value ? 'No network in range' : 'No network for this action' }}
     </div>
 
     <ResizablePanelGroup

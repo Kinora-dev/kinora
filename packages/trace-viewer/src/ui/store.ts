@@ -1,9 +1,11 @@
 import type { ContextEntry } from '@isomorphic/trace/entries'
 import type { ActionTraceEventInContext } from '@isomorphic/trace/traceModel'
 import type { Snapshot, SnapshotTab } from './lib/snapshots'
+import type { TimeRange } from './lib/timeline'
 import { buildActionTree, TraceModel } from '@isomorphic/trace/traceModel'
 import { computed, ref, shallowRef } from 'vue'
 import { collectSnapshots, snapshotInfoUrl, snapshotUrl } from './lib/snapshots'
+import { normalizeRange } from './lib/timeline'
 
 export interface ActionItem {
   id: string
@@ -29,6 +31,8 @@ const selectedId = ref<string | null>(null)
 const snapshotTab = ref<SnapshotTab>('action')
 const snapshotInfo = ref<SnapshotInfo>({})
 const playing = ref(false)
+// When set, a brushed time window that filters/zooms every tab; null = follow the selected action.
+const timeRange = ref<TimeRange | null>(null)
 let playTimer: ReturnType<typeof setInterval> | undefined
 
 function flatten(m: TraceModel): ActionItem[] {
@@ -68,6 +72,7 @@ async function load(uri: string): Promise<void> {
     model.value = m
     items.value = flatten(m)
     collapsed.value = new Set()
+    timeRange.value = null
     // Default selection: failed action, else the last page action with a
     // snapshot (most representative page state), else the first action.
     const failed = m.failedAction()
@@ -112,6 +117,20 @@ const selectedAction = computed<ActionTraceEventInContext | undefined>(() => ite
 const snapshots = computed(() => collectSnapshots(selectedAction.value))
 const currentSnapshot = computed<Snapshot | undefined>(() => snapshots.value[snapshotTab.value])
 const currentSnapshotUrl = computed(() => snapshotUrl(traceUri.value, currentSnapshot.value))
+
+const boundaries = computed(() => {
+  const m = model.value
+  return { min: m?.startTime ?? 0, max: m?.endTime ?? 1 }
+})
+
+function setTimeRange(a: number, b: number): void {
+  const { start, end } = normalizeRange(a, b)
+  timeRange.value = end > start ? { start, end } : null
+}
+
+function clearTimeRange(): void {
+  timeRange.value = null
+}
 
 function select(id: string): void {
   selectedId.value = id
@@ -187,11 +206,15 @@ export function useTraceStore() {
     currentSnapshotUrl,
     snapshotInfo,
     playing,
+    timeRange,
+    boundaries,
     load,
     select,
     step,
     setTab,
     togglePlay,
+    setTimeRange,
+    clearTimeRange,
     refreshSnapshotInfo,
   }
 }

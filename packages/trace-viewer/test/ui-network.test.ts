@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatSize, prettyJson, resourceCategory, resourcesForAction, statusClass, toCurl } from '../src/ui/lib/network'
+import { formatSize, prettyJson, resourceCategory, resourcesForAction, resourcesInWindow, statusClass, toCurl } from '../src/ui/lib/network'
 
 type Res = Parameters<typeof resourceCategory>[0]
 
@@ -143,5 +143,21 @@ describe('resourcesForAction', () => {
     expect(transfer.size).toBe(1234)
     const [header] = resourcesForAction([res({ contentSize: 0, respHeaders: [{ name: 'Content-Length', value: '500' }], monotonicTime: 10 })], action)
     expect(header.size).toBe(500)
+  })
+})
+
+describe('resourcesInWindow', () => {
+  it('keeps only resources whose start falls inside the window (bounds inclusive)', () => {
+    const rows = resourcesInWindow(
+      [
+        res({ url: 'https://x/before', monotonicTime: 50 }),
+        res({ url: 'https://x/at-start', monotonicTime: 100 }),
+        res({ url: 'https://x/inside', monotonicTime: 150 }),
+        res({ url: 'https://x/at-end', monotonicTime: 200 }),
+        res({ url: 'https://x/after', monotonicTime: 250 }),
+      ],
+      { start: 100, end: 200 },
+    )
+    expect(rows.map(r => r.url)).toEqual(['https://x/at-start', 'https://x/inside', 'https://x/at-end'])
   })
 })

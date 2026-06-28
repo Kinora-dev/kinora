@@ -60,6 +60,20 @@ function resourceName(url: string): string {
   }
 }
 
+function toNetworkRow(r: ResourceEntry): NetworkRow {
+  return {
+    id: r.id,
+    name: resourceName(r.request.url),
+    url: r.request.url,
+    method: r.request.method,
+    status: r.response?.status ?? 0,
+    category: resourceCategory(r),
+    size: responseSize(r),
+    duration: r.time ?? 0,
+    resource: r,
+  }
+}
+
 // Network requests up to (and including) the selected action. Cumulative rather
 // than windowed: async sub-resources often resolve between actions, so a strict
 // per-action window would usually be empty.
@@ -70,24 +84,17 @@ export function resourcesForAction(
   if (!action)
     return []
   const end = action.endTime || action.startTime
-  const rows: NetworkRow[] = []
-  for (const r of resources) {
-    const t = r._monotonicTime
-    if (t === undefined || t > end)
-      continue
-    rows.push({
-      id: r.id,
-      name: resourceName(r.request.url),
-      url: r.request.url,
-      method: r.request.method,
-      status: r.response?.status ?? 0,
-      category: resourceCategory(r),
-      size: responseSize(r),
-      duration: r.time ?? 0,
-      resource: r,
-    })
-  }
-  return rows
+  return resources.filter(r => r._monotonicTime !== undefined && r._monotonicTime <= end).map(toNetworkRow)
+}
+
+// Network requests whose start falls inside a brushed time window.
+export function resourcesInWindow(
+  resources: ResourceEntry[],
+  range: { start: number, end: number },
+): NetworkRow[] {
+  return resources
+    .filter(r => r._monotonicTime !== undefined && r._monotonicTime >= range.start && r._monotonicTime <= range.end)
+    .map(toNetworkRow)
 }
 
 export function formatSize(bytes: number): string {

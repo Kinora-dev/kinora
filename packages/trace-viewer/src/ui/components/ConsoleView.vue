@@ -3,15 +3,19 @@ import type { ConsoleMessageTraceEvent } from '@trace/trace'
 import { eventsForAction } from '@isomorphic/trace/traceModel'
 import { cn } from '@kinora/ui'
 import { computed } from 'vue'
+import { inWindow } from '../lib/timeline'
 import { useTraceStore } from '../store'
 
 const store = useTraceStore()
 
 const messages = computed(() => {
-  const action = store.selectedAction.value
-  if (!action)
-    return []
-  return eventsForAction(action)
+  const range = store.timeRange.value
+  const source = range
+    ? (store.model.value?.events ?? []).filter(e => inWindow(e.time, range))
+    : store.selectedAction.value
+      ? eventsForAction(store.selectedAction.value)
+      : []
+  return source
     .filter((e): e is ConsoleMessageTraceEvent => e.type === 'console')
     .map(e => ({
       kind: e.messageType === 'error' ? 'error' : e.messageType === 'warning' ? 'warning' : 'log',
@@ -30,7 +34,7 @@ const kindClass: Record<string, string> = {
 <template>
   <div class="h-full overflow-y-auto py-1">
     <div v-if="!messages.length" class="flex h-full items-center justify-center text-sm text-muted-foreground">
-      No console output for this action
+      {{ store.timeRange.value ? 'No console output in range' : 'No console output for this action' }}
     </div>
     <div
       v-for="(msg, i) in messages"

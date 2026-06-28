@@ -4,6 +4,7 @@ import { Check, ChevronRight, X } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { actionDuration, actionStatus, actionTitle } from '../lib/action'
 import { formatMs } from '../lib/format'
+import { actionInWindow } from '../lib/timeline'
 import { useTraceStore } from '../store'
 import FilterInput from './FilterInput.vue'
 import TextTooltip from './TextTooltip.vue'
@@ -15,9 +16,11 @@ const filtering = computed(() => filter.value.trim().length > 0)
 
 const rows = computed(() => {
   const f = filter.value.trim().toLowerCase()
-  // While filtering, search the full flat list; otherwise follow collapse state.
-  const source = f ? store.items.value : store.visibleItems.value
+  const range = store.timeRange.value
+  // While filtering or zoomed, search the full flat list; otherwise follow collapse state.
+  const source = f || range ? store.items.value : store.visibleItems.value
   return source
+    .filter(item => !range || actionInWindow(item.action, range))
     .map(item => ({
       item,
       title: actionTitle(item.action),
@@ -33,7 +36,7 @@ const rows = computed(() => {
     <div class="flex h-11 shrink-0 items-center border-b border-border px-3">
       <div class="flex items-baseline gap-2">
         <span class="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Actions</span>
-        <span class="font-mono text-[11px] text-muted-foreground/70">{{ store.items.value.length }}</span>
+        <span class="font-mono text-[11px] text-muted-foreground/70">{{ store.timeRange.value ? `${rows.length} / ${store.items.value.length}` : store.items.value.length }}</span>
       </div>
     </div>
 
