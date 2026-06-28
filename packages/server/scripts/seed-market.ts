@@ -269,7 +269,7 @@ async function main(): Promise<void> {
   const passTrace = await readFile(PASS_TRACE)
 
   await db.delete(project).where(eq(project.organizationId, orgId))
-  const apiKey = await auth.api.createApiKey({ body: { name: 'market seed token', userId } })
+  const apiKey = await auth.api.createApiKey({ body: { name: 'ci-github-actions', userId } })
   await db.update(apikey).set({ referenceId: orgId }).where(eq(apikey.id, apiKey.id))
 
   for (const pdef of PROJECTS) {
