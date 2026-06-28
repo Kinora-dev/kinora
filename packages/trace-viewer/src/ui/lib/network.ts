@@ -141,3 +141,15 @@ export function bodyUrl(model: { createRelativeUrl: (p: string) => string } | nu
     return undefined
   return model.createRelativeUrl(`sha1/${sha1}`)
 }
+
+// null when not JSON or unparseable, so callers fall back to the raw text.
+export function prettyJson(text: string, mime: string): string | null {
+  if (!mime.includes('json') && !/^\s*[[{]/.test(text))
+    return null
+  try {
+    return JSON.stringify(JSON.parse(text), null, 2)
+  }
+  catch {
+    return null
+  }
+}

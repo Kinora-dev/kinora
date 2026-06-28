@@ -9,7 +9,7 @@ import { getCoreRowModel, getSortedRowModel, useVueTable } from '@tanstack/vue-t
 import { useStorage } from '@vueuse/core'
 import { ChevronDown, ChevronUp, Copy } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
-import { bodyUrl, formatSize, RESOURCE_CATEGORIES, resourcesForAction, statusClass, toCurl, toFetch } from '../lib/network'
+import { bodyUrl, formatSize, prettyJson, RESOURCE_CATEGORIES, resourcesForAction, statusClass, toCurl, toFetch } from '../lib/network'
 import { useTraceStore } from '../store'
 import FilterInput from './FilterInput.vue'
 import TextTooltip from './TextTooltip.vue'
@@ -55,11 +55,14 @@ const table = useVueTable({
 
 const selected = computed(() => rows.value.find(r => r.id === selectedId.value) ?? null)
 
-interface Body { kind: 'image' | 'text' | 'none', url?: string, text?: string }
+interface Body { kind: 'image' | 'text' | 'none', url?: string, text?: string, raw?: string, canPretty?: boolean }
 const body = ref<Body>({ kind: 'none' })
+const showRaw = ref(false)
+const bodyText = computed(() => showRaw.value && body.value.raw ? body.value.raw : body.value.text)
 
 watch(selected, async (sel) => {
   body.value = { kind: 'none' }
+  showRaw.value = false
   if (!sel)
     return
   const content = sel.resource.response?.content
@@ -73,8 +76,9 @@ watch(selected, async (sel) => {
   }
   if (mime.startsWith('text/') || mime.includes('json') || mime.includes('xml') || mime.includes('javascript')) {
     try {
-      const text = await (await fetch(url)).text()
-      body.value = { kind: 'text', url, text: text.slice(0, 50_000) }
+      const raw = (await (await fetch(url)).text()).slice(0, 200_000)
+      const pretty = prettyJson(raw, mime)
+      body.value = { kind: 'text', url, text: (pretty ?? raw).slice(0, 50_000), raw: raw.slice(0, 50_000), canPretty: pretty !== null }
     }
     catch {
       body.value = { kind: 'none', url }
@@ -225,12 +229,22 @@ const alignEnd = new Set(['size', 'duration', 'status'])
             </div>
 
             <template v-if="body.kind !== 'none' || body.url">
-              <div class="mb-1 font-semibold tracking-wide text-muted-foreground uppercase">
-                Response body
+              <div class="mb-1 flex items-center gap-2">
+                <span class="font-semibold tracking-wide text-muted-foreground uppercase">
+                  Response body
+                </span>
+                <button
+                  v-if="body.canPretty"
+                  type="button"
+                  class="rounded px-1.5 py-0.5 text-[10px] text-muted-foreground transition-colors hover:text-foreground"
+                  @click="showRaw = !showRaw"
+                >
+                  {{ showRaw ? 'Pretty' : 'Raw' }}
+                </button>
               </div>
               <div class="mb-3">
                 <img v-if="body.kind === 'image'" :src="body.url" class="max-h-48 rounded border border-border">
-                <pre v-else-if="body.kind === 'text'" class="max-h-48 overflow-auto rounded bg-muted/40 p-2 font-mono whitespace-pre-wrap">{{ body.text }}</pre>
+                <pre v-else-if="body.kind === 'text'" class="max-h-48 overflow-auto rounded bg-muted/40 p-2 font-mono whitespace-pre-wrap">{{ bodyText }}</pre>
                 <a v-else-if="body.url" :href="body.url" download class="text-muted-foreground hover:text-foreground">download body</a>
               </div>
             </template>

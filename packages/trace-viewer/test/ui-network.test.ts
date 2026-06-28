@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatSize, resourceCategory, resourcesForAction, statusClass, toCurl } from '../src/ui/lib/network'
+import { formatSize, prettyJson, resourceCategory, resourcesForAction, statusClass, toCurl } from '../src/ui/lib/network'
 
 type Res = Parameters<typeof resourceCategory>[0]
 
@@ -94,6 +94,24 @@ describe('toCurl', () => {
 
   it('escapes single quotes in values', () => {
     expect(toCurl(res({ url: `https://x/it's` }))).toContain(`'https://x/it'\\''s'`)
+  })
+})
+
+describe('prettyJson', () => {
+  it('indents JSON when the mime is json', () => {
+    expect(prettyJson('{"a":1}', 'application/json')).toBe('{\n  "a": 1\n}')
+  })
+
+  it('sniffs JSON by shape when the mime lies', () => {
+    expect(prettyJson('  [1,2]', 'text/plain')).toBe('[\n  1,\n  2\n]')
+  })
+
+  it('returns null for non-JSON text', () => {
+    expect(prettyJson('hello', 'text/plain')).toBeNull()
+  })
+
+  it('returns null for JSON-mime bodies that do not parse', () => {
+    expect(prettyJson('{bad', 'application/json')).toBeNull()
   })
 })
 
