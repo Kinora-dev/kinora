@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process'
-import { rmSync } from 'node:fs'
+import { existsSync, readdirSync, rmSync } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { sql } from 'drizzle-orm'
@@ -26,8 +26,13 @@ async function main(): Promise<void> {
   if (tables.length)
     await db.execute(sql.raw(`TRUNCATE ${tables.join(', ')} RESTART IDENTITY CASCADE`))
 
-  // Drop the now-orphaned trace blobs so STORAGE_DIR doesn't grow each reseed.
-  rmSync(path.resolve(env.STORAGE_DIR), { recursive: true, force: true })
+  // Drop the now-orphaned trace blobs. Clear the dir's CONTENTS, not the dir itself: STORAGE_DIR
+  // is a mounted volume whose mountpoint is root-owned -> removing it would EACCES.
+  const artifactsDir = path.resolve(env.STORAGE_DIR)
+  if (existsSync(artifactsDir)) {
+    for (const entry of readdirSync(artifactsDir))
+      rmSync(path.join(artifactsDir, entry), { recursive: true, force: true })
+  }
 
   // Reseed the marketing dataset (run dates are relative to now -> fresh every run).
   execSync('node dist/scripts/seed-market.mjs --force', { stdio: 'inherit', env: process.env })
