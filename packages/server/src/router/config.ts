@@ -1,4 +1,4 @@
-import { slackApp } from '../lib/env'
+import { demo, slackApp } from '../lib/env'
 import { mailerEnabled } from '../lib/mailer'
 import { publicProcedure, router } from '../trpc/index'
 
@@ -9,5 +9,7 @@ export const configRouter = router({
     mailerEnabled,
     // Slack OAuth app present? front shows "Add to Slack" vs manual webhook paste.
     slackOauthEnabled: slackApp !== null,
+    // Public read-only demo? front shows a banner + hides mutation UI.
+    demo,
   })),
 })

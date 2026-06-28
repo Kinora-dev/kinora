@@ -4,7 +4,7 @@ import { serve } from '@hono/node-server'
 import process from 'node:process'
 import { app } from './app'
 import { db } from './db'
-import { env } from './lib/env'
+import { demo, env } from './lib/env'
 import { logger } from './lib/logger'
 
 // Log stray rejections instead of letting one crash the whole server; uncaught exceptions leave the
@@ -16,7 +16,7 @@ process.on('uncaughtException', (err) => {
 })
 
 const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
-  logger.info(`kinora server running on port ${info.port}`)
+  logger.info(`${demo ? '[DEMO] ' : ''}kinora server running on port ${info.port}`)
 })
 
 let shuttingDown = false

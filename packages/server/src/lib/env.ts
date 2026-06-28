@@ -20,6 +20,8 @@ const envSchema = z.object({
   GITHUB_CLIENT_ID: z.string(),
   GITHUB_CLIENT_SECRET: z.string(),
   KINORA_CLOUD: z.stringbool().default(false),
+  // Public demo instance: auto-session as the seeded demo user + read-only (no mutations/ingest/auth writes).
+  KINORA_DEMO: z.stringbool().default(false),
   POLAR_ACCESS_TOKEN: z.string().optional(),
   POLAR_WEBHOOK_SECRET: z.string().optional(),
   POLAR_PRODUCT_TEAM_ID: z.string().optional(),
@@ -78,6 +80,8 @@ function resolveCloud(): CloudConfig | null {
 }
 
 export const cloud = resolveCloud()
+
+export const demo = env.KINORA_DEMO
 
 export interface S3Config {
   endpoint: string

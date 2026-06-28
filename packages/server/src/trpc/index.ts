@@ -4,11 +4,15 @@ import { initTRPC, TRPCError } from '@trpc/server'
 import { and, eq } from 'drizzle-orm'
 import { db } from '../db'
 import { member } from '../db/schemas/index'
+import { demo } from '../lib/env'
 import { logger } from '../lib/logger'
 
 export const t = initTRPC.context<Context>().create()
 
 const loggedProcedure = t.procedure.use(async (opts) => {
+  // Public demo is browse-only: reject every mutation (one gate for all routers).
+  if (demo && opts.type === 'mutation')
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'This is a read-only demo' })
   const start = Date.now()
   const result = await opts.next()
   const ms = Date.now() - start

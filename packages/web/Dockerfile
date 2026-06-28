@@ -31,7 +31,10 @@ RUN --mount=type=secret,id=sentry_auth_token \
 RUN pnpm --filter @kinora/trace-viewer build
 
 FROM nginx:1.27-alpine AS runtime
-COPY packages/web/nginx.conf /etc/nginx/conf.d/default.conf
+# Default = cloud (static-only, API is a separate origin). Single-origin demo/self-host passes
+# NGINX_CONF=selfhost/nginx.conf to bake the reverse-proxy config instead.
+ARG NGINX_CONF=packages/web/nginx.conf
+COPY ${NGINX_CONF} /etc/nginx/conf.d/default.conf
 COPY --from=build /repo/packages/web/dist /usr/share/nginx/html
 COPY --from=build /repo/packages/trace-viewer/dist /usr/share/nginx/html/trace
 EXPOSE 80

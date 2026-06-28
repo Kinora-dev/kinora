@@ -1,8 +1,11 @@
 import type { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch'
+import type { AuthType } from '../lib/auth'
 import { and, eq } from 'drizzle-orm'
 import { db } from '../db'
 import { member } from '../db/schemas/index'
+import { resolveDemoOwner } from '../demo/owner'
 import { auth } from '../lib/auth'
+import { demo } from '../lib/env'
 
 export async function createContext({ req }: FetchCreateContextFnOptions) {
   const session = await auth.api.getSession({ headers: req.headers })
@@ -16,6 +19,13 @@ export async function createContext({ req }: FetchCreateContextFnOptions) {
       columns: { organizationId: true },
     })
     organizationId = owned?.organizationId ?? null
+  }
+
+  if (!user && demo) {
+    const d = await resolveDemoOwner()
+    // db row is structurally the session user; cast to the auth user type for ctx consistency.
+    if (d)
+      return { user: d.user as unknown as AuthType['user'], organizationId: d.organizationId, req }
   }
 
   return { user, organizationId, req }

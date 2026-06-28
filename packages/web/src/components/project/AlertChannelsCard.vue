@@ -6,11 +6,13 @@ import { SegmentedControl } from '@kinora/ui/segmented-control'
 import { ArrowUpRight, Mail, Send, Trash2, Webhook } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { z } from 'zod'
+import { useDemo } from '@/composables/queries'
 import { useAlertChannels } from '@/composables/useAlertChannels'
 import { useBilling } from '@/composables/useBilling'
 
 const props = defineProps<{ projectId: string }>()
 
+const isDemo = useDemo()
 const labelClass = 'font-mono text-[11px] tracking-wider text-muted-foreground uppercase'
 
 const POLICIES = [
@@ -56,7 +58,7 @@ async function onAdd(): Promise<void> {
         <p class="text-sm text-muted-foreground">
           Email &amp; webhook alerts are a Team feature.
         </p>
-        <Button type="button" size="sm" class="font-mono text-xs" :disabled="!!billingPending" @click="checkout('team')">
+        <Button type="button" size="sm" class="font-mono text-xs" :disabled="!!billingPending || isDemo" @click="checkout('team')">
           <ArrowUpRight class="size-3.5" />
           {{ billingPending === 'team' ? 'Redirecting…' : 'Upgrade to Team' }}
         </Button>
@@ -76,11 +78,11 @@ async function onAdd(): Promise<void> {
                 <span class="truncate font-mono text-xs">{{ ch.target }}</span>
               </div>
               <div class="flex shrink-0 gap-1">
-                <Button type="button" variant="ghost" size="sm" class="font-mono text-xs" :disabled="testingId === ch.id" @click="test(ch.id)">
+                <Button type="button" variant="ghost" size="sm" class="font-mono text-xs" :disabled="testingId === ch.id || isDemo" @click="test(ch.id)">
                   <Send class="size-3.5" />
                   {{ testingId === ch.id ? 'Sending…' : 'Test' }}
                 </Button>
-                <Button type="button" variant="ghost" size="sm" class="text-muted-foreground hover:text-fail" aria-label="Remove channel" @click="remove(ch.id)">
+                <Button type="button" variant="ghost" size="sm" class="text-muted-foreground hover:text-fail" aria-label="Remove channel" :disabled="isDemo" @click="remove(ch.id)">
                   <Trash2 class="size-3.5" />
                 </Button>
               </div>
@@ -97,6 +99,7 @@ async function onAdd(): Promise<void> {
                 size="sm"
                 class="gap-2 font-mono text-xs"
                 :class="ch.enabled ? 'border-signal/60 text-signal hover:text-signal' : 'text-muted-foreground'"
+                :disabled="isDemo"
                 @click="update(ch.id, { policy: ch.policy, enabled: !ch.enabled })"
               >
                 <span class="size-1.5 rounded-full" :class="ch.enabled ? 'bg-signal' : 'bg-muted-foreground'" aria-hidden="true" />
@@ -125,7 +128,7 @@ async function onAdd(): Promise<void> {
             :options="POLICIES"
             @update:model-value="(v) => addPolicy = v as typeof POLICIES[number]['value']"
           />
-          <Button type="submit" size="sm" class="w-fit font-mono text-xs" :disabled="adding || !targetValid">
+          <Button type="submit" size="sm" class="w-fit font-mono text-xs" :disabled="adding || !targetValid || isDemo">
             {{ adding ? 'Adding…' : 'Add channel' }}
           </Button>
         </form>

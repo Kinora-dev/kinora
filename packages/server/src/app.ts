@@ -7,9 +7,11 @@ import { bodyLimit } from 'hono/body-limit'
 import { cors } from 'hono/cors'
 import { secureHeaders } from 'hono/secure-headers'
 import { db } from './db'
+import { demoApp } from './demo/session'
 import { accessLog } from './lib/access-log'
 import { verifyArtifactSignature } from './lib/artifact-url'
 import { auth } from './lib/auth'
+import { blockAuthWritesInDemo, blockInDemo } from './lib/demo-guard'
 import { env } from './lib/env'
 import { logger } from './lib/logger'
 import { clientIp, rateLimit } from './lib/rate-limit'
@@ -50,6 +52,7 @@ app.get('/healthcheck', async (c) => {
   }
 })
 
+app.use('/api/auth/*', blockAuthWritesInDemo)
 app.on(['POST', 'GET'], '/api/auth/*', c => auth.handler(c.req.raw))
 
 app.use('/trpc/*', rateLimit({ windowMs: 60_000, limit: 300 }))
@@ -57,6 +60,8 @@ app.use('/trpc/*', trpcServer({ router: appRouter, createContext }))
 
 // Access log first in the chain so rate-limit (429) / body-limit (413) rejections are logged too.
 app.use('/api/v1/*', accessLog)
+// Read-only demo: reject all ingest writes (logged by accessLog above).
+app.use('/api/v1/*', blockInDemo)
 // Per-IP, before the body is read, so a flood is cheap to reject. Keyed by IP (not token) so
 // sharded CI spreads across runner IPs instead of summing into one bucket. Real throttle is
 // nginx limit_req (unspoofable IP); this is the backstop.
@@ -69,7 +74,12 @@ app.use('/api/v1/*', bodyLimit({
 app.route('/api/v1', publicApi)
 
 app.use('/api/slack/*', accessLog)
+// Read-only demo: the Slack OAuth callback writes the integration (bypassing tRPC), so block it here.
+app.use('/api/slack/*', blockInDemo)
 app.route('/api/slack', slackOAuth)
+
+// Demo-only: establishes the shared read-only session cookie (no-op otherwise).
+app.route('/api/demo', demoApp)
 
 app.onError((err, c) => {
   logger.error({ err }, 'unhandled request error')

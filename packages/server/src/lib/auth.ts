@@ -8,7 +8,7 @@ import { polarAuthPlugin, polarClient } from '../billing/polar'
 import { db } from '../db'
 import { member, organization as organizationTable } from '../db/schemas/index'
 import { purgeUserOwnedData } from './account'
-import { env } from './env'
+import { demo, env } from './env'
 import { logger } from './logger'
 import { mailerEnabled, sendMail } from './mailer'
 import { getTrustedOrigins } from './utils'
@@ -124,9 +124,11 @@ export const auth = betterAuth({
       },
     },
   },
-  advanced: env.COOKIE_DOMAIN
-    ? { crossSubDomainCookies: { enabled: true, domain: env.COOKIE_DOMAIN } }
-    : {},
+  advanced: {
+    ...(env.COOKIE_DOMAIN ? { crossSubDomainCookies: { enabled: true, domain: env.COOKIE_DOMAIN } } : {}),
+    // Demo runs on a *.kinora.dev subdomain next to prod; a distinct cookie name stops prod's
+    ...(demo ? { cookiePrefix: 'kinora-demo' } : {}),
+  },
   secret: env.AUTH_SECRET,
   plugins: [
     // Plugin default is 10 req/day per key, which any real CI exceeds, billing quotas already cap ingest volume.

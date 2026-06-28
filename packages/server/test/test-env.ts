@@ -19,6 +19,7 @@ export const TEST_ENV: Record<keyof Env, string> = {
   GITHUB_CLIENT_ID: 'test',
   GITHUB_CLIENT_SECRET: 'test',
   KINORA_CLOUD: 'false',
+  KINORA_DEMO: 'false',
   INGEST_RATE_LIMIT: '600',
   POLAR_ACCESS_TOKEN: '',
   POLAR_WEBHOOK_SECRET: '',
