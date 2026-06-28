@@ -6,6 +6,7 @@ import { SegmentedControl } from '@kinora/ui/segmented-control'
 import { Send } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 import Icon from '@/components/Icon.vue'
+import { useServerConfig } from '@/composables/queries'
 import { useAlerts } from '@/composables/useAlerts'
 import { useBilling } from '@/composables/useBilling'
 import { env } from '@/lib/env'
@@ -21,7 +22,10 @@ const POLICIES = [
 ] as const
 
 const { summary: billing, pending: billingPending, checkout } = useBilling()
-const { config, oauthEnabled, saving, testing, save, updateSettings, disconnect, sendTest } = useAlerts(props.projectId)
+const { config, saving, testing, save, updateSettings, disconnect, sendTest } = useAlerts(props.projectId)
+
+const { state: serverConfig } = useServerConfig()
+const oauthEnabled = computed(() => serverConfig.value?.slackOauthEnabled ?? false)
 
 const webhookUrl = ref('')
 const policy = ref<typeof POLICIES[number]['value']>('on-failure')

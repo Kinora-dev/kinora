@@ -15,6 +15,7 @@ import { computed, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { z } from 'zod'
+import { useServerConfig } from '@/composables/queries'
 import { authClient } from '@/lib/auth'
 import { session } from '@/lib/session'
 
@@ -53,8 +54,8 @@ async function updateEmail(): Promise<void> {
   toast.success('Email updated')
 }
 
-// No SMTP on the server: hide verification UI entirely (can't verify or resend).
-const mailerEnabled = computed(() => session.user.value?.mailerEnabled ?? false)
+const { state: serverConfig } = useServerConfig()
+const mailerEnabled = computed(() => serverConfig.value?.mailerEnabled ?? false)
 const emailVerified = computed(() => session.user.value?.emailVerified ?? false)
 const resending = ref(false)
 

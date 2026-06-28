@@ -9,7 +9,7 @@ import { postWebhook } from '../alerts/webhook'
 import { getEntitlements } from '../billing/entitlements'
 import { db } from '../db'
 import { alertChannel, project, slackIntegration } from '../db/schemas/index'
-import { env, slackApp } from '../lib/env'
+import { env } from '../lib/env'
 import { sendMail } from '../lib/mailer'
 import { adminProcedure, orgProcedure, router } from '../trpc/index'
 import { ownedProject } from './dashboard'
@@ -61,9 +61,6 @@ async function requireAlerts(organizationId: string): Promise<void> {
 }
 
 export const alertsRouter = router({
-  // True when the server has a Slack OAuth app: front shows "Add to Slack" vs manual paste.
-  oauthEnabled: orgProcedure.query(() => ({ enabled: slackApp !== null })),
-
   get: orgProcedure
     .input(z.object({ projectId: z.string() }))
     .query(async ({ ctx, input }) => {

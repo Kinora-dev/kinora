@@ -1,5 +1,5 @@
 import { useAsyncState } from '@vueuse/core'
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { toast } from 'vue-sonner'
 import { trpc } from '@/lib/trpc'
 
@@ -11,13 +11,6 @@ export function useAlerts(projectId: string) {
     null,
     { immediate: true, resetOnExecute: false },
   )
-
-  const { state: oauth } = useAsyncState(
-    () => trpc.alerts.oauthEnabled.query(),
-    null,
-    { immediate: true },
-  )
-  const oauthEnabled = computed(() => oauth.value?.enabled ?? false)
 
   const saving = ref(false)
   const testing = ref(false)
@@ -77,5 +70,5 @@ export function useAlerts(projectId: string) {
     }
   }
 
-  return { config, oauthEnabled, isLoading, saving, testing, refresh, save, updateSettings, disconnect, sendTest }
+  return { config, isLoading, saving, testing, refresh, save, updateSettings, disconnect, sendTest }
 }

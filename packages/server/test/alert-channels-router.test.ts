@@ -84,12 +84,6 @@ describe('alerts channel lifecycle', () => {
 })
 
 describe('alerts slack integration', () => {
-  it('oauthEnabled returns a boolean', async () => {
-    const user = await createUser()
-    await seedProject(user.id)
-    expect(typeof (await (await caller(user)).alerts.oauthEnabled()).enabled).toBe('boolean')
-  })
-
   it('upsert creates a slack integration that get returns', async () => {
     const user = await createUser()
     await seedProject(user.id)

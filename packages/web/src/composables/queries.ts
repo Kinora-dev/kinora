@@ -1,6 +1,10 @@
 import { useAsyncState } from '@vueuse/core'
 import { trpc } from '@/lib/trpc'
 
+export function useServerConfig() {
+  return useAsyncState(() => trpc.config.get.query(), null, { immediate: true })
+}
+
 export function useManifest() {
   return useAsyncState(() => trpc.dashboard.manifest.query(), null, { immediate: true })
 }

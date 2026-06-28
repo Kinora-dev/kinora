@@ -16,7 +16,17 @@ describe('user.me', () => {
     const me = await (await caller(u)).user.me()
     expect(me?.id).toBe(u.id)
     expect(me?.hasPassword).toBe(true) // created via email/password signup
-    expect(typeof me?.mailerEnabled).toBe('boolean')
+    expect(me).not.toHaveProperty('mailerEnabled') // server caps moved to config.get
+    expect(me).not.toHaveProperty('role') // admin-plugin internals not exposed
+  })
+})
+
+describe('config.get', () => {
+  it('returns server capability flags', async () => {
+    const u = await createUser()
+    const cfg = await (await caller(u)).config.get()
+    expect(typeof cfg.mailerEnabled).toBe('boolean')
+    expect(typeof cfg.slackOauthEnabled).toBe('boolean')
   })
 })
 
