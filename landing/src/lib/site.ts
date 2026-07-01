@@ -15,9 +15,9 @@ export const SITE = {
 } as const
 
 export const NAV = [
-  { label: 'Features', href: '#features' },
-  { label: 'Trace viewer', href: '#trace' },
-  { label: 'Desktop', href: '#desktop' },
-  { label: 'Pricing', href: '#pricing' },
-  { label: 'Setup', href: '#setup' },
+  { label: 'Features', href: '/#features' },
+  { label: 'Trace viewer', href: '/#trace' },
+  { label: 'Desktop', href: '/#desktop' },
+  { label: 'Pricing', href: '/#pricing' },
+  { label: 'Setup', href: '/#setup' },
 ] as const
