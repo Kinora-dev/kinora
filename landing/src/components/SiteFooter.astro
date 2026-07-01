@@ -1,5 +1,6 @@
 ---
 import { COMPARISONS } from '../data/comparisons'
+import { SOLUTIONS } from '../data/solutions'
 import { SITE } from '../lib/site'
 import GithubIcon from './GithubIcon.astro'
 import Wordmark from './Wordmark.astro'
@@ -76,6 +77,22 @@ const year = new Date().getFullYear();
             class="text-muted-foreground transition-colors hover:text-foreground"
           >Terms</a
           >
+        </div>
+        <div class="flex flex-col gap-3">
+          <span
+            class="text-[11px] uppercase tracking-wider text-muted-foreground"
+          >Use cases</span
+          >
+          {
+            SOLUTIONS.map(s => (
+              <a
+                href={`/${s.slug}`}
+                class="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {s.eyebrow}
+              </a>
+            ))
+          }
         </div>
         <div class="flex flex-col gap-3">
           <span

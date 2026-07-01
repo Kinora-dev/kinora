@@ -1,0 +1,174 @@
+---
+import type { ImageMetadata } from 'astro'
+import type { ShotKey } from '../data/solutions'
+import { ArrowRight, ChevronDown } from '@lucide/astro'
+import compareDark from '../assets/screenshots/compare-dark.png'
+import compareLight from '../assets/screenshots/compare-light.png'
+import overviewDark from '../assets/screenshots/overview-dark.png'
+import overviewLight from '../assets/screenshots/overview-light.png'
+import testHistoryDark from '../assets/screenshots/test-history-dark.png'
+import testHistoryLight from '../assets/screenshots/test-history-light.png'
+import testsDark from '../assets/screenshots/tests-dark.png'
+import testsLight from '../assets/screenshots/tests-light.png'
+import traceViewerDark from '../assets/screenshots/trace-viewer-dark.png'
+import traceViewerLight from '../assets/screenshots/trace-viewer-light.png'
+import CtaSection from '../components/CtaSection.astro'
+import Screenshot from '../components/Screenshot.astro'
+import SiteFooter from '../components/SiteFooter.astro'
+import SiteHeader from '../components/SiteHeader.astro'
+import { SOLUTIONS } from '../data/solutions'
+import Layout from '../layouts/Layout.astro'
+import { SITE } from '../lib/site'
+
+export function getStaticPaths() {
+  return SOLUTIONS.map(s => ({ params: { slug: s.slug }, props: { s } }))
+}
+
+const { s } = Astro.props
+
+const SHOTS: Record<ShotKey, { light: ImageMetadata, dark: ImageMetadata, label: string }> = {
+  'overview': { light: overviewLight, dark: overviewDark, label: 'kinora.dev/overview' },
+  'test-history': { light: testHistoryLight, dark: testHistoryDark, label: 'kinora.dev/test-history' },
+  'tests': { light: testsLight, dark: testsDark, label: 'kinora.dev/tests' },
+  'trace-viewer': { light: traceViewerLight, dark: traceViewerDark, label: 'kinora.dev/trace' },
+  'compare': { light: compareLight, dark: compareDark, label: 'kinora.dev/compare' },
+}
+const shot = SHOTS[s.shot]
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  'mainEntity': s.faqs.map(f => ({
+    '@type': 'Question',
+    'name': f.q,
+    'acceptedAnswer': { '@type': 'Answer', 'text': f.a },
+  })),
+}
+
+const related = SOLUTIONS.filter(o => o.slug !== s.slug)
+---
+
+<Layout title={s.title} description={s.description} pathname={`/${s.slug}`}>
+  <SiteHeader />
+  <main>
+    <section class="relative overflow-hidden border-b border-border">
+      <div
+        class="app-grid pointer-events-none absolute inset-0 [mask-image:radial-gradient(120%_80%_at_50%_0%,black,transparent)]"
+        aria-hidden="true"
+      >
+      </div>
+      <div class="relative mx-auto max-w-4xl px-5 pt-16 pb-14 text-center sm:px-8 sm:pt-24">
+        <p class="reveal font-mono text-xs font-medium uppercase tracking-wider text-signal">
+          [ {s.eyebrow} ]
+        </p>
+        <h1
+          class="reveal mt-4 text-balance text-4xl font-semibold leading-[1.08] tracking-tight sm:text-5xl"
+          style="--reveal-delay: 60ms"
+        >
+          {s.h1}
+        </h1>
+        <p
+          class="reveal mx-auto mt-6 max-w-2xl text-pretty text-lg text-muted-foreground"
+          style="--reveal-delay: 140ms"
+        >
+          {s.tldr}
+        </p>
+        <div
+          class="reveal mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"
+          style="--reveal-delay: 220ms"
+        >
+          <a
+            href={SITE.signup}
+            data-umami-event={`get-started-${s.slug}`}
+            class="inline-flex h-11 items-center gap-2 rounded-md bg-signal px-6 font-mono text-sm font-semibold text-background transition-opacity hover:opacity-90"
+          >
+            Get started
+            <ArrowRight class="size-4" aria-hidden="true" />
+          </a>
+          <a
+            href={SITE.demo}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-umami-event={`live-demo-${s.slug}`}
+            class="inline-flex h-11 items-center gap-2 rounded-md border border-border px-6 font-mono text-sm font-semibold transition-colors hover:bg-muted bg-background"
+          >
+            Live demo
+          </a>
+        </div>
+      </div>
+    </section>
+
+    {/* Intro + screenshot */}
+    <section class="border-b border-border">
+      <div class="mx-auto max-w-5xl px-5 py-16 sm:px-8 sm:py-20">
+        <p class="reveal mx-auto max-w-3xl text-pretty text-lg leading-relaxed text-muted-foreground">
+          {s.intro}
+        </p>
+        <div class="reveal mt-12" style="--reveal-delay: 80ms">
+          <Screenshot
+            light={shot.light}
+            dark={shot.dark}
+            label={shot.label}
+            alt={s.shotAlt}
+            class="mx-auto max-w-4xl"
+          />
+        </div>
+      </div>
+    </section>
+
+    {/* Points */}
+    <section class="border-b border-border">
+      <div class="mx-auto max-w-5xl px-5 py-16 sm:px-8 sm:py-20">
+        <div class="grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-2">
+          {
+            s.points.map((p, i) => (
+              <article class="reveal bg-background p-7" style={`--reveal-delay: ${(i % 2) * 70}ms`}>
+                <h2 class="text-base font-semibold tracking-tight">{p.title}</h2>
+                <p class="mt-2.5 text-pretty text-sm leading-relaxed text-muted-foreground">{p.body}</p>
+              </article>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    {/* FAQ */}
+    <section class="border-b border-border">
+      <div class="mx-auto max-w-3xl px-5 py-16 sm:px-8 sm:py-20">
+        <h2 class="reveal text-balance text-3xl font-semibold tracking-tight sm:text-4xl">FAQ</h2>
+        <div class="reveal mt-8 flex flex-col gap-px overflow-hidden rounded-xl border border-border bg-border" style="--reveal-delay: 80ms">
+          {
+            s.faqs.map(f => (
+              <details class="group bg-background">
+                <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-left font-medium tracking-tight transition-colors hover:bg-muted/40 [&::-webkit-details-marker]:hidden">
+                  <span>{f.q}</span>
+                  <ChevronDown class="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
+                </summary>
+                <p class="px-6 pb-5 text-pretty leading-relaxed text-muted-foreground">{f.a}</p>
+              </details>
+            ))
+          }
+        </div>
+
+        <div class="reveal mt-10 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+          <span class="font-mono text-[11px] uppercase tracking-wider">See also:</span>
+          {
+            related.map(o => (
+              <a
+                href={`/${o.slug}`}
+                class="underline decoration-border underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground"
+              >
+                {o.h1}
+              </a>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <CtaSection />
+  </main>
+  <SiteFooter />
+
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+</Layout>
