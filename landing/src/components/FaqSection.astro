@@ -1,0 +1,97 @@
+---
+import { ChevronDown } from '@lucide/astro'
+
+interface Faq {
+  q: string
+  a: string
+}
+
+const faqs: Faq[] = [
+  {
+    q: 'What is kinora?',
+    a: 'kinora is an open-source dashboard for Playwright test reports. It collects results from every CI run and tracks pass rates, trends, and flaky tests across projects and over time, with the full Playwright trace viewer embedded inline for failures.',
+  },
+  {
+    q: 'How is kinora different from Playwright\'s built-in HTML report?',
+    a: 'Playwright\'s HTML report covers a single run on one machine. kinora sits one level up: it ingests every run from CI, keeps history, and lets you compare runs, watch pass-rate trends, and detect flaky tests over time. The trace viewer is the same one you know, embedded directly in the dashboard.',
+  },
+  {
+    q: 'Is kinora free?',
+    a: 'Yes. You can self-host the full dashboard and trace viewer for free, forever, under the FSL-1.1 license. A hosted cloud version is also available, with a free tier (2,500 test results per month) and paid plans from $49/month.',
+  },
+  {
+    q: 'Can I self-host kinora?',
+    a: 'Yes. kinora ships a single-origin Docker Compose bundle (Postgres, server, and web in one). Self-hosting is unlimited and needs no account. The client libraries you embed, the reporter and CLI, are MIT-licensed.',
+  },
+  {
+    q: 'How do I send my Playwright results to kinora?',
+    a: 'Two ways: add @kinora/reporter to your playwright.config, or upload results.json with the kinora CLI from CI. Both derive the same test identity, so history stays stable regardless of how a result was uploaded.',
+  },
+  {
+    q: 'Does kinora work with my CI provider?',
+    a: 'Yes, kinora is CI-agnostic. The ingest API is plain REST authed by an API key, so any CI provider such as GitHub Actions or GitLab CI, or a plain curl command, can push results.',
+  },
+  {
+    q: 'Where are my traces and artifacts stored?',
+    a: 'trace.zip artifacts are stored on local disk by default, or in any S3-compatible store (AWS, Cloudflare R2, MinIO). When you self-host, everything stays on your own infrastructure.',
+  },
+  {
+    q: 'What is the kinora desktop app?',
+    a: 'The desktop app is a local Playwright trace viewer that needs no account, plus an account dashboard that signs into your kinora server. It can re-run a failing test locally with your repo\'s own Playwright and open the resulting trace inline.',
+  },
+]
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  'mainEntity': faqs.map(f => ({
+    '@type': 'Question',
+    'name': f.q,
+    'acceptedAnswer': { '@type': 'Answer', 'text': f.a },
+  })),
+};
+---
+
+<section id="faq" class="border-b border-border">
+  <div class="mx-auto max-w-7xl px-5 py-20 sm:px-8 sm:py-28">
+    <header class="reveal mb-12 max-w-3xl">
+      <p
+        class="font-mono text-xs font-medium uppercase tracking-wider text-signal"
+      >
+        [ FAQ ]
+      </p>
+      <h2
+        class="mt-4 text-balance text-3xl font-semibold tracking-tight sm:text-4xl"
+      >
+        Questions, answered.
+      </h2>
+    </header>
+
+    <div
+      class="reveal mx-auto flex max-w-3xl flex-col gap-px overflow-hidden rounded-xl border border-border bg-border"
+    >
+      {
+        faqs.map(f => (
+          <details class="group bg-background">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-left font-medium tracking-tight transition-colors hover:bg-muted/40 [&::-webkit-details-marker]:hidden">
+              <span>{f.q}</span>
+              <ChevronDown
+                class="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
+                aria-hidden="true"
+              />
+            </summary>
+            <p class="px-6 pb-5 text-pretty leading-relaxed text-muted-foreground">
+              {f.a}
+            </p>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+
+  <script
+    is:inline
+    type="application/ld+json"
+    set:html={JSON.stringify(faqSchema)}
+  />
+</section>

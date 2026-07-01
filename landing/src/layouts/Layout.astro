@@ -26,15 +26,58 @@ const imageUrl = new URL(image, site).toString()
 
 const isProd = import.meta.env.MODE === 'production'
 
+const orgId = `${site.origin}/#organization`
+const siteId = `${site.origin}/#website`
+
 const structuredData = {
   '@context': 'https://schema.org',
-  '@type': 'SoftwareApplication',
-  'name': 'kinora',
-  'description': SITE.description,
-  'url': site.toString(),
-  'applicationCategory': 'DeveloperApplication',
-  'operatingSystem': 'Web, Self-hosted',
-  'offers': { '@type': 'Offer', 'price': '0', 'priceCurrency': 'USD' },
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': orgId,
+      'name': SITE.name,
+      'url': site.toString(),
+      'logo': new URL('/web-app-manifest-512x512.png', site).toString(),
+      'sameAs': [SITE.repo],
+    },
+    {
+      '@type': 'WebSite',
+      '@id': siteId,
+      'name': SITE.name,
+      'url': site.toString(),
+      'publisher': { '@id': orgId },
+    },
+    {
+      '@type': 'SoftwareApplication',
+      'name': SITE.name,
+      'description': SITE.description,
+      'url': site.toString(),
+      'applicationCategory': 'DeveloperApplication',
+      'operatingSystem': 'Web, macOS, Linux, self-hosted',
+      'publisher': { '@id': orgId },
+      'sameAs': [SITE.repo],
+      'featureList': [
+        'Playwright test dashboard across projects and over time',
+        'Pass-rate and trend tracking',
+        'Flaky test detection',
+        'Embedded Playwright trace viewer',
+        'Self-hosted or cloud',
+      ],
+      'offers': {
+        '@type': 'AggregateOffer',
+        'priceCurrency': 'USD',
+        'lowPrice': '0',
+        'highPrice': '149',
+        'offerCount': '4',
+        'offers': [
+          { '@type': 'Offer', 'name': 'Self-hosted', 'price': '0', 'priceCurrency': 'USD' },
+          { '@type': 'Offer', 'name': 'Free', 'price': '0', 'priceCurrency': 'USD' },
+          { '@type': 'Offer', 'name': 'Team', 'price': '49', 'priceCurrency': 'USD' },
+          { '@type': 'Offer', 'name': 'Pro', 'price': '149', 'priceCurrency': 'USD' },
+        ],
+      },
+    },
+  ],
 };
 ---
 
