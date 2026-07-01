@@ -1,5 +1,6 @@
 ---
 import { ChevronDown } from '@lucide/astro'
+import { COMPARISONS } from '../data/comparisons'
 
 interface Faq {
   q: string
@@ -84,6 +85,20 @@ const faqSchema = {
               {f.a}
             </p>
           </details>
+        ))
+      }
+    </div>
+
+    <div class="reveal mx-auto mt-8 flex max-w-3xl flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+      <span class="font-mono text-[11px] uppercase tracking-wider">Compare:</span>
+      {
+        COMPARISONS.map(c => (
+          <a
+            href={`/vs/${c.slug}`}
+            class="underline decoration-border underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground"
+          >
+            vs {c.themShort}
+          </a>
         ))
       }
     </div>
