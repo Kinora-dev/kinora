@@ -89,7 +89,7 @@ export const COMPARISONS: Comparison[] = [
     themShort: 'Currents',
     title: 'kinora vs Currents: open-source, self-hostable alternative',
     description:
-      'Currents is a cloud-only paid Playwright dashboard that also orchestrates test runs. kinora is open source, self-hostable for free, with a free cloud tier and an embedded trace viewer.',
+      'Currents is a cloud-only paid Playwright dashboard. kinora is the open-source, self-hostable alternative: free tier, embedded trace viewer, own your data.',
     tldr:
       'Currents is a cloud-only paid dashboard that also orchestrates your test runs. kinora is open source, self-hostable for free with a free cloud tier, and focuses on the reporting dashboard and embedded trace viewer.',
     kinoraIs: KINORA_IS,
