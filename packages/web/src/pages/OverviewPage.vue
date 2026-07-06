@@ -94,7 +94,7 @@ const stats = computed(() => {
             <SelectTrigger class="h-9 w-44 font-mono text-xs">
               <SelectValue placeholder="Branch" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent class="max-h-72">
               <SelectItem value="all" class="font-mono text-xs">
                 All branches
               </SelectItem>
@@ -108,7 +108,7 @@ const stats = computed(() => {
             <SelectTrigger class="h-9 w-40 font-mono text-xs">
               <SelectValue placeholder="Tag" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent class="max-h-72">
               <SelectItem value="all" class="font-mono text-xs">
                 All tags
               </SelectItem>
