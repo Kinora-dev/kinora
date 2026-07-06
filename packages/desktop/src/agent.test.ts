@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { buildFixPrompt, buildRetryPrompt, collectAgentDiff, extractSessionId, formatAgentEvent, gitSnapshot, newlyChanged, parsePorcelainZ, revertAgentChanges } from './agent'
+import { buildFixPrompt, buildRetryPrompt, claudeSearchDirs, collectAgentDiff, discoverClaude, extractSessionId, formatAgentEvent, gitSnapshot, newlyChanged, parsePorcelainZ, revertAgentChanges } from './agent'
 
 describe('buildFixPrompt', () => {
   it('includes the test identity and the error', () => {
@@ -157,6 +157,55 @@ describe('git snapshot / diff / revert (real git)', () => {
     }
     finally {
       fs.rmSync(dir, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('claude binary discovery', () => {
+  function fakeHome(layout: string[]): string {
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), 'kinora-home-'))
+    for (const rel of layout) {
+      const full = path.join(home, rel)
+      fs.mkdirSync(path.dirname(full), { recursive: true })
+      fs.writeFileSync(full, '#!/bin/sh\n')
+    }
+    return home
+  }
+
+  it('finds claude under the native-installer dir', () => {
+    const home = fakeHome(['.local/bin/claude'])
+    try {
+      const found = discoverClaude(claudeSearchDirs(home).filter(d => d.startsWith(home)))
+      expect(found?.bin).toBe(path.join(home, '.local/bin/claude'))
+    }
+    finally {
+      fs.rmSync(home, { recursive: true, force: true })
+    }
+  })
+
+  it('finds claude inside an nvm version dir, newest version first', () => {
+    const home = fakeHome([
+      '.nvm/versions/node/v20.11.0/bin/claude',
+      '.nvm/versions/node/v22.4.0/bin/claude',
+    ])
+    try {
+      const found = discoverClaude(claudeSearchDirs(home).filter(d => d.startsWith(home)))
+      expect(found?.bin).toBe(path.join(home, '.nvm/versions/node/v22.4.0/bin/claude'))
+      // The bin dir rides along so the npm shim can find its sibling node.
+      expect(found?.dir).toBe(path.join(home, '.nvm/versions/node/v22.4.0/bin'))
+    }
+    finally {
+      fs.rmSync(home, { recursive: true, force: true })
+    }
+  })
+
+  it('returns null when claude is nowhere', () => {
+    const home = fakeHome([])
+    try {
+      expect(discoverClaude(claudeSearchDirs(home).filter(d => d.startsWith(home)))).toBeNull()
+    }
+    finally {
+      fs.rmSync(home, { recursive: true, force: true })
     }
   })
 })

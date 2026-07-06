@@ -2,6 +2,7 @@ import type { Buffer } from 'node:buffer'
 import type { ChildProcess } from 'node:child_process'
 import { execFile, spawn } from 'node:child_process'
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { augmentedPath } from './editor'
@@ -10,7 +11,6 @@ import { augmentedPath } from './editor'
 // config dir. It may read and edit files (acceptEdits) but not run commands: the app
 // owns the loop (fix -> re-run -> watch), so Bash stays disabled and every change is
 // reviewed as a git diff before the user keeps or reverts it.
-const AGENT_BIN = process.env.KINORA_AGENT_CMD || 'claude'
 const AGENT_ARGS = [
   '-p',
   '--output-format',
@@ -23,6 +23,77 @@ const AGENT_ARGS = [
   '--max-turns',
   '50',
 ]
+// Wall-clock cap: a wedged agent (network stall, credit prompt, runaway) dies on its
+// own instead of relying on the user noticing and hitting Stop.
+const AGENT_TIMEOUT_MS = 10 * 60 * 1000
+
+// --- binary discovery --------------------------------------------------------------
+// GUI-launched apps inherit a stripped PATH; augmentedPath() covers the classic system
+// dirs, but `claude` usually lives in a per-user prefix (native installer, npm-global
+// under a version manager, volta/bun/pnpm). Scan those explicitly.
+
+const BIN_NAMES = process.platform === 'win32' ? ['claude.cmd', 'claude.exe', 'claude'] : ['claude']
+
+// Version-manager roots hold one dir per node version; newest name first is a good
+// proxy for "the one the user actually uses".
+function versionManagerBins(root: string, sub = 'bin'): string[] {
+  try {
+    return fs.readdirSync(root)
+      .sort()
+      .reverse()
+      .map(v => path.join(root, v, sub))
+  }
+  catch {
+    return []
+  }
+}
+
+export function claudeSearchDirs(home = os.homedir()): string[] {
+  return [
+    ...augmentedPath().split(path.delimiter),
+    path.join(home, '.local', 'bin'), // Claude Code native installer
+    path.join(home, '.claude', 'local'), // claude migrate-installer layout
+    path.join(home, '.npm-global', 'bin'),
+    path.join(home, '.volta', 'bin'),
+    path.join(home, '.bun', 'bin'),
+    path.join(home, '.local', 'share', 'pnpm'),
+    '/home/linuxbrew/.linuxbrew/bin',
+    ...versionManagerBins(path.join(home, '.nvm', 'versions', 'node')),
+    ...versionManagerBins(path.join(home, '.local', 'share', 'fnm', 'node-versions'), path.join('installation', 'bin')),
+    ...versionManagerBins(path.join(home, '.fnm', 'node-versions'), path.join('installation', 'bin')),
+  ]
+}
+
+// First hit wins; PATH dirs come first so an explicit user install stays authoritative.
+export function discoverClaude(dirs: string[]): { bin: string, dir: string } | null {
+  for (const dir of dirs) {
+    if (!dir)
+      continue
+    for (const name of BIN_NAMES) {
+      const full = path.join(dir, name)
+      try {
+        if (fs.statSync(full).isFile())
+          return { bin: full, dir }
+      }
+      catch {
+        // keep scanning
+      }
+    }
+  }
+  return null
+}
+
+// The spawn target + the PATH the child gets. The binary's own dir is appended so an
+// npm-installed `claude` (env-node shebang) finds its sibling `node`.
+export function agentInvocation(): { bin: string, pathEnv: string } {
+  const override = process.env.KINORA_AGENT_CMD
+  if (override)
+    return { bin: override, pathEnv: augmentedPath() }
+  const found = discoverClaude(claudeSearchDirs())
+  if (found)
+    return { bin: found.bin, pathEnv: [augmentedPath(), found.dir].join(path.delimiter) }
+  return { bin: 'claude', pathEnv: augmentedPath() }
+}
 
 export interface FixTarget {
   title: string
@@ -131,16 +202,28 @@ export interface AgentRunOpts {
   resumeSessionId?: string
   // The prompt to send when resuming (buildRetryPrompt output).
   feedback?: string
+  // Wall-clock kill; defaults to AGENT_TIMEOUT_MS (override is for tests).
+  timeoutMs?: number
 }
 
 // Spawn the agent in configDir, stream formatted output, resolve pass/fail on close.
 export function startAgentFix(configDir: string, target: FixTarget, onOutput: (chunk: string) => void, onDone: (r: AgentResult) => void, opts: AgentRunOpts = {}): ChildProcess {
+  const { bin, pathEnv } = agentInvocation()
   const args = opts.resumeSessionId ? [...AGENT_ARGS, '--resume', opts.resumeSessionId] : AGENT_ARGS
-  const child = spawn(AGENT_BIN, args, {
+  const child = spawn(bin, args, {
     cwd: configDir,
-    env: { ...process.env, PATH: augmentedPath() },
+    env: { ...process.env, PATH: pathEnv },
   })
   child.stdin?.end(opts.resumeSessionId ? buildRetryPrompt(opts.feedback ?? '') : buildFixPrompt(target))
+
+  const timeoutMs = opts.timeoutMs ?? AGENT_TIMEOUT_MS
+  const timeoutHuman = timeoutMs >= 60_000 ? `${Math.round(timeoutMs / 60_000)} min` : `${Math.round(timeoutMs / 1000)}s`
+  let timedOut = false
+  const timer = setTimeout(() => {
+    timedOut = true
+    onOutput(`✖ agent timed out after ${timeoutHuman}, stopping it\n`)
+    child.kill()
+  }, timeoutMs)
 
   let sessionId: string | undefined
   let buf = ''
@@ -159,10 +242,14 @@ export function startAgentFix(configDir: string, target: FixTarget, onOutput: (c
   })
   child.stderr?.on('data', (chunk: Buffer) => onOutput(chunk.toString()))
   child.on('error', () => {
-    onDone({ ok: false, error: `Claude Code CLI (\`${AGENT_BIN}\`) not found. Install it: npm install -g @anthropic-ai/claude-code` })
+    clearTimeout(timer)
+    onDone({ ok: false, error: `Claude Code CLI (\`${bin}\`) not found. Install it (npm install -g @anthropic-ai/claude-code) or point KINORA_AGENT_CMD at it.` })
   })
   child.on('close', (code, signal) => {
-    if (signal)
+    clearTimeout(timer)
+    if (timedOut)
+      onDone({ ok: false, error: `agent timed out after ${timeoutHuman}`, sessionId })
+    else if (signal)
       onDone({ ok: false, error: 'cancelled', sessionId })
     else
       onDone({ ok: code === 0, error: code === 0 ? undefined : `agent exited with code ${code}`, sessionId })

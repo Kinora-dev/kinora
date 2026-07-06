@@ -85,6 +85,18 @@ describe('startAgentFix (fake agent binary)', () => {
     expect(result.error).toContain('exited with code 2')
   })
 
+  it('kills a wedged agent at the wall-clock timeout', async () => {
+    const start = Date.now()
+    const { output, result } = await runFake(
+      'process.stdin.resume(); setTimeout(() => process.exit(0), 30_000)',
+      { timeoutMs: 500 },
+    )
+    expect(Date.now() - start).toBeLessThan(10_000)
+    expect(result.ok).toBe(false)
+    expect(result.error).toContain('timed out')
+    expect(output).toContain('timed out')
+  })
+
   it('surfaces a missing binary with an install hint', async () => {
     vi.stubEnv('KINORA_AGENT_CMD', '/nonexistent/claude')
     vi.resetModules()
