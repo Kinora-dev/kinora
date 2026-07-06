@@ -56,10 +56,20 @@ let rerunGen = 0
 // Last re-run target (replayed by watch mode) + the active file watcher's stop fn.
 let lastRerunInput: { projectId: string, file: string, line: number, projectName?: string } | null = null
 let rerunWatchStop: (() => void) | null = null
-// The in-flight agent fix + what its last completed run changed (for Revert).
+// The agent-fix session: survives across retry turns so Revert always restores to the
+// pre-agent state and follow-up turns resume the same Claude Code conversation.
+interface AgentSession {
+  configDir: string
+  absFile: string
+  input: FixTestIpcInput
+  snap: GitSnapshot | null
+  sessionId: string | null
+  changes: AgentChange[]
+  errorContext: string | null
+}
 let agentChild: ChildProcess | null = null
 let agentGen = 0
-let lastAgentFix: { snap: GitSnapshot, changes: AgentChange[] } | null = null
+let agentSession: AgentSession | null = null
 
 // macOS open-file (file association) and argv both hand us a local trace to view.
 let pendingOpen: string | null = null
@@ -304,14 +314,25 @@ function registerIpc(): void {
     return { ok: true }
   })
 
+  // Red re-run after a fix: resume the same agent session with the failure output.
+  ipcMain.handle('kinora:retry-agent-fix', (_e, input: { output: string }) => {
+    if (!agentSession)
+      return { ok: false, error: 'No agent session to retry' }
+    // Keep the tail: that's where the assertion failure and summary live.
+    const feedback = input.output.length > 20_000 ? input.output.slice(-20_000) : input.output
+    runAgentTurn(agentSession, feedback)
+    return { ok: true }
+  })
+
   ipcMain.handle('kinora:cancel-agent-fix', () => agentChild?.kill())
 
   ipcMain.handle('kinora:revert-agent-fix', async () => {
-    if (!lastAgentFix)
+    if (!agentSession?.snap || !agentSession.changes.length)
       return { ok: false, error: 'Nothing to revert' }
     try {
-      await revertAgentChanges(lastAgentFix.snap, lastAgentFix.changes)
-      lastAgentFix = null
+      await revertAgentChanges(agentSession.snap, agentSession.changes)
+      // The session's edits are gone; resuming it would build on state that no longer exists.
+      agentSession = null
       return { ok: true }
     }
     catch (err) {
@@ -368,15 +389,15 @@ function launchRerun(input: RerunInput): void {
   )
 }
 
-// Snapshot git state, run the agent in the resolved config dir, then attribute and
-// ship the diff of what it touched. One agent at a time: a new launch kills the old.
+// Start a fresh agent-fix session: snapshot git state once (Revert always restores to
+// this point, across retries), enrich the prompt with the trace's error-context, run
+// the first turn. One agent at a time: a new launch kills the old.
 async function launchAgentFix(configDir: string, absFile: string, input: FixTestIpcInput): Promise<void> {
   const gen = ++agentGen
   agentChild?.kill()
   const snap = await gitSnapshot(configDir)
   if (!snap)
     sendHome('kinora:agent-output', 'Not a git repo: changes can\'t be reviewed or reverted here.\n')
-  // Enrich the prompt with the trace's error-context (ARIA page snapshot at failure).
   // Best-effort: a missing/unreachable trace just means a leaner prompt.
   let errorContext: string | null = null
   if (input.traceUrl) {
@@ -387,9 +408,19 @@ async function launchAgentFix(configDir: string, absFile: string, input: FixTest
     if (!errorContext)
       sendHome('kinora:agent-output', '▸ no error context in the trace, continuing without it\n')
   }
+  agentSession = { configDir, absFile, input, snap, sessionId: null, changes: [], errorContext }
+  runAgentTurn(agentSession, null)
+}
+
+// One agent turn: the opening fix attempt, or (with feedback + a session id) a resumed
+// follow-up after a red re-run. Diff always accumulates against the session's snapshot.
+function runAgentTurn(session: AgentSession, feedback: string | null): void {
+  const gen = ++agentGen
+  agentChild?.kill()
+  const { input } = session
   agentChild = startAgentFix(
-    configDir,
-    { title: input.title, absFile, line: input.line, projectName: input.projectName, status: input.status, errors: input.errors, errorContext },
+    session.configDir,
+    { title: input.title, absFile: session.absFile, line: input.line, projectName: input.projectName, status: input.status, errors: input.errors, errorContext: session.errorContext },
     (chunk) => {
       if (gen === agentGen)
         sendHome('kinora:agent-output', chunk)
@@ -398,22 +429,22 @@ async function launchAgentFix(configDir: string, absFile: string, input: FixTest
       if (gen !== agentGen)
         return
       agentChild = null
+      session.sessionId = r.sessionId ?? session.sessionId
       void (async () => {
         let diff = ''
-        let changes: AgentChange[] = []
-        if (snap) {
+        if (session.snap) {
           try {
-            ({ diff, changes } = await collectAgentDiff(snap))
+            ({ diff, changes: session.changes } = await collectAgentDiff(session.snap))
           }
           catch (err) {
             sendHome('kinora:agent-output', `Couldn't collect the diff: ${err instanceof Error ? err.message : err}\n`)
           }
         }
-        lastAgentFix = snap && changes.length ? { snap, changes } : null
         if (gen === agentGen)
-          sendHome('kinora:agent-done', { ok: r.ok, error: r.error, diff, files: changes.map(c => c.path), hadDirty: !!snap && snap.dirty.size > 0 })
+          sendHome('kinora:agent-done', { ok: r.ok, error: r.error, diff, files: session.changes.map(c => c.path), hadDirty: !!session.snap && session.snap.dirty.size > 0 })
       })()
     },
+    feedback && session.sessionId ? { resumeSessionId: session.sessionId, feedback } : {},
   )
 }
 

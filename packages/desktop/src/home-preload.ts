@@ -20,6 +20,7 @@ const bridge: KinoraBridge = {
   fixTest: input => ipcRenderer.invoke('kinora:fix-test', input),
   onAgentOutput: cb => ipcRenderer.on('kinora:agent-output', (_e, chunk) => cb(chunk)),
   onAgentDone: cb => ipcRenderer.on('kinora:agent-done', (_e, r) => cb(r)),
+  retryAgentFix: input => ipcRenderer.invoke('kinora:retry-agent-fix', input),
   cancelAgentFix: () => ipcRenderer.invoke('kinora:cancel-agent-fix'),
   revertAgentFix: () => ipcRenderer.invoke('kinora:revert-agent-fix'),
   onRerunStarted: cb => ipcRenderer.on('kinora:rerun-started', () => cb()),

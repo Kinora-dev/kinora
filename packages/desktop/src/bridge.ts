@@ -64,6 +64,8 @@ export interface KinoraBridge {
   // it changed nothing or the repo isn't git). hadDirty flags pre-existing uncommitted
   // changes (those are excluded from the diff and from Revert).
   onAgentDone: (cb: (r: { ok: boolean, error?: string, diff: string, files: string[], hadDirty: boolean }) => void) => void
+  // The re-run after a fix came back red: resume the agent session with the run output.
+  retryAgentFix: (input: { output: string }) => Promise<{ ok: boolean, error?: string }>
   // Kill the in-flight agent.
   cancelAgentFix: () => Promise<void>
   // Restore every file the last agent run touched (git checkout / delete untracked).

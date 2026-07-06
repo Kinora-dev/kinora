@@ -23,7 +23,8 @@ const projectPaths = ref<Record<string, string>>({})
 const highlightLink = ref(false)
 const rerun = ref<{ title: string, status: 'running' | 'passed' | 'failed' | 'error', log: string, hasTrace: boolean, watch: boolean } | null>(null)
 interface AgentTarget { file: string, line: number, projectName: string, title: string }
-const agent = ref<{ target: AgentTarget, status: 'running' | 'done' | 'stopped' | 'error', log: string, error: string, diff: string, files: string[], hadDirty: boolean, reverted: boolean } | null>(null)
+// verify tracks the local re-run that checks the agent's fix: idle -> running -> passed/failed.
+const agent = ref<{ target: AgentTarget, status: 'running' | 'done' | 'stopped' | 'error', verify: 'idle' | 'running' | 'passed' | 'failed', log: string, error: string, diff: string, files: string[], hadDirty: boolean, reverted: boolean } | null>(null)
 const logEl = ref<HTMLElement | null>(null)
 const agentLogEl = ref<HTMLElement | null>(null)
 const updateReady = ref(false)
@@ -121,12 +122,21 @@ window.kinora.onUpdateReady(() => {
   updateReady.value = true
 })
 
+// A re-run of the agent's own target test (auto, manual, or watch-triggered) doubles
+// as the verification of the fix.
+function rerunVerifiesAgent(): boolean {
+  return !!agent.value && !!rerun.value && rerun.value.title === agent.value.target.title
+    && agent.value.status !== 'running' && !agent.value.reverted
+}
+
 window.kinora.onRerunStarted(() => {
   if (rerun.value) {
     rerun.value.status = 'running'
     rerun.value.log = ''
     rerun.value.hasTrace = false
   }
+  if (rerunVerifiesAgent())
+    agent.value!.verify = 'running'
 })
 window.kinora.onRerunOutput((chunk) => {
   if (rerun.value)
@@ -137,6 +147,8 @@ window.kinora.onRerunDone((r) => {
     return
   rerun.value.status = r.code === -1 ? 'error' : r.ok ? 'passed' : 'failed'
   rerun.value.hasTrace = r.hasTrace
+  if (rerunVerifiesAgent())
+    agent.value!.verify = r.ok ? 'passed' : 'failed'
 })
 
 window.kinora.onAgentOutput((chunk) => {
@@ -153,6 +165,11 @@ window.kinora.onAgentDone((r) => {
   agent.value.diff = r.diff
   agent.value.files = r.files
   agent.value.hadDirty = r.hadDirty
+  // Close the loop: a successful turn that changed files gets verified by a re-run.
+  if (agent.value.status === 'done' && agent.value.files.length && !agent.value.reverted) {
+    agent.value.verify = 'running'
+    void onRerun(agent.value.target)
+  }
 })
 
 // Tail the live log to the latest output.
@@ -274,7 +291,7 @@ async function onFixTest(t: { file: string, line: number, projectName: string, t
     return
   if (!projectPaths.value[id] && !(await linkActiveProject()))
     return
-  agent.value = { target: { file: t.file, line: t.line, projectName: t.projectName, title: t.title }, status: 'running', log: '', error: '', diff: '', files: [], hadDirty: false, reverted: false }
+  agent.value = { target: { file: t.file, line: t.line, projectName: t.projectName, title: t.title }, status: 'running', verify: 'idle', log: '', error: '', diff: '', files: [], hadDirty: false, reverted: false }
   const res = await window.kinora.fixTest({ projectId: id, ...t })
   if (!res.ok && res.error && res.error !== 'no-path') {
     agent.value.status = 'error'
@@ -303,6 +320,20 @@ async function revertAgent(): Promise<void> {
 function rerunAgentTarget(): void {
   if (agent.value)
     void onRerun(agent.value.target)
+}
+// Still red after the fix: resume the agent session with the re-run output as feedback.
+async function retryAgent(): Promise<void> {
+  if (!agent.value)
+    return
+  agent.value.status = 'running'
+  agent.value.verify = 'idle'
+  agent.value.log = ''
+  agent.value.error = ''
+  const res = await window.kinora.retryAgentFix({ output: rerunLog.value })
+  if (!res.ok && res.error) {
+    agent.value.status = 'error'
+    agent.value.error = res.error
+  }
 }
 
 function stopRerun(): void {
@@ -419,10 +450,16 @@ function viewRerunTrace(): void {
             <span class="font-mono text-[11px] tracking-wider uppercase" :class="agentStatusCls">{{ agentStatusText }}</span>
             <span class="truncate text-sm">{{ agent.target.title }}</span>
             <span v-if="agent.reverted" class="shrink-0 font-mono text-[10px] text-muted-foreground">· reverted</span>
+            <span v-else-if="agent.verify === 'running'" class="shrink-0 font-mono text-[10px] text-signal">· verifying…</span>
+            <span v-else-if="agent.verify === 'passed'" class="shrink-0 font-mono text-[10px] text-pass">· fix verified, test passes</span>
+            <span v-else-if="agent.verify === 'failed'" class="shrink-0 font-mono text-[10px] text-fail">· still failing</span>
           </div>
           <div class="flex shrink-0 gap-1.5">
             <Button v-if="agent.status === 'running'" variant="outline" size="sm" class="h-7 font-mono text-[11px]" @click="stopAgent">
               Stop
+            </Button>
+            <Button v-if="agent.verify === 'failed' && !agent.reverted" variant="outline" size="sm" class="h-7 gap-1.5 border-signal font-mono text-[11px] text-signal" title="Resume the agent with the re-run output" @click="retryAgent">
+              Retry with output
             </Button>
             <Button v-if="agent.status !== 'running' && agent.files.length && !agent.reverted" variant="outline" size="sm" class="h-7 font-mono text-[11px]" @click="rerunAgentTarget">
               Re-run test

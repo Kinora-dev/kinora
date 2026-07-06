@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { buildFixPrompt, collectAgentDiff, formatAgentEvent, gitSnapshot, newlyChanged, parsePorcelainZ, revertAgentChanges } from './agent'
+import { buildFixPrompt, buildRetryPrompt, collectAgentDiff, extractSessionId, formatAgentEvent, gitSnapshot, newlyChanged, parsePorcelainZ, revertAgentChanges } from './agent'
 
 describe('buildFixPrompt', () => {
   it('includes the test identity and the error', () => {
@@ -27,6 +27,22 @@ describe('buildFixPrompt', () => {
     const p = buildFixPrompt({ title: 't', absFile: '/f.ts', line: 1, status: 'unexpected', errors: '' })
     expect(p).toContain('(no error captured)')
     expect(p).toContain('(default)')
+  })
+})
+
+describe('buildRetryPrompt', () => {
+  it('embeds the re-run output and keeps the constraints', () => {
+    const p = buildRetryPrompt('1 failed\n  expect(x).toBe(y)')
+    expect(p).toContain('expect(x).toBe(y)')
+    expect(p).toContain('don\'t run anything yourself')
+  })
+})
+
+describe('extractSessionId', () => {
+  it('reads the session id off the init event only', () => {
+    expect(extractSessionId(JSON.stringify({ type: 'system', subtype: 'init', session_id: 'abc-123' }))).toBe('abc-123')
+    expect(extractSessionId(JSON.stringify({ type: 'result', session_id: 'abc-123' }))).toBeNull()
+    expect(extractSessionId('not json')).toBeNull()
   })
 })
 

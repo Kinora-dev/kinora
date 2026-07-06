@@ -39,6 +39,9 @@ export interface FixTarget {
 export interface AgentResult {
   ok: boolean
   error?: string
+  // Claude Code session id (from the stream-json init event); lets a follow-up
+  // run resume with full context instead of starting over.
+  sessionId?: string
 }
 
 export function buildFixPrompt(t: FixTarget): string {
@@ -62,6 +65,26 @@ Constraints:
 - Fix the underlying cause: the code under test or the test itself, whichever is actually wrong.
 - Do not run the test or any shell command; the app re-runs the test after your changes.
 - Keep the change minimal and focused on this failure.`
+}
+
+// Follow-up prompt for a resumed session: the previous fix didn't turn the test green.
+export function buildRetryPrompt(rerunOutput: string): string {
+  return `The fix didn't make the test pass yet. Here is the output of re-running it locally:
+
+${rerunOutput || '(no output captured)'}
+
+Analyze what's still wrong and adjust the fix. Same constraints: don't run anything yourself, keep the change minimal.`
+}
+
+// Session id lives on the stream-json init event.
+export function extractSessionId(line: string): string | null {
+  try {
+    const evt = JSON.parse(line)
+    return evt?.type === 'system' && evt.subtype === 'init' && typeof evt.session_id === 'string' ? evt.session_id : null
+  }
+  catch {
+    return null
+  }
 }
 
 // One line of Claude Code's stream-json output -> human-readable panel text (null = skip).
@@ -103,14 +126,23 @@ function toolTarget(input: unknown): string {
   return typeof v === 'string' ? v : ''
 }
 
+export interface AgentRunOpts {
+  // Resume a previous session (retry after a red re-run) instead of starting fresh.
+  resumeSessionId?: string
+  // The prompt to send when resuming (buildRetryPrompt output).
+  feedback?: string
+}
+
 // Spawn the agent in configDir, stream formatted output, resolve pass/fail on close.
-export function startAgentFix(configDir: string, target: FixTarget, onOutput: (chunk: string) => void, onDone: (r: AgentResult) => void): ChildProcess {
-  const child = spawn(AGENT_BIN, AGENT_ARGS, {
+export function startAgentFix(configDir: string, target: FixTarget, onOutput: (chunk: string) => void, onDone: (r: AgentResult) => void, opts: AgentRunOpts = {}): ChildProcess {
+  const args = opts.resumeSessionId ? [...AGENT_ARGS, '--resume', opts.resumeSessionId] : AGENT_ARGS
+  const child = spawn(AGENT_BIN, args, {
     cwd: configDir,
     env: { ...process.env, PATH: augmentedPath() },
   })
-  child.stdin?.end(buildFixPrompt(target))
+  child.stdin?.end(opts.resumeSessionId ? buildRetryPrompt(opts.feedback ?? '') : buildFixPrompt(target))
 
+  let sessionId: string | undefined
   let buf = ''
   child.stdout?.on('data', (chunk: Buffer) => {
     buf += chunk.toString()
@@ -119,6 +151,7 @@ export function startAgentFix(configDir: string, target: FixTarget, onOutput: (c
     for (const line of lines) {
       if (!line.trim())
         continue
+      sessionId ??= extractSessionId(line) ?? undefined
       const text = formatAgentEvent(line)
       if (text)
         onOutput(text)
@@ -130,9 +163,9 @@ export function startAgentFix(configDir: string, target: FixTarget, onOutput: (c
   })
   child.on('close', (code, signal) => {
     if (signal)
-      onDone({ ok: false, error: 'cancelled' })
+      onDone({ ok: false, error: 'cancelled', sessionId })
     else
-      onDone({ ok: code === 0, error: code === 0 ? undefined : `agent exited with code ${code}` })
+      onDone({ ok: code === 0, error: code === 0 ? undefined : `agent exited with code ${code}`, sessionId })
   })
   return child
 }

@@ -1,4 +1,4 @@
-import type { AgentResult } from './agent'
+import type { AgentResult, AgentRunOpts } from './agent'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -9,7 +9,7 @@ const TARGET = { title: 't', absFile: '/repo/t.spec.ts', line: 3, projectName: '
 // KINORA_AGENT_CMD is read at module load, so the fake agent binary must exist and be
 // in the env before agent.ts is imported (fresh module registry per test). The fake is
 // a self-executable node script that ignores claude's CLI flags.
-async function runFake(body: string): Promise<{ output: string, result: AgentResult }> {
+async function runFake(body: string, opts: AgentRunOpts = {}): Promise<{ output: string, result: AgentResult }> {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kinora-fake-agent-'))
   const bin = path.join(dir, 'fake-agent.mjs')
   fs.writeFileSync(bin, `#!/usr/bin/env node\n${body}`)
@@ -22,7 +22,7 @@ async function runFake(body: string): Promise<{ output: string, result: AgentRes
     const result = await new Promise<AgentResult>((resolve) => {
       startAgentFix(dir, TARGET, (chunk) => {
         output += chunk
-      }, resolve)
+      }, resolve, opts)
     })
     return { output, result }
   }
@@ -30,6 +30,19 @@ async function runFake(body: string): Promise<{ output: string, result: AgentRes
     fs.rmSync(dir, { recursive: true, force: true })
   }
 }
+
+// Echoes what the agent process actually received (argv + stdin) back through
+// stream-json text, so tests can assert on the real spawn contract.
+const ECHO_AGENT = `
+  const chunks = []
+  for await (const c of process.stdin) chunks.push(c)
+  const prompt = Buffer.concat(chunks).toString()
+  const say = o => process.stdout.write(JSON.stringify(o) + '\\n')
+  say({ type: 'system', subtype: 'init', model: 'fake', session_id: 'sess-42' })
+  say({ type: 'assistant', message: { content: [{ type: 'text', text: 'ARGS:' + process.argv.slice(2).join(' ') }] } })
+  say({ type: 'assistant', message: { content: [{ type: 'text', text: 'PROMPT:' + prompt.split('\\n')[0] }] } })
+  say({ type: 'result', subtype: 'success', is_error: false })
+`
 
 afterEach(() => {
   vi.unstubAllEnvs()
@@ -50,6 +63,20 @@ describe('startAgentFix (fake agent binary)', () => {
     expect(output).toContain('PROMPT_HAS_ERROR:true')
     expect(output).toContain('✔ agent finished')
     expect(result).toEqual({ ok: true, error: undefined })
+  })
+
+  it('captures the session id and omits --resume on a fresh run', async () => {
+    const { output, result } = await runFake(ECHO_AGENT)
+    expect(result.sessionId).toBe('sess-42')
+    expect(output).not.toContain('--resume')
+    expect(output).toContain('PROMPT:This Playwright test is failing')
+  })
+
+  it('passes --resume and the retry prompt when resuming with feedback', async () => {
+    const { output, result } = await runFake(ECHO_AGENT, { resumeSessionId: 'sess-42', feedback: '1 failed: expect(x).toBe(y)' })
+    expect(result.ok).toBe(true)
+    expect(output).toContain('--resume sess-42')
+    expect(output).toContain('PROMPT:The fix didn\'t make the test pass yet')
   })
 
   it('reports a non-zero exit as an error', async () => {
