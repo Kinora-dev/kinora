@@ -22,7 +22,10 @@ const reportLoading = ref(false)
 const projectPaths = ref<Record<string, string>>({})
 const highlightLink = ref(false)
 const rerun = ref<{ title: string, status: 'running' | 'passed' | 'failed' | 'error', log: string, hasTrace: boolean, watch: boolean } | null>(null)
+interface AgentTarget { file: string, line: number, projectName: string, title: string }
+const agent = ref<{ target: AgentTarget, status: 'running' | 'done' | 'stopped' | 'error', log: string, error: string, diff: string, files: string[], hadDirty: boolean, reverted: boolean } | null>(null)
 const logEl = ref<HTMLElement | null>(null)
+const agentLogEl = ref<HTMLElement | null>(null)
 const updateReady = ref(false)
 const isDev = window.kinora.isDev
 
@@ -33,6 +36,30 @@ const rerunStatusText = computed(() => {
 const rerunStatusCls = computed(() => (rerun.value?.status === 'passed' ? 'text-pass' : rerun.value?.status === 'running' ? 'text-signal' : 'text-fail'))
 // Strip the whole buffer (not per-chunk) so the line reporter's cursor codes (ESC[1A/[2K) go.
 const rerunLog = computed(() => stripAnsi(rerun.value?.log ?? ''))
+
+const agentLog = computed(() => stripAnsi(agent.value?.log ?? ''))
+const agentStatusText = computed(() => {
+  const s = agent.value?.status
+  return s === 'running' ? 'Agent working…' : s === 'done' ? 'Agent done' : s === 'stopped' ? 'Agent stopped' : s === 'error' ? 'Agent error' : ''
+})
+const agentStatusCls = computed(() => (
+  agent.value?.status === 'done'
+    ? 'text-pass'
+    : agent.value?.status === 'running'
+      ? 'text-signal'
+      : agent.value?.status === 'stopped' ? 'text-muted-foreground' : 'text-fail'
+))
+// Per-line classes so the proposed diff reads as a diff (adds green, removals red).
+const agentDiffLines = computed(() => (agent.value?.diff ?? '').split('\n').map(text => ({
+  text,
+  cls: text.startsWith('+') && !text.startsWith('+++')
+    ? 'text-pass'
+    : text.startsWith('-') && !text.startsWith('---')
+      ? 'text-fail'
+      : text.startsWith('@@') || text.startsWith('diff ')
+        ? 'text-signal'
+        : 'text-muted-foreground',
+})))
 
 const activeProject = computed(() => projects.value.find(p => p.id === activeId.value) ?? null)
 const activePath = computed(() => (activeId.value ? projectPaths.value[activeId.value] ?? null : null))
@@ -112,6 +139,22 @@ window.kinora.onRerunDone((r) => {
   rerun.value.hasTrace = r.hasTrace
 })
 
+window.kinora.onAgentOutput((chunk) => {
+  if (agent.value)
+    agent.value.log += chunk
+})
+window.kinora.onAgentDone((r) => {
+  if (!agent.value)
+    return
+  // A stopped agent still reports the diff of whatever it edited before the kill,
+  // so partial changes get reviewed (and are revertable) instead of lingering silently.
+  agent.value.status = r.ok ? 'done' : r.error === 'cancelled' ? 'stopped' : 'error'
+  agent.value.error = r.error && r.error !== 'cancelled' ? r.error : ''
+  agent.value.diff = r.diff
+  agent.value.files = r.files
+  agent.value.hadDirty = r.hadDirty
+})
+
 // Tail the live log to the latest output.
 watch(() => rerun.value?.log, () => {
   void nextTick(() => {
@@ -119,11 +162,19 @@ watch(() => rerun.value?.log, () => {
       logEl.value.scrollTop = logEl.value.scrollHeight
   })
 })
+watch(() => agent.value?.log, () => {
+  void nextTick(() => {
+    if (agentLogEl.value)
+      agentLogEl.value.scrollTop = agentLogEl.value.scrollHeight
+  })
+})
 
 function selectProject(id: string): void {
-  // The re-run/watch session is tied to a test in the current project; end it on switch.
+  // The re-run/watch and agent sessions are tied to a test in the current project; end them on switch.
   if (rerun.value)
     closeRerun()
+  if (agent.value)
+    closeAgent()
   activeId.value = id
   localStorage.setItem(STORE_KEY, id)
   void loadActive()
@@ -217,6 +268,43 @@ async function onRerun(t: { file: string, line: number, projectName: string, tit
     rerun.value.log = res.error
   }
 }
+async function onFixTest(t: { file: string, line: number, projectName: string, title: string, status: string, errors: string }): Promise<void> {
+  const id = activeId.value
+  if (!id)
+    return
+  if (!projectPaths.value[id] && !(await linkActiveProject()))
+    return
+  agent.value = { target: { file: t.file, line: t.line, projectName: t.projectName, title: t.title }, status: 'running', log: '', error: '', diff: '', files: [], hadDirty: false, reverted: false }
+  const res = await window.kinora.fixTest({ projectId: id, ...t })
+  if (!res.ok && res.error && res.error !== 'no-path') {
+    agent.value.status = 'error'
+    agent.value.error = res.error
+  }
+}
+function stopAgent(): void {
+  void window.kinora.cancelAgentFix()
+}
+function closeAgent(): void {
+  void window.kinora.cancelAgentFix()
+  agent.value = null
+}
+async function revertAgent(): Promise<void> {
+  if (!agent.value)
+    return
+  const res = await window.kinora.revertAgentFix()
+  if (res.ok) {
+    agent.value.reverted = true
+  }
+  else if (res.error) {
+    agent.value.error = res.error
+  }
+}
+// The agent's proposal is verified by the existing local re-run loop.
+function rerunAgentTarget(): void {
+  if (agent.value)
+    void onRerun(agent.value.target)
+}
+
 function stopRerun(): void {
   void window.kinora.cancelRerun()
 }
@@ -316,14 +404,55 @@ function viewRerunTrace(): void {
           @view-trace="onViewTrace"
           @open-in-editor="onOpenInEditor"
           @rerun="onRerun"
+          @fix-test="onFixTest"
           @request-link="onRequestLink"
         />
       </div>
     </main>
 
-    <!-- local re-run: live output + result -->
-    <div v-if="rerun" class="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur">
-      <div class="mx-auto max-w-4xl px-5 py-3">
+    <!-- bottom dock: agent fix + local re-run panels stack when both are open -->
+    <div v-if="rerun || agent" class="fixed inset-x-0 bottom-0 z-40 divide-y divide-border border-t border-border bg-background/95 backdrop-blur">
+      <!-- agent fix: live agent output, then the proposed diff to keep/revert -->
+      <div v-if="agent" class="mx-auto max-w-4xl px-5 py-3">
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex min-w-0 items-center gap-2">
+            <span class="font-mono text-[11px] tracking-wider uppercase" :class="agentStatusCls">{{ agentStatusText }}</span>
+            <span class="truncate text-sm">{{ agent.target.title }}</span>
+            <span v-if="agent.reverted" class="shrink-0 font-mono text-[10px] text-muted-foreground">· reverted</span>
+          </div>
+          <div class="flex shrink-0 gap-1.5">
+            <Button v-if="agent.status === 'running'" variant="outline" size="sm" class="h-7 font-mono text-[11px]" @click="stopAgent">
+              Stop
+            </Button>
+            <Button v-if="agent.status !== 'running' && agent.files.length && !agent.reverted" variant="outline" size="sm" class="h-7 font-mono text-[11px]" @click="rerunAgentTarget">
+              Re-run test
+            </Button>
+            <Button v-if="agent.status !== 'running' && agent.files.length && !agent.reverted" variant="outline" size="sm" class="h-7 font-mono text-[11px] text-fail" @click="revertAgent">
+              Revert
+            </Button>
+            <!-- No Close while running: Stop first, review the partial diff, then decide. -->
+            <Button v-if="agent.status !== 'running'" variant="ghost" size="sm" class="h-7 font-mono text-[11px] text-muted-foreground" @click="closeAgent">
+              Close
+            </Button>
+          </div>
+        </div>
+        <p v-if="agent.error" class="mt-2 rounded-md border border-fail/30 bg-fail/10 px-3 py-2 font-mono text-[11px] text-fail">
+          {{ agent.error }}
+        </p>
+        <pre v-if="agentLog" ref="agentLogEl" class="mt-2 max-h-40 overflow-auto rounded-md bg-muted/40 p-2 font-mono text-[11px] leading-relaxed whitespace-pre-wrap">{{ agentLog }}</pre>
+        <template v-if="agent.status !== 'running' && !agent.reverted">
+          <p v-if="agent.hadDirty && agent.files.length" class="mt-2 font-mono text-[10px] text-muted-foreground">
+            Your working tree already had uncommitted changes; the diff and Revert cover only the files the agent touched.
+          </p>
+          <p v-if="agent.status === 'done' && !agent.files.length" class="mt-2 font-mono text-[11px] text-muted-foreground">
+            The agent finished without changing any files.
+          </p>
+          <pre v-if="agent.diff" class="mt-2 max-h-64 overflow-auto rounded-md bg-muted/40 p-2 font-mono text-[11px] leading-relaxed"><span v-for="(l, i) in agentDiffLines" :key="i" class="block whitespace-pre-wrap" :class="l.cls">{{ l.text }}</span></pre>
+        </template>
+      </div>
+
+      <!-- local re-run: live output + result -->
+      <div v-if="rerun" class="mx-auto max-w-4xl px-5 py-3">
         <div class="flex items-center justify-between gap-3">
           <div class="flex min-w-0 items-center gap-2">
             <span class="font-mono text-[11px] tracking-wider uppercase" :class="rerunStatusCls">{{ rerunStatusText }}</span>

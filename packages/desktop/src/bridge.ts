@@ -4,6 +4,17 @@ import type { Manifest, ProjectEntry, RunReport, TestHistory } from '@kinora/cor
 export type { Manifest, RunReport, TestHistory }
 export type Project = ProjectEntry
 
+export interface FixTestInput {
+  projectId: string
+  file: string
+  line: number
+  projectName?: string
+  title: string
+  status: string
+  // Pre-joined, ANSI-stripped error text (message + stack per error).
+  errors: string
+}
+
 export interface SessionUser {
   name: string
   email: string
@@ -41,6 +52,19 @@ export interface KinoraBridge {
   openInEditor: (input: { projectId: string, file: string, line: number, column: number }) => Promise<{ ok: boolean, error?: string }>
   // Re-run a single test locally via the repo's playwright (needs the project linked).
   rerunTest: (input: { projectId: string, file: string, line: number, projectName?: string }) => Promise<{ ok: boolean, error?: string }>
+  // Launch a local agent (Claude Code CLI) that proposes a fix for a failing test
+  // (needs the project linked). Progress streams via onAgent*.
+  fixTest: (input: FixTestInput) => Promise<{ ok: boolean, error?: string }>
+  // Live formatted output of the running agent.
+  onAgentOutput: (cb: (chunk: string) => void) => void
+  // Agent finished: pass/fail plus the git diff of the files it touched (empty when
+  // it changed nothing or the repo isn't git). hadDirty flags pre-existing uncommitted
+  // changes (those are excluded from the diff and from Revert).
+  onAgentDone: (cb: (r: { ok: boolean, error?: string, diff: string, files: string[], hadDirty: boolean }) => void) => void
+  // Kill the in-flight agent.
+  cancelAgentFix: () => Promise<void>
+  // Restore every file the last agent run touched (git checkout / delete untracked).
+  revertAgentFix: () => Promise<{ ok: boolean, error?: string }>
   // A re-run launched (user-triggered or by watch mode): reset the panel.
   onRerunStarted: (cb: () => void) => void
   // Live combined stdout/stderr of the running re-run.

@@ -4,7 +4,7 @@ import { formatPct, passRate, stripAnsi } from '@kinora/core'
 import { Button } from '@kinora/ui/button'
 import { Card } from '@kinora/ui/card'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@kinora/ui/tooltip'
-import { Check, Copy, FileCode2, Play, RefreshCw } from 'lucide-vue-next'
+import { Check, Copy, FileCode2, Play, RefreshCw, Sparkles } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 
 const props = defineProps<{
@@ -18,6 +18,8 @@ const emit = defineEmits<{
   viewTrace: [traceUrl: string]
   openInEditor: [loc: { file: string, line: number, column: number }]
   rerun: [t: { file: string, line: number, projectName: string, title: string }]
+  // Launch the local fix agent on a failing test (same linked-repo requirement as re-run).
+  fixTest: [t: { file: string, line: number, projectName: string, title: string, status: string, errors: string }]
   // Re-run / Open need a linked repo; when absent, nudge the user to link first.
   requestLink: []
 }>()
@@ -137,8 +139,23 @@ const rows = computed(() => {
   })
 })
 
+function errorText(test: NormTest): string {
+  return test.errors.map(e => stripAnsi(e.stack ? `${e.message}\n${e.stack}` : e.message)).join('\n\n')
+}
+
+function fixTest(test: NormTest): void {
+  emit('fixTest', {
+    file: test.file,
+    line: test.line,
+    projectName: test.projectName,
+    title: test.title,
+    status: test.status,
+    errors: errorText(test),
+  })
+}
+
 async function copyPrompt(test: NormTest): Promise<void> {
-  const errors = test.errors.map(e => stripAnsi(e.stack ? `${e.message}\n${e.stack}` : e.message)).join('\n\n')
+  const errors = errorText(test)
   const prompt = `This Playwright test is failing. Find the root cause and fix it.
 
 Test: ${test.title}
@@ -269,6 +286,21 @@ ${errors || '(no error captured)'}`
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>{{ linked ? 'Open in your editor' : 'Link a folder first' }}</TooltipContent>
+                </Tooltip>
+                <Tooltip v-if="row.fail">
+                  <TooltipTrigger as-child>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      class="h-7 gap-1.5 font-mono text-[11px]"
+                      :class="{ 'opacity-50': !linked }"
+                      @click="linked ? fixTest(row.test) : emit('requestLink')"
+                    >
+                      <Sparkles class="size-3" />
+                      Fix
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{{ linked ? 'Let a local agent propose a fix' : 'Link a folder first' }}</TooltipContent>
                 </Tooltip>
                 <Tooltip v-if="row.fail">
                   <TooltipTrigger as-child>

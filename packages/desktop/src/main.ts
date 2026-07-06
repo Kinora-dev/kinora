@@ -1,11 +1,13 @@
 /* eslint-disable no-console */
 import type { ChildProcess } from 'node:child_process'
+import type { AgentChange, GitSnapshot } from './agent'
 import path from 'node:path'
 import process from 'node:process'
 import * as Sentry from '@sentry/electron/main'
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import { signIn } from './account'
+import { collectAgentDiff, gitSnapshot, revertAgentChanges, startAgentFix } from './agent'
 import { loadConfig, saveConfig } from './config'
 import { pollDeviceToken, requestDeviceCode } from './device'
 import { openInEditor } from './editor'
@@ -53,6 +55,10 @@ let rerunGen = 0
 // Last re-run target (replayed by watch mode) + the active file watcher's stop fn.
 let lastRerunInput: { projectId: string, file: string, line: number, projectName?: string } | null = null
 let rerunWatchStop: (() => void) | null = null
+// The in-flight agent fix + what its last completed run changed (for Revert).
+let agentChild: ChildProcess | null = null
+let agentGen = 0
+let lastAgentFix: { snap: GitSnapshot, changes: AgentChange[] } | null = null
 
 // macOS open-file (file association) and argv both hand us a local trace to view.
 let pendingOpen: string | null = null
@@ -286,6 +292,32 @@ function registerIpc(): void {
       rerunWatchStop = watchRepo(found.configDir, () => lastRerunInput && launchRerun(lastRerunInput))
   })
 
+  ipcMain.handle('kinora:fix-test', async (_e, input: FixTestIpcInput) => {
+    const root = config.projectPaths[input.projectId]
+    if (!root)
+      return { ok: false, error: 'no-path' }
+    const found = resolveTest(root, input.file)
+    if (!found)
+      return { ok: false, error: `Couldn't find ${input.file} under ${root}` }
+    await launchAgentFix(found.configDir, found.absFile, input)
+    return { ok: true }
+  })
+
+  ipcMain.handle('kinora:cancel-agent-fix', () => agentChild?.kill())
+
+  ipcMain.handle('kinora:revert-agent-fix', async () => {
+    if (!lastAgentFix)
+      return { ok: false, error: 'Nothing to revert' }
+    try {
+      await revertAgentChanges(lastAgentFix.snap, lastAgentFix.changes)
+      lastAgentFix = null
+      return { ok: true }
+    }
+    catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : 'Revert failed' }
+    }
+  })
+
   ipcMain.handle('kinora:cancel-rerun', () => rerunChild?.kill())
   ipcMain.handle('kinora:open-rerun-trace', () => {
     if (lastRerunTrace)
@@ -296,6 +328,7 @@ function registerIpc(): void {
 }
 
 interface RerunInput { projectId: string, file: string, line: number, projectName?: string }
+interface FixTestIpcInput extends RerunInput { title: string, status: string, errors: string }
 
 // The home window may be gone (closed while a viewer window keeps the app alive).
 function sendHome(channel: string, payload?: unknown): void {
@@ -330,6 +363,44 @@ function launchRerun(input: RerunInput): void {
       rerunChild = null
       lastRerunTrace = r.tracePath
       sendHome('kinora:rerun-done', { ok: r.ok, code: r.code, hasTrace: !!r.tracePath })
+    },
+  )
+}
+
+// Snapshot git state, run the agent in the resolved config dir, then attribute and
+// ship the diff of what it touched. One agent at a time: a new launch kills the old.
+async function launchAgentFix(configDir: string, absFile: string, input: FixTestIpcInput): Promise<void> {
+  const gen = ++agentGen
+  agentChild?.kill()
+  const snap = await gitSnapshot(configDir)
+  if (!snap)
+    sendHome('kinora:agent-output', 'Not a git repo: changes can\'t be reviewed or reverted here.\n')
+  agentChild = startAgentFix(
+    configDir,
+    { title: input.title, absFile, line: input.line, projectName: input.projectName, status: input.status, errors: input.errors },
+    (chunk) => {
+      if (gen === agentGen)
+        sendHome('kinora:agent-output', chunk)
+    },
+    (r) => {
+      if (gen !== agentGen)
+        return
+      agentChild = null
+      void (async () => {
+        let diff = ''
+        let changes: AgentChange[] = []
+        if (snap) {
+          try {
+            ({ diff, changes } = await collectAgentDiff(snap))
+          }
+          catch (err) {
+            sendHome('kinora:agent-output', `Couldn't collect the diff: ${err instanceof Error ? err.message : err}\n`)
+          }
+        }
+        lastAgentFix = snap && changes.length ? { snap, changes } : null
+        if (gen === agentGen)
+          sendHome('kinora:agent-done', { ok: r.ok, error: r.error, diff, files: changes.map(c => c.path), hadDirty: !!snap && snap.dirty.size > 0 })
+      })()
     },
   )
 }
