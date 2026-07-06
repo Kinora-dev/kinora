@@ -9,18 +9,12 @@ import {
   runHealth,
 } from '@kinora/core'
 import { Button } from '@kinora/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@kinora/ui/select'
 import { Separator } from '@kinora/ui/separator'
 import { Skeleton } from '@kinora/ui/skeleton'
 import { StatBlock } from '@kinora/ui/stat-block'
 import { useRouteQuery } from '@vueuse/router'
 import { computed } from 'vue'
+import FilterCombobox from '@/components/FilterCombobox.vue'
 import OverviewEmpty from '@/components/project/OverviewEmpty.vue'
 import ProjectCard from '@/components/project/ProjectCard.vue'
 import { useManifest } from '@/composables/queries'
@@ -90,33 +84,23 @@ const stats = computed(() => {
 
         <!-- Filters -->
         <div v-if="!isLoading && !error" class="flex items-center gap-2">
-          <Select v-if="branches.length > 1" v-model="branch">
-            <SelectTrigger class="h-9 w-44 font-mono text-xs">
-              <SelectValue placeholder="Branch" />
-            </SelectTrigger>
-            <SelectContent class="max-h-72">
-              <SelectItem value="all" class="font-mono text-xs">
-                All branches
-              </SelectItem>
-              <SelectItem v-for="b in branches" :key="b" :value="b" class="font-mono text-xs">
-                {{ b }}
-              </SelectItem>
-            </SelectContent>
-          </Select>
+          <FilterCombobox
+            v-if="branches.length > 1"
+            v-model="branch"
+            :options="branches"
+            all-label="All branches"
+            search-placeholder="Search branch..."
+            trigger-class="w-44"
+          />
 
-          <Select v-if="tags.length" v-model="tag">
-            <SelectTrigger class="h-9 w-40 font-mono text-xs">
-              <SelectValue placeholder="Tag" />
-            </SelectTrigger>
-            <SelectContent class="max-h-72">
-              <SelectItem value="all" class="font-mono text-xs">
-                All tags
-              </SelectItem>
-              <SelectItem v-for="t in tags" :key="t" :value="t" class="font-mono text-xs">
-                {{ t }}
-              </SelectItem>
-            </SelectContent>
-          </Select>
+          <FilterCombobox
+            v-if="tags.length"
+            v-model="tag"
+            :options="tags"
+            all-label="All tags"
+            search-placeholder="Search tag..."
+            trigger-class="w-40"
+          />
 
           <Button v-if="hasFilters" variant="ghost" size="sm" class="h-9 font-mono text-xs" @click="clearFilters">
             Clear
