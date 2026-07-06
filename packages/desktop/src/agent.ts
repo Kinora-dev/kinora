@@ -113,6 +113,9 @@ export interface AgentResult {
   // Claude Code session id (from the stream-json init event); lets a follow-up
   // run resume with full context instead of starting over.
   sessionId?: string
+  // Spend and wall-clock of this turn (from the stream-json result event).
+  costUsd?: number
+  durationMs?: number
 }
 
 export function buildFixPrompt(t: FixTarget): string {
@@ -147,11 +150,34 @@ ${rerunOutput || '(no output captured)'}
 Analyze what's still wrong and adjust the fix. Same constraints: don't run anything yourself, keep the change minimal.`
 }
 
+// Free-form user instruction for a resumed session ("also update the snapshot", ...).
+export function buildFollowUpPrompt(message: string): string {
+  return `${message}
+
+(Same constraints as before: don't run the test or any shell command yourself; the app re-runs it after your changes.)`
+}
+
 // Session id lives on the stream-json init event.
 export function extractSessionId(line: string): string | null {
   try {
     const evt = JSON.parse(line)
     return evt?.type === 'system' && evt.subtype === 'init' && typeof evt.session_id === 'string' ? evt.session_id : null
+  }
+  catch {
+    return null
+  }
+}
+
+// Cost + wall-clock live on the stream-json result event.
+export function extractRunStats(line: string): { costUsd?: number, durationMs?: number } | null {
+  try {
+    const evt = JSON.parse(line)
+    if (evt?.type !== 'result')
+      return null
+    return {
+      costUsd: typeof evt.total_cost_usd === 'number' ? evt.total_cost_usd : undefined,
+      durationMs: typeof evt.duration_ms === 'number' ? evt.duration_ms : undefined,
+    }
   }
   catch {
     return null
@@ -198,10 +224,11 @@ function toolTarget(input: unknown): string {
 }
 
 export interface AgentRunOpts {
-  // Resume a previous session (retry after a red re-run) instead of starting fresh.
+  // Resume a previous session (retry after a red re-run, or a user follow-up)
+  // instead of starting fresh.
   resumeSessionId?: string
-  // The prompt to send when resuming (buildRetryPrompt output).
-  feedback?: string
+  // The prompt to send when resuming (buildRetryPrompt / buildFollowUpPrompt output).
+  resumePrompt?: string
   // Wall-clock kill; defaults to AGENT_TIMEOUT_MS (override is for tests).
   timeoutMs?: number
 }
@@ -214,7 +241,7 @@ export function startAgentFix(configDir: string, target: FixTarget, onOutput: (c
     cwd: configDir,
     env: { ...process.env, PATH: pathEnv },
   })
-  child.stdin?.end(opts.resumeSessionId ? buildRetryPrompt(opts.feedback ?? '') : buildFixPrompt(target))
+  child.stdin?.end(opts.resumeSessionId ? opts.resumePrompt ?? '' : buildFixPrompt(target))
 
   const timeoutMs = opts.timeoutMs ?? AGENT_TIMEOUT_MS
   const timeoutHuman = timeoutMs >= 60_000 ? `${Math.round(timeoutMs / 60_000)} min` : `${Math.round(timeoutMs / 1000)}s`
@@ -226,6 +253,7 @@ export function startAgentFix(configDir: string, target: FixTarget, onOutput: (c
   }, timeoutMs)
 
   let sessionId: string | undefined
+  let stats: { costUsd?: number, durationMs?: number } = {}
   let buf = ''
   child.stdout?.on('data', (chunk: Buffer) => {
     buf += chunk.toString()
@@ -235,6 +263,7 @@ export function startAgentFix(configDir: string, target: FixTarget, onOutput: (c
       if (!line.trim())
         continue
       sessionId ??= extractSessionId(line) ?? undefined
+      stats = extractRunStats(line) ?? stats
       const text = formatAgentEvent(line)
       if (text)
         onOutput(text)
@@ -248,11 +277,11 @@ export function startAgentFix(configDir: string, target: FixTarget, onOutput: (c
   child.on('close', (code, signal) => {
     clearTimeout(timer)
     if (timedOut)
-      onDone({ ok: false, error: `agent timed out after ${timeoutHuman}`, sessionId })
+      onDone({ ok: false, error: `agent timed out after ${timeoutHuman}`, sessionId, ...stats })
     else if (signal)
-      onDone({ ok: false, error: 'cancelled', sessionId })
+      onDone({ ok: false, error: 'cancelled', sessionId, ...stats })
     else
-      onDone({ ok: code === 0, error: code === 0 ? undefined : `agent exited with code ${code}`, sessionId })
+      onDone({ ok: code === 0, error: code === 0 ? undefined : `agent exited with code ${code}`, sessionId, ...stats })
   })
   return child
 }

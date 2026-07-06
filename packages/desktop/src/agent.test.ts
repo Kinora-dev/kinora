@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { buildFixPrompt, buildRetryPrompt, claudeSearchDirs, collectAgentDiff, discoverClaude, extractSessionId, formatAgentEvent, gitSnapshot, newlyChanged, parsePorcelainZ, revertAgentChanges } from './agent'
+import { buildFixPrompt, buildFollowUpPrompt, buildRetryPrompt, claudeSearchDirs, collectAgentDiff, discoverClaude, extractRunStats, extractSessionId, formatAgentEvent, gitSnapshot, newlyChanged, parsePorcelainZ, revertAgentChanges } from './agent'
 
 describe('buildFixPrompt', () => {
   it('includes the test identity and the error', () => {
@@ -35,6 +35,26 @@ describe('buildRetryPrompt', () => {
     const p = buildRetryPrompt('1 failed\n  expect(x).toBe(y)')
     expect(p).toContain('expect(x).toBe(y)')
     expect(p).toContain('don\'t run anything yourself')
+  })
+})
+
+describe('buildFollowUpPrompt', () => {
+  it('carries the user message and re-states the constraints', () => {
+    const p = buildFollowUpPrompt('also update the snapshot')
+    expect(p).toContain('also update the snapshot')
+    expect(p).toContain('don\'t run the test')
+  })
+})
+
+describe('extractRunStats', () => {
+  it('reads cost and duration off the result event only', () => {
+    expect(extractRunStats(JSON.stringify({ type: 'result', total_cost_usd: 0.05, duration_ms: 1500 }))).toEqual({ costUsd: 0.05, durationMs: 1500 })
+    expect(extractRunStats(JSON.stringify({ type: 'assistant', total_cost_usd: 0.05 }))).toBeNull()
+    expect(extractRunStats('not json')).toBeNull()
+  })
+
+  it('tolerates a result event without stats', () => {
+    expect(extractRunStats(JSON.stringify({ type: 'result', is_error: false }))).toEqual({ costUsd: undefined, durationMs: undefined })
   })
 })
 

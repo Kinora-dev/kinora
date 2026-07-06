@@ -7,7 +7,7 @@ import * as Sentry from '@sentry/electron/main'
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import { signIn } from './account'
-import { collectAgentDiff, gitSnapshot, revertAgentChanges, startAgentFix } from './agent'
+import { buildFollowUpPrompt, buildRetryPrompt, collectAgentDiff, gitSnapshot, revertAgentChanges, startAgentFix } from './agent'
 import { loadConfig, saveConfig } from './config'
 import { pollDeviceToken, requestDeviceCode } from './device'
 import { openInEditor } from './editor'
@@ -320,7 +320,15 @@ function registerIpc(): void {
       return { ok: false, error: 'No agent session to retry' }
     // Keep the tail: that's where the assertion failure and summary live.
     const feedback = input.output.length > 20_000 ? input.output.slice(-20_000) : input.output
-    runAgentTurn(agentSession, feedback)
+    runAgentTurn(agentSession, buildRetryPrompt(feedback))
+    return { ok: true }
+  })
+
+  // Free-form user instruction to the same agent session ("also update the snapshot").
+  ipcMain.handle('kinora:follow-up-agent-fix', (_e, input: { message: string }) => {
+    if (!agentSession)
+      return { ok: false, error: 'No agent session to continue' }
+    runAgentTurn(agentSession, buildFollowUpPrompt(input.message.slice(0, 4_000)))
     return { ok: true }
   })
 
@@ -412,9 +420,9 @@ async function launchAgentFix(configDir: string, absFile: string, input: FixTest
   runAgentTurn(agentSession, null)
 }
 
-// One agent turn: the opening fix attempt, or (with feedback + a session id) a resumed
-// follow-up after a red re-run. Diff always accumulates against the session's snapshot.
-function runAgentTurn(session: AgentSession, feedback: string | null): void {
+// One agent turn: the opening fix attempt, or (with a resume prompt + session id) a
+// retry / user follow-up. Diff always accumulates against the session's snapshot.
+function runAgentTurn(session: AgentSession, resumePrompt: string | null): void {
   const gen = ++agentGen
   agentChild?.kill()
   const { input } = session
@@ -441,10 +449,10 @@ function runAgentTurn(session: AgentSession, feedback: string | null): void {
           }
         }
         if (gen === agentGen)
-          sendHome('kinora:agent-done', { ok: r.ok, error: r.error, diff, files: session.changes.map(c => c.path), hadDirty: !!session.snap && session.snap.dirty.size > 0 })
+          sendHome('kinora:agent-done', { ok: r.ok, error: r.error, diff, files: session.changes.map(c => c.path), hadDirty: !!session.snap && session.snap.dirty.size > 0, costUsd: r.costUsd, durationMs: r.durationMs })
       })()
     },
-    feedback && session.sessionId ? { resumeSessionId: session.sessionId, feedback } : {},
+    resumePrompt && session.sessionId ? { resumeSessionId: session.sessionId, resumePrompt } : {},
   )
 }
 

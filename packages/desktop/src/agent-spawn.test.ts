@@ -72,11 +72,23 @@ describe('startAgentFix (fake agent binary)', () => {
     expect(output).toContain('PROMPT:This Playwright test is failing')
   })
 
-  it('passes --resume and the retry prompt when resuming with feedback', async () => {
-    const { output, result } = await runFake(ECHO_AGENT, { resumeSessionId: 'sess-42', feedback: '1 failed: expect(x).toBe(y)' })
+  it('passes --resume and the caller-built prompt when resuming', async () => {
+    const { output, result } = await runFake(ECHO_AGENT, { resumeSessionId: 'sess-42', resumePrompt: 'RESUME-PROMPT here' })
     expect(result.ok).toBe(true)
     expect(output).toContain('--resume sess-42')
-    expect(output).toContain('PROMPT:The fix didn\'t make the test pass yet')
+    expect(output).toContain('PROMPT:RESUME-PROMPT here')
+  })
+
+  it('reports cost and duration from the result event', async () => {
+    const { result } = await runFake(`
+      process.stdin.resume()
+      process.stdin.on('end', () => {
+        process.stdout.write(JSON.stringify({ type: 'result', subtype: 'success', is_error: false, total_cost_usd: 0.1234, duration_ms: 4200 }) + '\\n')
+        process.exit(0)
+      })
+    `)
+    expect(result.costUsd).toBeCloseTo(0.1234)
+    expect(result.durationMs).toBe(4200)
   })
 
   it('reports a non-zero exit as an error', async () => {

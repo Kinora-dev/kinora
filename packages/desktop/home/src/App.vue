@@ -24,7 +24,9 @@ const highlightLink = ref(false)
 const rerun = ref<{ title: string, status: 'running' | 'passed' | 'failed' | 'error', log: string, hasTrace: boolean, watch: boolean } | null>(null)
 interface AgentTarget { file: string, line: number, projectName: string, title: string }
 // verify tracks the local re-run that checks the agent's fix: idle -> running -> passed/failed.
-const agent = ref<{ target: AgentTarget, status: 'running' | 'done' | 'stopped' | 'error', verify: 'idle' | 'running' | 'passed' | 'failed', log: string, error: string, diff: string, files: string[], hadDirty: boolean, reverted: boolean } | null>(null)
+// costUsd/durationMs accumulate across turns (retries, follow-ups) of one session.
+const agent = ref<{ target: AgentTarget, status: 'running' | 'done' | 'stopped' | 'error', verify: 'idle' | 'running' | 'passed' | 'failed', log: string, error: string, diff: string, files: string[], hadDirty: boolean, reverted: boolean, costUsd: number, durationMs: number } | null>(null)
+const followUpText = ref('')
 const logEl = ref<HTMLElement | null>(null)
 const agentLogEl = ref<HTMLElement | null>(null)
 const updateReady = ref(false)
@@ -50,6 +52,21 @@ const agentStatusCls = computed(() => (
       ? 'text-signal'
       : agent.value?.status === 'stopped' ? 'text-muted-foreground' : 'text-fail'
 ))
+// Session spend + wall-clock ("$0.14 · 1m32s"), shown once a turn reported them.
+const agentStats = computed(() => {
+  const a = agent.value
+  if (!a || (!a.costUsd && !a.durationMs))
+    return ''
+  const parts: string[] = []
+  if (a.costUsd)
+    parts.push(`$${a.costUsd.toFixed(2)}`)
+  if (a.durationMs) {
+    const s = Math.round(a.durationMs / 1000)
+    parts.push(s >= 60 ? `${Math.floor(s / 60)}m${String(s % 60).padStart(2, '0')}s` : `${s}s`)
+  }
+  return parts.join(' · ')
+})
+
 // Per-line classes so the proposed diff reads as a diff (adds green, removals red).
 const agentDiffLines = computed(() => (agent.value?.diff ?? '').split('\n').map(text => ({
   text,
@@ -165,6 +182,8 @@ window.kinora.onAgentDone((r) => {
   agent.value.diff = r.diff
   agent.value.files = r.files
   agent.value.hadDirty = r.hadDirty
+  agent.value.costUsd += r.costUsd ?? 0
+  agent.value.durationMs += r.durationMs ?? 0
   // Close the loop: a successful turn that changed files gets verified by a re-run.
   if (agent.value.status === 'done' && agent.value.files.length && !agent.value.reverted) {
     agent.value.verify = 'running'
@@ -291,7 +310,8 @@ async function onFixTest(t: { file: string, line: number, projectName: string, t
     return
   if (!projectPaths.value[id] && !(await linkActiveProject()))
     return
-  agent.value = { target: { file: t.file, line: t.line, projectName: t.projectName, title: t.title }, status: 'running', verify: 'idle', log: '', error: '', diff: '', files: [], hadDirty: false, reverted: false }
+  followUpText.value = ''
+  agent.value = { target: { file: t.file, line: t.line, projectName: t.projectName, title: t.title }, status: 'running', verify: 'idle', log: '', error: '', diff: '', files: [], hadDirty: false, reverted: false, costUsd: 0, durationMs: 0 }
   const res = await window.kinora.fixTest({ projectId: id, ...t })
   if (!res.ok && res.error && res.error !== 'no-path') {
     agent.value.status = 'error'
@@ -330,6 +350,23 @@ async function retryAgent(): Promise<void> {
   agent.value.log = ''
   agent.value.error = ''
   const res = await window.kinora.retryAgentFix({ output: rerunLog.value })
+  if (!res.ok && res.error) {
+    agent.value.status = 'error'
+    agent.value.error = res.error
+  }
+}
+
+// Free-form instruction to the same agent session, from the panel's input.
+async function sendFollowUp(): Promise<void> {
+  const message = followUpText.value.trim()
+  if (!agent.value || !message || agent.value.status === 'running')
+    return
+  followUpText.value = ''
+  agent.value.status = 'running'
+  agent.value.verify = 'idle'
+  agent.value.log = ''
+  agent.value.error = ''
+  const res = await window.kinora.followUpAgentFix({ message })
   if (!res.ok && res.error) {
     agent.value.status = 'error'
     agent.value.error = res.error
@@ -453,6 +490,7 @@ function viewRerunTrace(): void {
             <span v-else-if="agent.verify === 'running'" class="shrink-0 font-mono text-[10px] text-signal">· verifying…</span>
             <span v-else-if="agent.verify === 'passed'" class="shrink-0 font-mono text-[10px] text-pass">· fix verified, test passes</span>
             <span v-else-if="agent.verify === 'failed'" class="shrink-0 font-mono text-[10px] text-fail">· still failing</span>
+            <span v-if="agentStats" class="shrink-0 font-mono text-[10px] text-muted-foreground">· {{ agentStats }}</span>
           </div>
           <div class="flex shrink-0 gap-1.5">
             <Button v-if="agent.status === 'running'" variant="outline" size="sm" class="h-7 font-mono text-[11px]" @click="stopAgent">
@@ -485,6 +523,18 @@ function viewRerunTrace(): void {
             The agent finished without changing any files.
           </p>
           <pre v-if="agent.diff" class="mt-2 max-h-64 overflow-auto rounded-md bg-muted/40 p-2 font-mono text-[11px] leading-relaxed"><span v-for="(l, i) in agentDiffLines" :key="i" class="block whitespace-pre-wrap" :class="l.cls">{{ l.text }}</span></pre>
+          <!-- follow-up: keep talking to the same agent session -->
+          <form class="mt-2 flex gap-1.5" @submit.prevent="sendFollowUp">
+            <input
+              v-model="followUpText"
+              type="text"
+              placeholder="Ask the agent to adjust… (e.g. also update the snapshot)"
+              class="h-7 min-w-0 flex-1 rounded-md border border-border bg-muted/40 px-2 font-mono text-[11px] placeholder:text-muted-foreground/60 focus:border-signal/50 focus:outline-none"
+            >
+            <Button type="submit" variant="outline" size="sm" class="h-7 font-mono text-[11px]" :disabled="!followUpText.trim()">
+              Send
+            </Button>
+          </form>
         </template>
       </div>
 
