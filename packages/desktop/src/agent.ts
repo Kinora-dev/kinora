@@ -31,6 +31,9 @@ export interface FixTarget {
   projectName?: string
   status: string
   errors: string
+  // Playwright's error-context markdown (test info + code frame + ARIA page snapshot),
+  // pulled from the run's trace.zip when one is hosted.
+  errorContext?: string | null
 }
 
 export interface AgentResult {
@@ -48,7 +51,13 @@ Status: ${t.status}
 
 Error:
 ${t.errors || '(no error captured)'}
+${t.errorContext
+  ? `
+Context from the Playwright trace (page state at the moment of failure):
 
+${t.errorContext}
+`
+  : ''}
 Constraints:
 - Fix the underlying cause: the code under test or the test itself, whichever is actually wrong.
 - Do not run the test or any shell command; the app re-runs the test after your changes.

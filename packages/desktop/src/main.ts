@@ -11,6 +11,7 @@ import { collectAgentDiff, gitSnapshot, revertAgentChanges, startAgentFix } from
 import { loadConfig, saveConfig } from './config'
 import { pollDeviceToken, requestDeviceCode } from './device'
 import { openInEditor } from './editor'
+import { fetchErrorContext } from './error-context'
 import { buildMenu } from './menu'
 import { resolveTest } from './resolve'
 import { startRerun, watchRepo } from './runner'
@@ -328,7 +329,7 @@ function registerIpc(): void {
 }
 
 interface RerunInput { projectId: string, file: string, line: number, projectName?: string }
-interface FixTestIpcInput extends RerunInput { title: string, status: string, errors: string }
+interface FixTestIpcInput extends RerunInput { title: string, status: string, errors: string, traceUrl?: string }
 
 // The home window may be gone (closed while a viewer window keeps the app alive).
 function sendHome(channel: string, payload?: unknown): void {
@@ -375,9 +376,20 @@ async function launchAgentFix(configDir: string, absFile: string, input: FixTest
   const snap = await gitSnapshot(configDir)
   if (!snap)
     sendHome('kinora:agent-output', 'Not a git repo: changes can\'t be reviewed or reverted here.\n')
+  // Enrich the prompt with the trace's error-context (ARIA page snapshot at failure).
+  // Best-effort: a missing/unreachable trace just means a leaner prompt.
+  let errorContext: string | null = null
+  if (input.traceUrl) {
+    sendHome('kinora:agent-output', '▸ fetching page snapshot from the trace…\n')
+    errorContext = await fetchErrorContext(input.traceUrl)
+    if (gen !== agentGen)
+      return
+    if (!errorContext)
+      sendHome('kinora:agent-output', '▸ no error context in the trace, continuing without it\n')
+  }
   agentChild = startAgentFix(
     configDir,
-    { title: input.title, absFile, line: input.line, projectName: input.projectName, status: input.status, errors: input.errors },
+    { title: input.title, absFile, line: input.line, projectName: input.projectName, status: input.status, errors: input.errors, errorContext },
     (chunk) => {
       if (gen === agentGen)
         sendHome('kinora:agent-output', chunk)

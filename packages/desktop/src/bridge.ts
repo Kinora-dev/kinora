@@ -13,6 +13,9 @@ export interface FixTestInput {
   status: string
   // Pre-joined, ANSI-stripped error text (message + stack per error).
   errors: string
+  // Hosted trace.zip URL; main pulls the error-context (ARIA snapshot) out of it
+  // to enrich the agent prompt.
+  traceUrl?: string
 }
 
 export interface SessionUser {

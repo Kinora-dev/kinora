@@ -15,6 +15,14 @@ describe('buildFixPrompt', () => {
     expect(p).toContain('Do not run the test')
   })
 
+  it('embeds the trace error-context when present', () => {
+    const p = buildFixPrompt({ title: 't', absFile: '/f.ts', line: 1, status: 'unexpected', errors: 'boom', errorContext: '# Test info\n- Page snapshot' })
+    expect(p).toContain('Context from the Playwright trace')
+    expect(p).toContain('- Page snapshot')
+    // Constraints stay last so they read as the operative instructions.
+    expect(p.indexOf('Constraints:')).toBeGreaterThan(p.indexOf('- Page snapshot'))
+  })
+
   it('falls back when there is no error or project', () => {
     const p = buildFixPrompt({ title: 't', absFile: '/f.ts', line: 1, status: 'unexpected', errors: '' })
     expect(p).toContain('(no error captured)')

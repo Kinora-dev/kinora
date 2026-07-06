@@ -19,7 +19,7 @@ const emit = defineEmits<{
   openInEditor: [loc: { file: string, line: number, column: number }]
   rerun: [t: { file: string, line: number, projectName: string, title: string }]
   // Launch the local fix agent on a failing test (same linked-repo requirement as re-run).
-  fixTest: [t: { file: string, line: number, projectName: string, title: string, status: string, errors: string }]
+  fixTest: [t: { file: string, line: number, projectName: string, title: string, status: string, errors: string, traceUrl?: string }]
   // Re-run / Open need a linked repo; when absent, nudge the user to link first.
   requestLink: []
 }>()
@@ -151,6 +151,7 @@ function fixTest(test: NormTest): void {
     title: test.title,
     status: test.status,
     errors: errorText(test),
+    traceUrl: traceUrl(test),
   })
 }
 
