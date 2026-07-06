@@ -84,6 +84,11 @@ const stats = computed(() => {
 
         <!-- Filters -->
         <div v-if="!isLoading && !error" class="flex items-center gap-2">
+          <!-- Clear sits left so the comboboxes (right-aligned) don't shift when it toggles. -->
+          <Button v-if="hasFilters" variant="ghost" size="sm" class="h-9 font-mono text-xs" @click="clearFilters">
+            Clear
+          </Button>
+
           <FilterCombobox
             v-if="branches.length > 1"
             v-model="branch"
@@ -94,17 +99,13 @@ const stats = computed(() => {
           />
 
           <FilterCombobox
-            v-if="tags.length"
+            v-if="tags.length > 1"
             v-model="tag"
             :options="tags"
             all-label="All tags"
             search-placeholder="Search tag..."
             trigger-class="w-40"
           />
-
-          <Button v-if="hasFilters" variant="ghost" size="sm" class="h-9 font-mono text-xs" @click="clearFilters">
-            Clear
-          </Button>
         </div>
       </div>
 
