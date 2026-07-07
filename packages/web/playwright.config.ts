@@ -22,7 +22,7 @@ export default defineConfig({
   reporter: ci ? [['github'], ['html', { open: 'never' }]] : 'list',
   webServer: [
     {
-      // Inline env so it reliably reaches the spawned process. dotenv (dev) / job env (CI) fills the rest.
+      // Inline env so it reliably reaches the spawned process. .env file (dev) / job env (CI) fills the rest.
       command: `PORT=${SERVER_PORT} BASE_URL=${serverUrl} WEB_ORIGIN=${baseURL} POSTGRES_DB=kinora_e2e KINORA_CLOUD=false pnpm --filter @kinora/server start`,
       url: `${serverUrl}/healthcheck`,
       reuseExistingServer: false,
