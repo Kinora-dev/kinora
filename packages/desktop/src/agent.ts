@@ -27,7 +27,6 @@ const AGENT_ARGS = [
 // own instead of relying on the user noticing and hitting Stop.
 const AGENT_TIMEOUT_MS = 10 * 60 * 1000
 
-// --- binary discovery --------------------------------------------------------------
 // GUI-launched apps inherit a stripped PATH; augmentedPath() covers the classic system
 // dirs, but `claude` usually lives in a per-user prefix (native installer, npm-global
 // under a version manager, volta/bun/pnpm). Scan those explicitly.
@@ -286,7 +285,6 @@ export function startAgentFix(configDir: string, target: FixTarget, onOutput: (c
   return child
 }
 
-// --- git snapshot / diff / revert -------------------------------------------------
 // Changes are attributed to the agent by diffing `git status` before vs after, so a
 // user's pre-existing uncommitted work is never shown as the agent's, and Revert only
 // ever touches paths the agent newly dirtied.
