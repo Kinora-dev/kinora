@@ -11,6 +11,7 @@ import CopyLinkButton from '@/components/app/CopyLinkButton.vue'
 import StatusTimeline from '@/components/viz/StatusTimeline.vue'
 import TestStatusBadge from '@/components/viz/TestStatusBadge.vue'
 import { useProjectHistory } from '@/composables/queries'
+import { testLabel } from '@/lib/test-display'
 
 const props = defineProps<{ projectId: string }>()
 const route = useRoute()
@@ -23,6 +24,14 @@ const testKey = computed(() => {
 
 const project = computed(() => state.value.project)
 const history = computed(() => state.value.histories.find(h => h.testKey === testKey.value))
+
+// Clusters this test shares with at least one other test: "the same error hits N others".
+const relatedClusters = computed(() =>
+  state.value.clusters
+    .filter(c => c.tests > 1 && c.testKeys.includes(testKey.value))
+    .sort((a, b) => b.tests - a.tests),
+)
+const labels = computed(() => new Map(state.value.histories.map(h => [h.testKey, testLabel(h)])))
 
 // Failures and flakes, most recent first.
 const incidents = computed(() =>
@@ -117,6 +126,29 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
         <h2 class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
           Failures & flakes ({{ incidents.length }})
         </h2>
+
+        <div
+          v-for="c in relatedClusters"
+          :key="c.fingerprint"
+          class="rounded-lg border border-flaky/30 bg-flaky/5 px-4 py-3"
+        >
+          <div class="font-mono text-xs text-flaky">
+            Same error as {{ c.tests - 1 }} other {{ c.tests - 1 === 1 ? 'test' : 'tests' }}
+          </div>
+          <div class="mt-0.5 truncate font-mono text-[11px] text-muted-foreground">
+            {{ c.title }}
+          </div>
+          <div class="mt-2 flex flex-col gap-1">
+            <RouterLink
+              v-for="key in c.testKeys.filter(k => k !== testKey)"
+              :key="key"
+              :to="{ name: 'test', params: { projectId }, query: { key } }"
+              class="truncate font-mono text-[11px] text-muted-foreground hover:text-foreground"
+            >
+              {{ labels.get(key) ?? key }}
+            </RouterLink>
+          </div>
+        </div>
         <RouterLink
           v-for="p in visibleIncidents"
           :key="p.runId"

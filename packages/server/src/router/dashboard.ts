@@ -1,5 +1,5 @@
 import type { Manifest, NormTest, ProjectEntry, ProjectHistory, RunComparison, RunReport, RunSummary } from '@kinora/core'
-import { buildTestHistories, compareRuns, SCHEMA_VERSION } from '@kinora/core'
+import { buildFailureClusters, buildTestHistories, compareRuns, SCHEMA_VERSION } from '@kinora/core'
 import { TRPCError } from '@trpc/server'
 import { and, asc, desc, eq, inArray } from 'drizzle-orm'
 import { z } from 'zod'
@@ -134,7 +134,7 @@ export const dashboardRouter = router({
 
       const reports = runs.map(r => runReport(input.projectId, r, byRun.get(r.id) ?? []))
       const entry: ProjectEntry = { id: p.slug, name: p.name, runs: runs.map(r => runSummary(p.slug, r)) }
-      return { project: entry, histories: buildTestHistories(reports) }
+      return { project: entry, histories: buildTestHistories(reports), clusters: buildFailureClusters(reports) }
     }),
 
   compareRuns: orgProcedure

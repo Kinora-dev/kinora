@@ -29,7 +29,7 @@ export function useRun(projectId: string, runId: string) {
 export function useProjectHistory(projectId: string) {
   return useAsyncState(
     () => trpc.dashboard.projectHistory.query({ projectId }),
-    { project: null, histories: [] },
+    { project: null, histories: [], clusters: [] },
     { immediate: true },
   )
 }

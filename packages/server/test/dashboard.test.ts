@@ -139,6 +139,24 @@ describe('dashboard reads', () => {
     expect(h.histories[0].points).toHaveLength(2)
   })
 
+  it('projectHistory clusters failing tests by error signature', async () => {
+    const a = await createUser('a@test.dev')
+    const key = await createApiKey(a.id)
+    // Same failure across two runs, varying only by timeout -> one signature.
+    const p1 = runPayload('web-app', '@smoke', 'unexpected')
+    p1.tests[0].errors = [{ message: 'TimeoutError: locator.click: Timeout 30000ms exceeded' }]
+    const p2 = runPayload('web-app', '@smoke', 'unexpected')
+    p2.tests[0].errors = [{ message: 'TimeoutError: locator.click: Timeout 15000ms exceeded' }]
+    await ingest(key, p1)
+    await ingest(key, p2)
+
+    const h = await (await caller(a)).dashboard.projectHistory({ projectId: 'web-app' })
+    expect(h.clusters).toHaveLength(1)
+    expect(h.clusters[0].count).toBe(2) // two occurrences
+    expect(h.clusters[0].tests).toBe(1) // one distinct test
+    expect(h.clusters[0].title).toContain('TimeoutError')
+  })
+
   it('compareRuns throws NOT_FOUND when a run id is unknown', async () => {
     const a = await createUser('a@test.dev')
     const key = await createApiKey(a.id)

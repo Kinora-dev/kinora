@@ -20,6 +20,7 @@ import { computed, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import CopyLinkButton from '@/components/app/CopyLinkButton.vue'
 import SearchInput from '@/components/app/SearchInput.vue'
+import FailureCausesCard from '@/components/project/FailureCausesCard.vue'
 import StatusTimeline from '@/components/viz/StatusTimeline.vue'
 import TestStatusBadge from '@/components/viz/TestStatusBadge.vue'
 import { useProjectHistory } from '@/composables/queries'
@@ -30,6 +31,7 @@ const { state, isLoading, error } = useProjectHistory(props.projectId)
 
 const project = computed(() => state.value.project)
 const histories = computed(() => state.value.histories)
+const clusters = computed(() => state.value.clusters)
 
 const search = useRouteQuery('q', '')
 const unstableOnly = useRouteQuery<string, boolean>('unstable', 'true', {
@@ -156,6 +158,8 @@ function setPage(p: number) {
           <StatBlock label="New failures" :value="newlyBrokenCount" :tone="newlyBrokenCount ? 'fail' : 'default'" />
         </div>
       </div>
+
+      <FailureCausesCard :clusters="clusters" :histories="histories" :project-id="projectId" />
 
       <!-- Toolbar -->
       <div class="flex flex-wrap items-center justify-between gap-3">

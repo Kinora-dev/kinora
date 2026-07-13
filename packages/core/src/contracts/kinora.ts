@@ -81,6 +81,7 @@ export const normErrorSchema = z.object({
     .object({ file: z.string(), line: z.number(), column: z.number() })
     .optional(),
 })
+export type NormError = z.infer<typeof normErrorSchema>
 
 // Flattened test, identity stable across runs via testKey.
 export const normTestSchema = z.object({
@@ -158,9 +159,23 @@ export const testHistorySchema = z.object({
 })
 export type TestHistory = z.infer<typeof testHistorySchema>
 
+// Failing occurrences grouped by error signature (see lib/fingerprint), for "top failure causes".
+export const failureClusterSchema = z.object({
+  fingerprint: z.string(),
+  title: z.string(),
+  sample: z.string(),
+  count: z.number(),
+  tests: z.number(),
+  testKeys: z.array(z.string()),
+  files: z.array(z.string()),
+  lastSeen: z.string(),
+})
+export type FailureCluster = z.infer<typeof failureClusterSchema>
+
 export const projectHistorySchema = z.object({
   project: projectEntrySchema.nullable(),
   histories: z.array(testHistorySchema),
+  clusters: z.array(failureClusterSchema),
 })
 export type ProjectHistory = z.infer<typeof projectHistorySchema>
 
