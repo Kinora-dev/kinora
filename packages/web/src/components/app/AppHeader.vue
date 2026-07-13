@@ -1,15 +1,21 @@
 <script setup lang="ts">
 import { Avatar, AvatarFallback, AvatarImage } from '@kinora/ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@kinora/ui/dropdown-menu'
-import { Check, ChevronsUpDown, LogOut, MonitorDown, Settings, SlidersHorizontal } from 'lucide-vue-next'
-import { computed } from 'vue'
+import { Check, ChevronsUpDown, LogOut, MessageSquarePlus, MonitorDown, Settings, SlidersHorizontal } from 'lucide-vue-next'
+import { computed, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
+import { useServerConfig } from '@/composables/queries'
 import { resetOrgState, useOrg } from '@/composables/useOrg'
 import { authClient } from '@/lib/auth'
 import { session } from '@/lib/session'
+import FeedbackDialog from './FeedbackDialog.vue'
 
 const router = useRouter()
 const user = session.user
+
+const { state: serverConfig } = useServerConfig()
+const feedbackEnabled = computed(() => serverConfig.value?.feedbackEnabled ?? false)
+const feedbackOpen = ref(false)
 
 const { orgs, org, setActive } = useOrg()
 const activeOrgId = computed(() => org.value?.id)
@@ -107,6 +113,10 @@ async function signOut(): Promise<void> {
                 Desktop app
               </a>
             </DropdownMenuItem>
+            <DropdownMenuItem v-if="feedbackEnabled" @click="feedbackOpen = true">
+              <MessageSquarePlus class="size-4" />
+              Send feedback
+            </DropdownMenuItem>
             <DropdownMenuItem @click="signOut">
               <LogOut class="size-4" />
               Sign out
@@ -115,5 +125,7 @@ async function signOut(): Promise<void> {
         </DropdownMenu>
       </div>
     </div>
+
+    <FeedbackDialog v-if="feedbackEnabled" v-model:open="feedbackOpen" />
   </header>
 </template>

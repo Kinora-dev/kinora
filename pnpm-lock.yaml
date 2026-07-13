@@ -206,6 +206,9 @@ importers:
       '@sentry/node':
         specifier: ^10.60.0
         version: 10.60.0(@opentelemetry/core@2.8.0(@opentelemetry/api@1.9.1))
+      '@stowline/sdk':
+        specifier: ^0.1.0
+        version: 0.1.0(@trpc/server@11.18.0(typescript@6.0.3))(typescript@6.0.3)
       '@trpc/server':
         specifier: ^11.18.0
         version: 11.18.0(typescript@6.0.3)
@@ -1046,11 +1049,11 @@ packages:
 
   '@esbuild-kit/core-utils@3.3.2':
     resolution: {integrity: sha512-sPRAnw9CdSsRmEtnsl2WXWdyquogVpB3yZ3dgwJfe8zrOzTsV7cJvmwrKVa+0ma5BoiGJ+BoqkMvawbayKUsqQ==}
-    deprecated: 'Merged into tsx: https://tsx.is'
+    deprecated: 'Merged into tsx: https://tsx.hirok.io'
 
   '@esbuild-kit/esm-loader@2.6.5':
     resolution: {integrity: sha512-FxEMIkJKnodyA1OaCUoEvbYRkoZlLZ4d/eXFu9Fh8CbBBgP5EmZxrfTRyN0qpXZ4vOvqnE5YdRdcrmUUXuU+dA==}
-    deprecated: 'Merged into tsx: https://tsx.is'
+    deprecated: 'Merged into tsx: https://tsx.hirok.io'
 
   '@esbuild/aix-ppc64@0.25.12':
     resolution: {integrity: sha512-Hhmwd6CInZ3dwpuGTF8fJG6yoWmsToE+vYgD4nytZVxcu1ulHpUQRAB1UJ8+N1Am3Mz4+xOByoQoSZf4D+CpkA==}
@@ -2209,6 +2212,9 @@ packages:
 
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
+
+  '@stowline/sdk@0.1.0':
+    resolution: {integrity: sha512-kfz4luBGPITXLOYhVCSEmYR57hK91FMFrqBLQLiR4PFSLSyTonBHaK3TEWC3IL3kbuN29BBqnk3ZQqiRXIxlEA==}
 
   '@stripe/react-stripe-js@4.0.2':
     resolution: {integrity: sha512-l2wau+8/LOlHl+Sz8wQ1oDuLJvyw51nQCsu6/ljT6smqzTszcMHifjAJoXlnMfcou3+jK/kQyVe04u/ufyTXgg==}
@@ -6961,6 +6967,7 @@ snapshots:
       '@polar-sh/better-auth': 1.8.4(@polar-sh/sdk@0.48.1)(@stripe/react-stripe-js@4.0.2(@stripe/stripe-js@7.9.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@stripe/stripe-js@7.9.0)(better-auth@1.6.20(@opentelemetry/api@1.9.1)(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(knex@3.2.10(pg@8.22.0))(kysely@0.29.2)(pg@8.22.0))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.9)(vue@3.5.38(typescript@6.0.3)))(react@19.2.7)(zod@4.4.3)
       '@polar-sh/sdk': 0.48.1
       '@sentry/node': 10.60.0(@opentelemetry/core@2.8.0(@opentelemetry/api@1.9.1))
+      '@stowline/sdk': 0.1.0(@trpc/server@11.18.0(typescript@6.0.3))(typescript@6.0.3)
       '@trpc/server': 11.18.0(typescript@6.0.3)
       better-auth: 1.6.20(@opentelemetry/api@1.9.1)(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(knex@3.2.10(pg@8.22.0))(kysely@0.29.2)(pg@8.22.0))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.9)(vue@3.5.38(typescript@6.0.3))
       busboy: 1.6.0
@@ -7540,6 +7547,13 @@ snapshots:
   '@stablelib/base64@1.0.1': {}
 
   '@standard-schema/spec@1.1.0': {}
+
+  '@stowline/sdk@0.1.0(@trpc/server@11.18.0(typescript@6.0.3))(typescript@6.0.3)':
+    dependencies:
+      '@trpc/client': 11.18.0(@trpc/server@11.18.0(typescript@6.0.3))(typescript@6.0.3)
+    transitivePeerDependencies:
+      - '@trpc/server'
+      - typescript
 
   '@stripe/react-stripe-js@4.0.2(@stripe/stripe-js@7.9.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:

@@ -38,4 +38,7 @@ export const TEST_ENV: Record<keyof Env, string> = {
   SMTP_PASS: '',
   SMTP_FROM: '',
   SENTRY_DSN: '',
+  STOWLINE_API_KEY: '',
+  STOWLINE_PROJECT_ID: '',
+  STOWLINE_API_URL: '',
 }

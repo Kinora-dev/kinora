@@ -45,6 +45,9 @@ const envSchema = z.object({
   SMTP_PASS: z.string().optional(),
   SMTP_FROM: z.string().optional(),
   SENTRY_DSN: z.string().optional(),
+  STOWLINE_API_KEY: z.string().optional(),
+  STOWLINE_PROJECT_ID: z.string().optional(),
+  STOWLINE_API_URL: z.url().optional(),
 }).refine(
   e => !e.KINORA_CLOUD || Boolean(e.POLAR_ACCESS_TOKEN && e.POLAR_WEBHOOK_SECRET && e.POLAR_PRODUCT_TEAM_ID && e.POLAR_PRODUCT_PRO_ID),
   { message: 'KINORA_CLOUD=true requires POLAR_ACCESS_TOKEN, POLAR_WEBHOOK_SECRET, POLAR_PRODUCT_TEAM_ID and POLAR_PRODUCT_PRO_ID' },
@@ -145,3 +148,21 @@ function resolveSmtp(): SmtpConfig | null {
 }
 
 export const smtp = resolveSmtp()
+
+export interface StowlineConfig {
+  apiKey: string
+  projectId: string
+  apiUrl: string
+}
+
+// User feedback -> Stowline issue tracker. Cloud-only: a self-host instance must not post to our tracker.
+function resolveStowline(): StowlineConfig | null {
+  if (!env.KINORA_CLOUD)
+    return null
+  const { STOWLINE_API_KEY: apiKey, STOWLINE_PROJECT_ID: projectId, STOWLINE_API_URL: apiUrl } = env
+  if (!apiKey || !projectId || !apiUrl)
+    return null
+  return { apiKey, projectId, apiUrl }
+}
+
+export const stowlineConfig = resolveStowline()
