@@ -47,7 +47,7 @@ const envSchema = z.object({
   SENTRY_DSN: z.string().optional(),
   STOWLINE_API_KEY: z.string().optional(),
   STOWLINE_PROJECT_ID: z.string().optional(),
-  STOWLINE_API_URL: z.url().optional(),
+  STOWLINE_API_URL: z.union([z.literal(''), z.url()]).optional(),
 }).refine(
   e => !e.KINORA_CLOUD || Boolean(e.POLAR_ACCESS_TOKEN && e.POLAR_WEBHOOK_SECRET && e.POLAR_PRODUCT_TEAM_ID && e.POLAR_PRODUCT_PRO_ID),
   { message: 'KINORA_CLOUD=true requires POLAR_ACCESS_TOKEN, POLAR_WEBHOOK_SECRET, POLAR_PRODUCT_TEAM_ID and POLAR_PRODUCT_PRO_ID' },
