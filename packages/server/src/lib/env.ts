@@ -18,10 +18,10 @@ const envSchema = z.object({
   POSTGRES_HOST: z.string(),
   POSTGRES_PORT: z.coerce.number(),
   POSTGRES_DB: z.string(),
-  GOOGLE_CLIENT_ID: z.string(),
-  GOOGLE_CLIENT_SECRET: z.string(),
-  GITHUB_CLIENT_ID: z.string(),
-  GITHUB_CLIENT_SECRET: z.string(),
+  GOOGLE_CLIENT_ID: z.string().default(''),
+  GOOGLE_CLIENT_SECRET: z.string().default(''),
+  GITHUB_CLIENT_ID: z.string().default(''),
+  GITHUB_CLIENT_SECRET: z.string().default(''),
   KINORA_CLOUD: z.stringbool().default(false),
   // Public demo instance: auto-session as the seeded demo user + read-only (no mutations/ingest/auth writes).
   KINORA_DEMO: z.stringbool().default(false),
@@ -85,6 +85,10 @@ function resolveCloud(): CloudConfig | null {
 export const cloud = resolveCloud()
 
 export const demo = env.KINORA_DEMO
+
+// Social login is enabled per provider only when both its id and secret are set.
+export const googleOauthEnabled = Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET)
+export const githubOauthEnabled = Boolean(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET)
 
 export interface S3Config {
   endpoint: string

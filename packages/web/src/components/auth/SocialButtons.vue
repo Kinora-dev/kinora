@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Badge } from '@kinora/ui/badge'
 import { Loader2 } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { toast } from 'vue-sonner'
 import Icon from '@/components/Icon.vue'
+import { useServerConfig } from '@/composables/queries'
 import { authClient } from '@/lib/auth'
 
 type Provider = 'github' | 'google'
@@ -12,6 +13,11 @@ type Provider = 'github' | 'google'
 const route = useRoute()
 const pending = ref<Provider | null>(null)
 const lastMethod = authClient.getLastUsedLoginMethod()
+
+const { state: serverConfig } = useServerConfig()
+const githubEnabled = computed(() => serverConfig.value?.githubOauthEnabled ?? false)
+const googleEnabled = computed(() => serverConfig.value?.googleOauthEnabled ?? false)
+const anyEnabled = computed(() => githubEnabled.value || googleEnabled.value)
 
 async function signIn(provider: Provider): Promise<void> {
   pending.value = provider
@@ -27,8 +33,9 @@ async function signIn(provider: Provider): Promise<void> {
 </script>
 
 <template>
-  <div class="flex flex-col gap-2.5">
+  <div v-if="anyEnabled" class="flex flex-col gap-2.5">
     <button
+      v-if="githubEnabled"
       type="button"
       :disabled="!!pending"
       class="group relative flex w-full items-center justify-center gap-2.5 rounded-md border border-border bg-background/40 px-4 py-2.5 font-mono text-[11px] tracking-wider text-foreground uppercase transition-colors hover:border-signal/50 hover:bg-card disabled:cursor-not-allowed disabled:opacity-50"
@@ -43,6 +50,7 @@ async function signIn(provider: Provider): Promise<void> {
     </button>
 
     <button
+      v-if="googleEnabled"
       type="button"
       :disabled="!!pending"
       class="group relative flex w-full items-center justify-center gap-2.5 rounded-md border border-border bg-background/40 px-4 py-2.5 font-mono text-[11px] tracking-wider text-foreground uppercase transition-colors hover:border-signal/50 hover:bg-card disabled:cursor-not-allowed disabled:opacity-50"

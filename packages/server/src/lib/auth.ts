@@ -8,7 +8,7 @@ import { polarAuthPlugin, polarClient } from '../billing/polar'
 import { db } from '../db'
 import { member, organization as organizationTable } from '../db/schemas/index'
 import { purgeUserOwnedData } from './account'
-import { demo, env } from './env'
+import { demo, env, githubOauthEnabled, googleOauthEnabled } from './env'
 import { logger } from './logger'
 import { mailerEnabled, sendMail } from './mailer'
 import { getTrustedOrigins } from './utils'
@@ -44,14 +44,8 @@ export const auth = betterAuth({
     },
   },
   socialProviders: {
-    google: {
-      clientId: env.GOOGLE_CLIENT_ID,
-      clientSecret: env.GOOGLE_CLIENT_SECRET,
-    },
-    github: {
-      clientId: env.GITHUB_CLIENT_ID,
-      clientSecret: env.GITHUB_CLIENT_SECRET,
-    },
+    ...(googleOauthEnabled ? { google: { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET } } : {}),
+    ...(githubOauthEnabled ? { github: { clientId: env.GITHUB_CLIENT_ID, clientSecret: env.GITHUB_CLIENT_SECRET } } : {}),
   },
   user: {
     deleteUser: {
