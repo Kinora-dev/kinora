@@ -53,6 +53,7 @@ export const COMPARISONS: Comparison[] = [
       { label: 'Multiple projects in one place', kinora: true, them: false },
       { label: 'Runs from all CI shards merged', kinora: true, them: false },
       { label: 'Alerts on new failures / regressions', kinora: 'Slack, email, webhook', them: false },
+      { label: 'MCP server for coding agents', kinora: true, them: false },
       { label: 'Setup', kinora: 'Reporter or CLI', them: 'Built in' },
       { label: 'Cost', kinora: 'Free self-host / free cloud tier', them: 'Free (built in)' },
       { label: 'Hosting', kinora: 'Self-host or cloud', them: 'Local static files' },
@@ -61,6 +62,7 @@ export const COMPARISONS: Comparison[] = [
       'You run tests in CI regularly and want history, trends, and flaky tracking across runs and projects.',
       'You want alerts on new failures or regressions.',
       'You want a shareable dashboard without giving up the Playwright trace viewer.',
+      'Your coding agent (Claude Code, Cursor, any MCP client) pulls failing tests, traces, and flaky history from CI over MCP.',
     ],
     chooseThemLabel: 'Stick with the HTML report when',
     chooseThem: [
@@ -109,12 +111,14 @@ export const COMPARISONS: Comparison[] = [
       { label: 'Free tier', kinora: '2,500 results / mo', them: false },
       { label: 'Entry price', kinora: '$0 self-host / $49 Team', them: '$49 / mo (10k results)' },
       { label: 'Desktop trace-viewer app', kinora: true, them: false },
+      { label: 'MCP server for coding agents', kinora: true, them: false },
       { label: 'Data ownership', kinora: 'Your infra (self-host)', them: 'Their cloud' },
     ],
     chooseKinora: [
       'You want to self-host for free or keep test data on your own infrastructure.',
       'You want an open-source tool and a free cloud tier.',
       'You run tests with Playwright\'s own sharding and just need the reporting dashboard, plus a desktop trace viewer.',
+      'Your coding agent (Claude Code, Cursor, any MCP client) pulls failing tests, traces, and flaky history from CI over MCP.',
     ],
     chooseThemLabel: 'Choose Currents when',
     chooseThem: [
@@ -160,6 +164,7 @@ export const COMPARISONS: Comparison[] = [
       { label: 'Embedded Playwright trace viewer', kinora: true, them: false },
       { label: 'Runs as a server / live dashboard', kinora: true, them: 'No (static HTML)' },
       { label: 'Alerts on regressions', kinora: true, them: false },
+      { label: 'MCP server for coding agents', kinora: true, them: false },
       { label: 'Hosted cloud option', kinora: 'kinora cloud (free tier + paid)', them: 'Allure TestOps (separate paid)' },
       { label: 'Self-host', kinora: 'Docker Compose', them: 'Static files, host anywhere' },
     ],
@@ -167,6 +172,7 @@ export const COMPARISONS: Comparison[] = [
       'You\'re Playwright-first and want a live dashboard with real cross-run history and trends.',
       'You want flaky tracking, regression alerts, and the embedded Playwright trace viewer.',
       'You don\'t want to stitch history together in CI or buy Allure TestOps.',
+      'Your coding agent (Claude Code, Cursor, any MCP client) pulls failing tests, traces, and flaky history from CI over MCP.',
     ],
     chooseThemLabel: 'Choose Allure Report when',
     chooseThem: [
@@ -214,11 +220,13 @@ export const COMPARISONS: Comparison[] = [
       { label: 'Alerts (Slack / email / webhook)', kinora: true, them: true },
       { label: 'Hosted cloud pricing', kinora: 'Free tier + plans from $49', them: 'SaaS, quote-based' },
       { label: 'Desktop trace-viewer app', kinora: true, them: false },
+      { label: 'MCP server for coding agents', kinora: true, them: false },
     ],
     chooseKinora: [
       'You\'re Playwright-first and want the embedded Playwright trace viewer.',
       'You want a lightweight self-host and transparent pricing with a free tier.',
       'You want a desktop trace-viewer app alongside the dashboard.',
+      'Your coding agent (Claude Code, Cursor, any MCP client) pulls failing tests, traces, and flaky history from CI over MCP.',
     ],
     chooseThemLabel: 'Choose ReportPortal when',
     chooseThem: [
