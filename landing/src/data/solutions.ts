@@ -10,6 +10,11 @@ export interface SolFaq {
   a: string
 }
 
+export interface SolTool {
+  name: string
+  desc: string
+}
+
 export interface Solution {
   slug: string
   eyebrow: string
@@ -18,8 +23,9 @@ export interface Solution {
   description: string
   tldr: string
   intro: string
-  shot: ShotKey
-  shotAlt: string
+  shot?: ShotKey
+  shotAlt?: string
+  mcp?: { config: string, tools: SolTool[] }
   points: SolPoint[]
   faqs: SolFaq[]
 }
@@ -160,6 +166,68 @@ export const SOLUTIONS: Solution[] = [
       {
         q: 'Can I open a local trace without an account?',
         a: 'Yes, with the kinora desktop app, a standalone local Playwright trace viewer that needs no account.',
+      },
+    ],
+  },
+  {
+    slug: 'playwright-mcp-coding-agents',
+    eyebrow: 'Coding agents',
+    h1: 'Playwright CI failures, in your coding agent',
+    title: 'Playwright MCP server for coding agents | kinora',
+    description:
+      'kinora ships an MCP server so Claude Code, Cursor, or any MCP client pulls your latest Playwright failures, traces, and flaky history straight into the chat, then works the fix.',
+    tldr:
+      'kinora ships an MCP server. Point Claude Code, Cursor, or any MCP client at it and your agent pulls the failing test, its trace, and flaky history straight into the chat, then works the fix. Local over stdio, against the cloud or your own self-host.',
+    intro:
+      'Copy-pasting a stack trace into your agent was step one. kinora exposes your CI test data over the Model Context Protocol, so the agent reads the last run\'s failures, opens the Playwright trace, and checks whether a test is a fresh regression or a chronic flake, without you shuttling files around. It runs locally over stdio against kinora cloud or your self-host, scoped to your API token.',
+    mcp: {
+      config: `{
+  "mcpServers": {
+    "kinora": {
+      "command": "npx",
+      "args": ["-y", "@kinora/mcp"],
+      "env": { "KINORA_TOKEN": "<token>" }
+    }
+  }
+}`,
+      tools: [
+        { name: 'list_failures', desc: 'the last run\'s failures, with error and file:line' },
+        { name: 'get_trace', desc: 'the Playwright trace for any failing test' },
+        { name: 'test_history', desc: 'flaky-vs-regression history per test' },
+        { name: 'list_projects', desc: 'every project and its latest run' },
+        { name: 'get_run', desc: 'the full report for a single run' },
+      ],
+    },
+    points: [
+      {
+        title: 'Five tools, zero glue',
+        body: 'The agent calls the tools directly over MCP, no scraping and no copy-paste.',
+      },
+      {
+        title: 'Straight into the chat',
+        body: 'Point Claude Code, Cursor, or any MCP client at kinora and the failing test, its error and file:line, and the trace land in context.',
+      },
+      {
+        title: 'Regression or flake',
+        body: 'test_history gives the agent pass/fail/flaky rates, so it fixes a real regression instead of chasing a chronic flake.',
+      },
+      {
+        title: 'Local, cloud, or self-host',
+        body: 'Runs over stdio with your API token, against kinora cloud or your own self-hosted server. Your data stays yours.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'How do I connect a coding agent to my Playwright tests?',
+        a: 'Add the kinora MCP server (@kinora/mcp) to your MCP client with a kinora API token. Claude Code, Cursor, or any MCP client can then pull failures, traces, and history from CI.',
+      },
+      {
+        q: 'Which MCP tools does kinora expose?',
+        a: 'Five: list_failures, get_trace, test_history, list_projects and get_run, covering the last run\'s failures with error and file:line, the trace for any failing test, per-test flaky-vs-regression history, every project with its latest run, and the full report for a single run.',
+      },
+      {
+        q: 'Does it work with self-hosted kinora?',
+        a: 'Yes. The MCP server runs locally over stdio and points at either kinora cloud or your self-hosted server, authenticated with your API token.',
       },
     ],
   },

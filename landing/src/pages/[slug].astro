@@ -12,6 +12,7 @@ import testsDark from '../assets/screenshots/tests-dark.png'
 import testsLight from '../assets/screenshots/tests-light.png'
 import traceViewerDark from '../assets/screenshots/trace-viewer-dark.png'
 import traceViewerLight from '../assets/screenshots/trace-viewer-light.png'
+import CodeBlock from '../components/CodeBlock.astro'
 import CtaSection from '../components/CtaSection.astro'
 import Screenshot from '../components/Screenshot.astro'
 import SiteFooter from '../components/SiteFooter.astro'
@@ -33,7 +34,7 @@ const SHOTS: Record<ShotKey, { light: ImageMetadata, dark: ImageMetadata, label:
   'trace-viewer': { light: traceViewerLight, dark: traceViewerDark, label: 'kinora.dev/trace' },
   'compare': { light: compareLight, dark: compareDark, label: 'kinora.dev/compare' },
 }
-const shot = SHOTS[s.shot]
+const shot = s.shot ? SHOTS[s.shot] : null
 
 const faqSchema = {
   '@context': 'https://schema.org',
@@ -105,13 +106,31 @@ const related = SOLUTIONS.filter(o => o.slug !== s.slug)
           {s.intro}
         </p>
         <div class="reveal mt-12" style="--reveal-delay: 80ms">
-          <Screenshot
-            light={shot.light}
-            dark={shot.dark}
-            label={shot.label}
-            alt={s.shotAlt}
-            class="mx-auto max-w-4xl"
-          />
+          {
+            s.mcp
+              ? (
+                  <div class="mx-auto flex max-w-3xl flex-col gap-6">
+                    <CodeBlock code={s.mcp.config} lang="json" filename="mcp config" event="copy-mcp-config" />
+                    <ul class="flex flex-col divide-y divide-border/60 overflow-hidden rounded-lg border border-border bg-card/40">
+                      {s.mcp.tools.map(t => (
+                        <li class="flex flex-col gap-0.5 px-4 py-3 sm:flex-row sm:items-baseline sm:gap-3">
+                          <code class="shrink-0 font-mono text-[13px] font-medium text-signal">{t.name}</code>
+                          <span class="text-sm text-muted-foreground">{t.desc}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )
+              : shot && (
+                  <Screenshot
+                    light={shot.light}
+                    dark={shot.dark}
+                    label={shot.label}
+                    alt={s.shotAlt ?? s.h1}
+                    class="mx-auto max-w-4xl"
+                  />
+                )
+          }
         </div>
       </div>
     </section>
