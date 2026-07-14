@@ -21,8 +21,10 @@ extraResources:
 mac:
   category: public.app-category.developer-tools
   target:
-    - dmg
-    - zip
+    - target: dmg
+      arch: [arm64, x64]
+    - target: zip
+      arch: [arm64, x64]
   # Signing in CI via CSC_LINK / CSC_KEY_PASSWORD; notarize via
   # APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD / APPLE_TEAM_ID (see desktop-release workflow).
   hardenedRuntime: true
