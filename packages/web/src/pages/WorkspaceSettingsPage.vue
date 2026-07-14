@@ -11,6 +11,7 @@ import { useDemo } from '@/composables/queries'
 import { useApiTokens } from '@/composables/useApiTokens'
 import { useBilling } from '@/composables/useBilling'
 import { useOrg } from '@/composables/useOrg'
+import { env } from '@/lib/env'
 
 const labelClass = 'font-mono text-[11px] tracking-wider text-muted-foreground uppercase'
 
@@ -48,6 +49,23 @@ const newTokenName = ref('')
 async function createToken(): Promise<void> {
   if (await createApiToken(newTokenName.value))
     newTokenName.value = ''
+}
+
+// --- MCP server (coding agents) ---
+const mcpConfig = computed(() => JSON.stringify({
+  mcpServers: {
+    kinora: {
+      command: 'npx',
+      args: ['-y', '@kinora/mcp'],
+      env: { KINORA_TOKEN: '<token>', KINORA_URL: env.serverUrl },
+    },
+  },
+}, null, 2))
+const mcpCopied = ref(false)
+async function copyMcp(): Promise<void> {
+  await navigator.clipboard.writeText(mcpConfig.value)
+  mcpCopied.value = true
+  setTimeout(() => (mcpCopied.value = false), 1500)
 }
 
 // --- Plan & billing ---
@@ -303,7 +321,7 @@ function fmtDate(d: Date | string | null | undefined): string {
     <Card>
       <CardHeader>
         <CardTitle>API tokens</CardTitle>
-        <CardDescription>Used as a Bearer token to push reports from the reporter or CLI into this workspace.</CardDescription>
+        <CardDescription>Used as a Bearer token to push reports from the reporter or CLI, and to read this workspace from the MCP server.</CardDescription>
       </CardHeader>
       <CardContent class="flex flex-col gap-5">
         <!-- One-time reveal of a freshly created token -->
@@ -372,6 +390,27 @@ function fmtDate(d: Date | string | null | undefined): string {
             </Button>
           </li>
         </ul>
+      </CardContent>
+    </Card>
+
+    <!-- MCP server for coding agents -->
+    <Card>
+      <CardHeader>
+        <CardTitle>Coding agents (MCP)</CardTitle>
+        <CardDescription>Point Claude Code, Cursor, or any MCP client at this workspace to debug failing tests from your editor. Add this to your agent's MCP config.</CardDescription>
+      </CardHeader>
+      <CardContent class="flex flex-col gap-2.5">
+        <div class="flex items-center justify-between">
+          <span :class="labelClass">mcp config</span>
+          <Button type="button" variant="outline" size="sm" class="font-mono text-xs" @click="copyMcp">
+            <component :is="mcpCopied ? Check : Copy" class="size-3.5" />
+            {{ mcpCopied ? 'Copied' : 'Copy' }}
+          </Button>
+        </div>
+        <pre class="overflow-x-auto rounded-md border border-border/70 bg-background px-4 py-3 font-mono text-xs leading-relaxed"><code>{{ mcpConfig }}</code></pre>
+        <p class="font-mono text-[11px] text-muted-foreground">
+          Runs locally via <code>npx</code>. Replace <code>&lt;token&gt;</code> with an API token from above.
+        </p>
       </CardContent>
     </Card>
   </div>

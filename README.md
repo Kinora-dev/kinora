@@ -85,6 +85,7 @@ Monorepo, fair source: the deployable surface is FSL-1.1-MIT, the client librari
 | [`@kinora/trace-viewer`](packages/trace-viewer) | Vendored Playwright trace engine (Apache-2.0) + our Vue UI               | MIT         |
 | [`@kinora/reporter`](packages/reporter)         | Playwright reporter - auto-uploads on `onEnd`                            | MIT         |
 | [`@kinora/cli`](packages/cli)                   | Manual upload of a `results.json`                                        | MIT         |
+| [`@kinora/mcp`](packages/mcp)                   | MCP server - exposes failures + history to coding agents                 | MIT         |
 | [`@kinora/core`](packages/core)                 | zod contracts + normalize + ingest client (shared)                       | MIT         |
 | [`@kinora/ui`](packages/ui)                     | Shared shadcn-vue design system                                          | MIT         |
 
@@ -122,6 +123,26 @@ npx @kinora/cli upload results.json --project web-app --token <project-token>
 
 The CLI can also bulk-import a backlog of historical reports (`kinora import <dir>`). See [`@kinora/cli`](packages/cli) for all flags and the CI example.
 
+## Debug from your agent (MCP)
+
+Point a coding agent (Claude Code, Cursor, Claude Desktop, and others) at your kinora data with the [`@kinora/mcp`](packages/mcp) server. It runs locally over stdio and pulls the last run's failures - error, `file:line`, and the trace - plus per-test flaky-vs-regression history, so the agent can go straight to the fix.
+
+Add it to your agent's MCP config with a kinora API token:
+
+```json
+{
+  "mcpServers": {
+    "kinora": {
+      "command": "npx",
+      "args": ["-y", "@kinora/mcp"],
+      "env": { "KINORA_TOKEN": "<token>", "KINORA_URL": "https://api.kinora.dev" }
+    }
+  }
+}
+```
+
+`KINORA_URL` defaults to the hosted cloud; set it to your own origin for self-host. See [`@kinora/mcp`](packages/mcp) for the tool list.
+
 ## Development
 
 Run the whole stack locally.
@@ -154,4 +175,4 @@ Run the whole stack with one `docker compose` (Postgres + server + dashboard, si
 
 ## Licensing
 
-kinora is fair source, the deployable product (`server`, `web`) is **FSL-1.1-MIT**, the libraries you embed in your own test suite (`reporter`, `cli`, `core`, `ui`) and the trace viewer are **MIT**. The trace engine under `packages/trace-viewer/src/core` and `src/sw` is vendored from [microsoft/playwright](https://github.com/microsoft/playwright) (Apache-2.0).
+kinora is fair source, the deployable product (`server`, `web`) is **FSL-1.1-MIT**, the client libraries (`reporter`, `cli`, `mcp`, `core`, `ui`) and the trace viewer are **MIT**. The trace engine under `packages/trace-viewer/src/core` and `src/sw` is vendored from [microsoft/playwright](https://github.com/microsoft/playwright) (Apache-2.0).
