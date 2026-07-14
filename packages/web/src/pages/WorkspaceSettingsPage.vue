@@ -11,7 +11,7 @@ import { useDemo } from '@/composables/queries'
 import { useApiTokens } from '@/composables/useApiTokens'
 import { useBilling } from '@/composables/useBilling'
 import { useOrg } from '@/composables/useOrg'
-import { env } from '@/lib/env'
+import { env, isSelfHost } from '@/lib/env'
 
 const labelClass = 'font-mono text-[11px] tracking-wider text-muted-foreground uppercase'
 
@@ -57,7 +57,7 @@ const mcpConfig = computed(() => JSON.stringify({
     kinora: {
       command: 'npx',
       args: ['-y', '@kinora/mcp'],
-      env: { KINORA_TOKEN: '<token>', KINORA_URL: env.serverUrl },
+      env: { KINORA_TOKEN: '<token>', ...(isSelfHost && { KINORA_URL: env.serverUrl }) },
     },
   },
 }, null, 2))

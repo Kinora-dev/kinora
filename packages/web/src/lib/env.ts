@@ -1,3 +1,5 @@
+import { DEFAULT_KINORA_URL } from '@kinora/core'
+
 // Build-time config from VITE_KINORA_* env (see .env.example / docker build args).
 const DEV = import.meta.env.DEV
 
@@ -7,3 +9,5 @@ export const env = {
   viewerBaseUrl: import.meta.env.VITE_KINORA_VIEWER_URL || (DEV ? 'http://localhost:5174/' : '/trace/'),
   sentryDsn: import.meta.env.VITE_KINORA_SENTRY_DSN,
 }
+
+export const isSelfHost = env.serverUrl !== DEFAULT_KINORA_URL

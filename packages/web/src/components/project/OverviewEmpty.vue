@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { DEFAULT_KINORA_URL } from '@kinora/core'
 import { Button } from '@kinora/ui/button'
 import { Input } from '@kinora/ui/input'
 import { Check, Copy, Plus } from 'lucide-vue-next'
@@ -7,7 +6,7 @@ import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import CopyButton from '@/components/app/CopyButton.vue'
 import { useApiTokens } from '@/composables/useApiTokens'
-import { env } from '@/lib/env'
+import { env, isSelfHost } from '@/lib/env'
 
 const { creating, createdKey, copied, create, copyCreatedKey } = useApiTokens({ autoLoad: false })
 const tokenName = ref('ci-github-actions')
@@ -23,9 +22,9 @@ const configSnippet = `export default defineConfig({
   use: { trace: 'on-first-retry' },
 })`
 
-const runSnippet = env.serverUrl === DEFAULT_KINORA_URL
-  ? 'KINORA_TOKEN=<token> npx playwright test'
-  : `KINORA_URL=${env.serverUrl} KINORA_TOKEN=<token> npx playwright test`
+const runSnippet = isSelfHost
+  ? `KINORA_URL=${env.serverUrl} KINORA_TOKEN=<token> npx playwright test`
+  : 'KINORA_TOKEN=<token> npx playwright test'
 </script>
 
 <template>
