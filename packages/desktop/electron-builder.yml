@@ -55,6 +55,7 @@ win:
     - nsis
 
 linux:
+  executableName: kinora
   target:
     - AppImage
 
