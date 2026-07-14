@@ -11,7 +11,8 @@ export const SITE = {
   tagline: 'Playwright test intelligence',
   description:
     'A dashboard for your Playwright tests, across projects and over time, with an embedded trace viewer. Track pass rates, spot trends, surface flaky tests, and open the full trace inline.',
-  contact: 'mailto:contact@kinora.dev?subject=kinora%20enterprise',
+  cal: 'https://cal.com/joris-gallot',
+  email: 'contact@kinora.dev',
 } as const
 
 export const NAV = [

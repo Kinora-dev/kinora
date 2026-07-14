@@ -1,0 +1,100 @@
+---
+import { Calendar, Check, Copy } from '@lucide/astro'
+import SiteFooter from '../components/SiteFooter.astro'
+import SiteHeader from '../components/SiteHeader.astro'
+import Layout from '../layouts/Layout.astro'
+import { SITE } from '../lib/site'
+---
+
+<Layout
+  title="Contact kinora"
+  description="Talk to us about kinora - book a call or send an email, whichever suits you."
+  pathname="/contact"
+>
+  <SiteHeader />
+  <main>
+    <section class="relative overflow-hidden border-b border-border">
+      <div
+        class="app-grid pointer-events-none absolute inset-0 [mask-image:radial-gradient(120%_80%_at_50%_0%,black,transparent)]"
+        aria-hidden="true"
+      >
+      </div>
+      <div class="relative mx-auto max-w-2xl px-5 py-24 text-center sm:px-8 sm:py-32">
+        <p class="reveal font-mono text-xs font-medium uppercase tracking-wider text-signal">
+          [ Contact ]
+        </p>
+        <h1
+          class="reveal mt-4 text-balance text-4xl font-semibold leading-[1.08] tracking-tight sm:text-5xl"
+          style="--reveal-delay: 60ms"
+        >
+          Let's talk.
+        </h1>
+        <p
+          class="reveal mx-auto mt-6 max-w-xl text-pretty text-lg text-muted-foreground"
+          style="--reveal-delay: 140ms"
+        >
+          Questions about self-hosting, enterprise, or kinora in general? Book a
+          call or drop an email, whichever suits you.
+        </p>
+
+        <div
+          class="reveal mt-9 flex flex-col items-center gap-4"
+          style="--reveal-delay: 220ms"
+        >
+          <a
+            href={SITE.cal}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-umami-event="contact-book-call"
+            class="inline-flex h-11 items-center gap-2 rounded-md bg-signal px-6 font-mono text-sm font-semibold text-background transition-opacity hover:opacity-90"
+          >
+            <Calendar class="size-4" aria-hidden="true" />
+            Book a call
+          </a>
+
+          <div class="flex flex-col items-center gap-2">
+            <span class="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+              or email
+            </span>
+            <div
+              data-copy-root
+              data-copy={SITE.email}
+              class="inline-flex h-11 items-center gap-3 rounded-md border border-border bg-card/60 pl-4 pr-2 font-mono text-sm"
+            >
+              <span>{SITE.email}</span>
+              <button
+                type="button"
+                data-copy-btn
+                data-umami-event="contact-email"
+                aria-label="Copy email address"
+                class="grid size-7 place-items-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <Copy class="size-3.5 [[data-copied]_&]:hidden" aria-hidden="true" />
+                <Check class="hidden size-3.5 text-pass [[data-copied]_&]:block" aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <SiteFooter />
+
+  <script is:inline>
+    document.querySelectorAll('[data-copy-root]').forEach((root) => {
+      if (root.dataset.copyBound)
+        return
+      root.dataset.copyBound = '1'
+      const btn = root.querySelector('[data-copy-btn]')
+      const text = root.getAttribute('data-copy') ?? ''
+      btn?.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(text)
+          btn.setAttribute('data-copied', '')
+          setTimeout(() => btn.removeAttribute('data-copied'), 1600)
+        }
+        catch {}
+      })
+    })
+  </script>
+</Layout>
