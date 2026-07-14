@@ -52,11 +52,13 @@ dmg:
       path: /Applications
 
 win:
+  artifactName: ${productName}-Setup-${version}-${arch}.${ext}
   target:
     - nsis
 
 linux:
   executableName: kinora
+  artifactName: ${productName}-${version}-${arch}.${ext}
   target:
     - AppImage
 
