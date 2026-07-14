@@ -63,7 +63,7 @@ export class IngestError extends Error {
 }
 
 // Prefer the server's JSON `error` field (human-readable, e.g. plan-limit messages).
-async function toIngestError(res: Response, fallback: string): Promise<IngestError> {
+export async function toIngestError(res: Response, fallback: string): Promise<IngestError> {
   const text = await res.text()
   let message = text || fallback
   try {

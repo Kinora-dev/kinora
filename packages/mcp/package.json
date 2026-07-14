@@ -1,0 +1,55 @@
+{
+  "name": "@kinora/mcp",
+  "type": "module",
+  "version": "0.1.0",
+  "description": "MCP server exposing kinora Playwright test failures and history to coding agents",
+  "author": "Joris Gallot",
+  "license": "MIT",
+  "homepage": "https://github.com/joris-gallot/kinora#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joris-gallot/kinora.git",
+    "directory": "packages/mcp"
+  },
+  "bugs": "https://github.com/joris-gallot/kinora/issues",
+  "keywords": [
+    "playwright",
+    "test-report",
+    "flaky-tests",
+    "ci",
+    "dashboard",
+    "mcp",
+    "model-context-protocol"
+  ],
+  "bin": {
+    "kinora-mcp": "./dist/mcp.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --coverage",
+    "prepublishOnly": "tsdown"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.20.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@kinora/core": "workspace:*",
+    "@types/node": "^26.0.0",
+    "@vitest/coverage-v8": "^4.1.9",
+    "tsdown": "^0.22.3",
+    "tsx": "^4.22.4",
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.9"
+  }
+}

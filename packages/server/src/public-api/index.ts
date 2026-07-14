@@ -18,6 +18,7 @@ import { env } from '../lib/env'
 import { logger } from '../lib/logger'
 import { sendMail } from '../lib/mailer'
 import { storage } from '../lib/storage'
+import { registerReadRoutes } from './read'
 
 const BEARER_PREFIX = 'Bearer '
 const INGEST_MAX_JSON_MB = 25
@@ -41,6 +42,9 @@ publicApi.use('*', async (c, next) => {
   c.set('orgId', verification.key.referenceId)
   await next()
 })
+
+// GET read routes (MCP server / API-key clients): registered after auth so they inherit the Bearer check.
+registerReadRoutes(publicApi)
 
 // A run report is JSON; cap it well below the trace.zip artifact limit so a huge body can't OOM the parse.
 const ingestJsonLimit = bodyLimit({
