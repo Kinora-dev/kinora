@@ -40,8 +40,7 @@ const tools = [
         <p
           class="mt-5 text-pretty text-base leading-relaxed text-muted-foreground"
         >
-          Copy-paste was step one. Point <span class="font-medium text-foreground"
-            >Claude Code</span
+          Copy-paste was step one. Point <span class="font-medium text-foreground">Claude Code</span
           >, <span class="font-medium text-foreground">Cursor</span> or any MCP
           client at kinora and it pulls the failing test, its trace and flaky
           history <span class="font-medium text-foreground">straight into the
@@ -69,7 +68,7 @@ const tools = [
           class="flex flex-col divide-y divide-border/60 overflow-hidden rounded-lg border border-border bg-card/40"
         >
           {
-            tools.map((t) => (
+            tools.map(t => (
               <li class="flex flex-col gap-0.5 px-4 py-3 sm:flex-row sm:items-baseline sm:gap-3">
                 <code class="shrink-0 font-mono text-[13px] font-medium text-signal">
                   {t.name}
