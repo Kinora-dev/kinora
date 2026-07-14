@@ -33,6 +33,7 @@ mac:
   entitlementsInherit: build/entitlements.mac.inherit.plist
 
 dmg:
+  artifactName: ${productName}-${version}-${arch}.${ext}
   title: kinora ${version}
   icon: build/icon.icns
   background: build/dmg-background.png
