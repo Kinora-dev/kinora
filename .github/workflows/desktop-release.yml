@@ -13,8 +13,35 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release-mac:
-    runs-on: macos-latest
+  # Pre-create the draft once so the concurrent matrix jobs upload into it
+  # instead of racing to create it.
+  draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Ensure draft release exists
+        working-directory: packages/desktop
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
+            || gh release create "v$VERSION" --repo "$GITHUB_REPOSITORY" --draft --title "v$VERSION" --notes "kinora desktop v$VERSION"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release:
+    needs: draft
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: mac
+          - os: windows-latest
+            platform: win
+          - os: ubuntu-latest
+            platform: linux
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -29,6 +56,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Build trace viewer + desktop
+        shell: bash
         run: |
           pnpm --filter @kinora/trace-viewer build
           pnpm --filter @kinora/desktop build
@@ -39,24 +67,15 @@ jobs:
           # Bundled trace viewer reports to the desktop project (public DSN, same as config.ts).
           VITE_KINORA_SENTRY_DSN: https://c310f2e5a017909d63b1977ea90149a9@o1155685.ingest.us.sentry.io/4511622840451072
 
-      # Pre-create the draft so electron-builder's concurrent uploads all find it,
-      # instead of racing to create it
-      - name: Ensure draft release exists
-        working-directory: packages/desktop
-        run: |
-          VERSION="$(node -p "require('./package.json').version")"
-          gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
-            || gh release create "v$VERSION" --repo "$GITHUB_REPOSITORY" --draft --title "v$VERSION" --notes "kinora desktop v$VERSION"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Package, sign, notarize, publish
         working-directory: packages/desktop
-        run: pnpm exec electron-builder --mac --publish always
+        run: pnpm exec electron-builder --${{ matrix.platform }} --publish always
         env:
-          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # mac-only signing/notarization; empty elsewhere so electron-builder ships
+          # win/linux unsigned (no code-signing cert yet).
+          CSC_LINK: ${{ matrix.platform == 'mac' && secrets.MAC_CSC_LINK || '' }}
+          CSC_KEY_PASSWORD: ${{ matrix.platform == 'mac' && secrets.MAC_CSC_KEY_PASSWORD || '' }}
+          APPLE_ID: ${{ matrix.platform == 'mac' && secrets.APPLE_ID || '' }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ matrix.platform == 'mac' && secrets.APPLE_APP_SPECIFIC_PASSWORD || '' }}
+          APPLE_TEAM_ID: ${{ matrix.platform == 'mac' && secrets.APPLE_TEAM_ID || '' }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
