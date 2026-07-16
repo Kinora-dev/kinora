@@ -26,6 +26,7 @@ export function getStaticPaths() {
 }
 
 const { s } = Astro.props
+const site = Astro.site ?? new URL(SITE.url)
 
 const SHOTS: Record<ShotKey, { light: ImageMetadata, dark: ImageMetadata, label: string }> = {
   'overview': { light: overviewLight, dark: overviewDark, label: 'kinora.dev/overview' },
@@ -44,6 +45,15 @@ const faqSchema = {
     'name': f.q,
     'acceptedAnswer': { '@type': 'Answer', 'text': f.a },
   })),
+}
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  'itemListElement': [
+    { '@type': 'ListItem', 'position': 1, 'name': 'kinora', 'item': site.toString() },
+    { '@type': 'ListItem', 'position': 2, 'name': s.h1, 'item': new URL(`/${s.slug}`, site).toString() },
+  ],
 }
 
 const related = SOLUTIONS.filter(o => o.slug !== s.slug)
@@ -190,4 +200,5 @@ const related = SOLUTIONS.filter(o => o.slug !== s.slug)
   <SiteFooter />
 
   <script is:inline type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
 </Layout>

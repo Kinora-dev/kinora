@@ -1,4 +1,20 @@
-# kinora
+import type { APIRoute } from 'astro'
+import { COMPARISONS } from '../data/comparisons'
+import { SOLUTIONS } from '../data/solutions'
+import { SITE } from '../lib/site'
+
+export const GET: APIRoute = () => {
+  const url = SITE.url
+
+  const useCases = SOLUTIONS.map(
+    s => `- [${s.h1}](${url}/${s.slug}): ${s.tldr}`,
+  ).join('\n')
+
+  const comparisons = COMPARISONS.map(
+    c => `- [kinora vs ${c.themShort}](${url}/vs/${c.slug}): ${c.tldr}`,
+  ).join('\n')
+
+  const body = `# kinora
 
 > kinora is an open-source dashboard for Playwright test reports across projects and over time, with an embedded trace viewer. CI runs push their results to kinora; it tracks pass rates, trends, and flaky tests, and opens the full Playwright trace inline for any failure.
 
@@ -7,12 +23,18 @@ Playwright ships a great HTML report for a single run on one machine. kinora sit
 kinora runs two ways: self-host the full dashboard and trace viewer for free (FSL-1.1 license, single-origin Docker Compose bundle, no account), or use the hosted cloud (free tier plus paid plans). It is CI-agnostic: results are pushed either through the @kinora/reporter or the kinora CLI, over a plain REST ingest API authed by an API key, so any CI provider or a curl command works.
 
 ## Links
-- [Home](https://kinora.dev): product overview, features, pricing, setup
-- [Live demo](https://demo.kinora.dev): the dashboard with seeded data
-- [App](https://app.kinora.dev): sign up / log in to the cloud
-- [GitHub](https://github.com/Kinora-dev/kinora): source code, issues, releases
-- [Self-host guide](https://github.com/Kinora-dev/kinora/tree/main/selfhost): Docker Compose bundle
-- [Desktop app](https://github.com/Kinora-dev/kinora/releases/latest): local trace viewer + account dashboard
+- [Home](${url}): product overview, features, pricing, setup
+- [Live demo](${SITE.demo}): the dashboard with seeded data
+- [App](${SITE.app}): sign up / log in to the cloud
+- [GitHub](${SITE.repo}): source code, issues, releases
+- [Self-host guide](${SITE.selfhost}): Docker Compose bundle
+- [Desktop app](${SITE.download}): local trace viewer + account dashboard
+
+## Use cases
+${useCases}
+
+## Comparisons
+${comparisons}
 
 ## Key facts
 - License: FSL-1.1-MIT. Server, web, and desktop are FSL-1.1 (source-available, converts to MIT after 2 years); the embeddable libraries (reporter, CLI, core, ui) and the trace viewer are MIT.
@@ -21,3 +43,7 @@ kinora runs two ways: self-host the full dashboard and trace viewer for free (FS
 - Alerts: per-project notifications on new failures and regressions via Slack, email, and webhook.
 - Desktop: an Electron app that is a local Playwright trace viewer (no account) plus an account dashboard; it can re-run a failing test locally with your repo's own Playwright and open the resulting trace inline.
 - Pricing: self-host is free forever. Cloud has a free tier (2,500 test results/month, 1 project, 7-day retention) and paid plans from $49/month billed by test results, with unlimited seats on every plan.
+`
+
+  return new Response(body, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } })
+}
