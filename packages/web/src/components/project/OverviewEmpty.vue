@@ -16,6 +16,16 @@ async function generate(): Promise<void> {
     tokenName.value = ''
 }
 
+const mode = ref<'ai' | 'manual'>('ai')
+
+const setupDocUrl = 'https://kinora.dev/llms/setup.md'
+const aiPrompt = [
+  'Set up kinora Playwright reporting in this repository.',
+  `Read ${setupDocUrl} and follow it.`,
+  ...(isSelfHost ? [`My kinora server is at ${env.serverUrl}; set KINORA_URL to it.`] : []),
+  'I have created a kinora API token and will add it as KINORA_TOKEN to my CI secrets (and a local .env if I run the suite locally). Do not hardcode it.',
+].join('\n\n')
+
 const configSnippet = `export default defineConfig({
   reporter: [['@kinora/reporter', { project: { slug: 'web-app' } }]],
   // enable tracing so View trace works
@@ -49,8 +59,28 @@ const runSnippet = isSelfHost
         Push a Playwright run and pass rates, flaky tests, trends, and full traces land here.
       </p>
 
+      <!-- Setup-path toggle -->
+      <div class="mt-6 inline-flex rounded-md border border-border p-0.5">
+        <button
+          type="button"
+          class="rounded px-3 py-1 text-xs font-medium transition-colors"
+          :class="mode === 'ai' ? 'bg-signal/10 text-signal' : 'text-muted-foreground hover:text-foreground'"
+          @click="mode = 'ai'"
+        >
+          With an AI agent
+        </button>
+        <button
+          type="button"
+          class="rounded px-3 py-1 text-xs font-medium transition-colors"
+          :class="mode === 'manual' ? 'bg-signal/10 text-signal' : 'text-muted-foreground hover:text-foreground'"
+          @click="mode = 'manual'"
+        >
+          Manually
+        </button>
+      </div>
+
       <!-- Onboarding steps -->
-      <ol class="mt-7 flex flex-col gap-6">
+      <ol class="mt-5 flex flex-col gap-6">
         <li class="flex gap-4">
           <span class="flex size-7 shrink-0 items-center justify-center rounded-md border border-signal/30 bg-signal/10 font-mono text-xs font-medium text-signal">
             01
@@ -91,7 +121,32 @@ const runSnippet = isSelfHost
           </div>
         </li>
 
-        <li class="flex gap-4">
+        <!-- AI path -->
+        <li v-if="mode === 'ai'" class="flex gap-4">
+          <span class="flex size-7 shrink-0 items-center justify-center rounded-md border border-signal/30 bg-signal/10 font-mono text-xs font-medium text-signal">
+            02
+          </span>
+          <div class="min-w-0 flex-1 pt-1">
+            <p class="text-sm">
+              Paste this into your coding agent (Claude Code, Cursor, Copilot, …). It reads the setup doc and configures the reporter for you.
+            </p>
+            <div class="mt-2 overflow-hidden rounded-md border border-border bg-background/60">
+              <div class="border-b border-border/80 px-3 py-1.5 font-mono text-[10px] text-muted-foreground">
+                Prompt
+              </div>
+              <div class="relative">
+                <pre class="overflow-x-auto py-2.5 pr-10 pl-3 font-mono text-xs leading-relaxed whitespace-pre-wrap text-muted-foreground">{{ aiPrompt }}</pre>
+                <CopyButton :text="aiPrompt" class="absolute top-1.5 right-1.5" />
+              </div>
+            </div>
+            <p class="mt-2 text-xs text-muted-foreground">
+              Keep the token above out of the prompt - the agent tells you to add it to your secrets.
+            </p>
+          </div>
+        </li>
+
+        <!-- Manual path -->
+        <li v-if="mode === 'manual'" class="flex gap-4">
           <span class="flex size-7 shrink-0 items-center justify-center rounded-md border border-signal/30 bg-signal/10 font-mono text-xs font-medium text-signal">
             02
           </span>
@@ -111,7 +166,7 @@ const runSnippet = isSelfHost
           </div>
         </li>
 
-        <li class="flex gap-4">
+        <li v-if="mode === 'manual'" class="flex gap-4">
           <span class="flex size-7 shrink-0 items-center justify-center rounded-md border border-signal/30 bg-signal/10 font-mono text-xs font-medium text-signal">
             03
           </span>
