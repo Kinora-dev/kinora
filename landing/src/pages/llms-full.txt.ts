@@ -1,20 +1,63 @@
 import type { APIRoute } from 'astro'
+import type { CompRow } from '../data/comparisons'
 import { COMPARISONS } from '../data/comparisons'
+import { HOME_FAQS } from '../data/faq'
 import { SOLUTIONS } from '../data/solutions'
 import { SITE } from '../lib/site'
+
+function cell(v: CompRow['kinora']): string {
+  if (v === true)
+    return 'Yes'
+  if (v === false)
+    return 'No'
+  return v
+}
+
+function faqBlock(faqs: { q: string, a: string }[]): string {
+  return faqs.map(f => `**${f.q}**\n${f.a}`).join('\n\n')
+}
 
 export const GET: APIRoute = () => {
   const url = SITE.url
 
-  const useCases = SOLUTIONS.map(
-    s => `- [${s.h1}](${url}/${s.slug}): ${s.tldr}`,
-  ).join('\n')
+  const solutions = SOLUTIONS.map((s) => {
+    const points = s.points.map(p => `- ${p.title}: ${p.body}`).join('\n')
+    return `### ${s.h1}
+${url}/${s.slug}
 
-  const comparisons = COMPARISONS.map(
-    c => `- [kinora vs ${c.themShort}](${url}/vs/${c.slug}): ${c.tldr}`,
-  ).join('\n')
+${s.intro}
 
-  const body = `# kinora
+${points}
+
+${faqBlock(s.faqs)}`
+  }).join('\n\n---\n\n')
+
+  const comparisons = COMPARISONS.map((c) => {
+    const rows = c.rows.map(r => `- ${r.label}: kinora = ${cell(r.kinora)}; ${c.themShort} = ${cell(r.them)}`).join('\n')
+    const chooseKinora = c.chooseKinora.map(i => `- ${i}`).join('\n')
+    const chooseThem = c.chooseThem.map(i => `- ${i}`).join('\n')
+    return `### kinora vs ${c.themShort}
+${url}/vs/${c.slug}
+
+${c.intro}
+
+kinora: ${c.kinoraIs}
+
+${c.themShort}: ${c.themIs}
+
+Feature by feature:
+${rows}
+
+Choose kinora when:
+${chooseKinora}
+
+${c.chooseThemLabel}:
+${chooseThem}
+
+${faqBlock(c.faqs)}`
+  }).join('\n\n---\n\n')
+
+  const body = `# kinora - full content
 
 > kinora is an open-source dashboard for Playwright test reports across projects and over time, with an embedded trace viewer. CI runs push their results to kinora; it tracks pass rates, trends, and flaky tests, and opens the full Playwright trace inline for any failure.
 
@@ -23,18 +66,23 @@ Playwright ships a great HTML report for a single run on one machine. kinora sit
 kinora runs two ways: self-host the full dashboard and trace viewer for free (FSL-1.1 license, single-origin Docker Compose bundle, no account), or use the hosted cloud (free tier plus paid plans). It is CI-agnostic: results are pushed either through the @kinora/reporter or the kinora CLI, over a plain REST ingest API authed by an API key, so any CI provider or a curl command works.
 
 ## Links
-- [Home](${url}): product overview, features, pricing, setup
-- [Live demo](${SITE.demo}): the dashboard with seeded data
-- [App](${SITE.app}): sign up / log in to the cloud
-- [GitHub](${SITE.repo}): source code, issues, releases
-- [Self-host guide](${SITE.selfhost}): Docker Compose bundle
-- [Desktop app](${SITE.download}): local trace viewer + account dashboard
-- [Full text](${url}/llms-full.txt): every use case, comparison, and FAQ in one file
+- Home: ${url}
+- Live demo: ${SITE.demo}
+- App (sign up / log in): ${SITE.app}
+- GitHub: ${SITE.repo}
+- Self-host guide: ${SITE.selfhost}
+- Desktop app: ${SITE.download}
+
+## Product FAQ
+
+${faqBlock(HOME_FAQS)}
 
 ## Use cases
-${useCases}
+
+${solutions}
 
 ## Comparisons
+
 ${comparisons}
 
 ## Key facts
