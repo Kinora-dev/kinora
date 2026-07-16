@@ -13,7 +13,7 @@ import Wordmark from './Wordmark.astro';
       <Wordmark size="sm" />
     </a>
 
-    <nav class="ml-6 hidden items-center gap-1 md:flex">
+    <nav class="ml-6 hidden items-center gap-1 lg:flex">
       {
         NAV.map(item => (
           <a
@@ -66,7 +66,7 @@ import Wordmark from './Wordmark.astro';
         aria-label="Open menu"
         aria-controls="mobile-nav"
         aria-expanded="false"
-        class="group grid size-9 place-items-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden"
+        class="group grid size-9 place-items-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:hidden"
       >
         <Menu class="size-4 group-aria-expanded:hidden" aria-hidden="true" />
         <X class="hidden size-4 group-aria-expanded:block" aria-hidden="true" />
@@ -78,7 +78,7 @@ import Wordmark from './Wordmark.astro';
     id="mobile-nav"
     hidden
     aria-label="Mobile"
-    class="border-t border-border/80 bg-background px-5 py-3 md:hidden"
+    class="border-t border-border/80 bg-background px-5 py-3 lg:hidden"
   >
     <div class="flex flex-col gap-1">
       {
