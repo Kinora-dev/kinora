@@ -29,6 +29,7 @@ kinora runs two ways: self-host the full dashboard and trace viewer for free (FS
 - [GitHub](${SITE.repo}): source code, issues, releases
 - [Self-host guide](${SITE.selfhost}): Docker Compose bundle
 - [Desktop app](${SITE.download}): local trace viewer + account dashboard
+- [Agent setup](${url}/llms/setup.md): paste-and-go Playwright reporting setup for coding agents
 - [Full text](${url}/llms-full.txt): every use case, comparison, and FAQ in one file
 
 ## Use cases
