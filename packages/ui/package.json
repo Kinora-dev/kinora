@@ -26,6 +26,8 @@
     "@kinora/core": "workspace:*",
     "@lucide/vue": "^1.21.0",
     "@tanstack/vue-table": "^8.21.3",
+    "@unovis/ts": "^1.6.7",
+    "@unovis/vue": "^1.6.7",
     "@vueuse/core": "^14.3.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

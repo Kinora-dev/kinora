@@ -33,4 +33,6 @@ allowBuilds:
   electron: true
   electron-winstaller: false
   esbuild: true
+  # Transitive via @unovis (maps); kinora only uses XY charts, so skip its native build.
+  maplibre-gl: false
   vue-demi: true

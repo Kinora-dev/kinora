@@ -43,7 +43,7 @@ function tierForProduct(productId: string | undefined): 'free' | 'team' | 'pro' 
   return 'free'
 }
 
-function isActivePaid(tier: Tier, status: string | null | undefined): boolean {
+export function isActivePaid(tier: Tier, status: string | null | undefined): boolean {
   return tier !== 'free' && (status === 'active' || status === 'trialing')
 }
 

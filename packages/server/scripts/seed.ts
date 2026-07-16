@@ -17,6 +17,10 @@ const EMAIL = 'demo@kinora.dev'
 const PASSWORD = 'password123'
 const NAME = 'Demo User'
 
+// Platform-admin account for the operator analytics dashboard (/admin, cloud-only).
+const ADMIN_EMAIL = 'admin@kinora.dev'
+const ADMIN_NAME = 'Kinora Admin'
+
 // A second workspace the demo user is a member of, so the org switcher has two entries.
 const MATE_EMAIL = 'teammate@kinora.dev'
 const MATE_NAME = 'Acme QA'
@@ -237,10 +241,15 @@ async function main(): Promise<void> {
   await seedProjects(mateOrgId, PROJECTS.slice(1, 2), failTrace, passTrace)
   await ensureMembership(mateOrgId, userId, 'member')
 
+  // Global admin: own account with the platform-admin role, so /admin is reachable on cloud.
+  const adminId = await ensureUser(ADMIN_EMAIL, ADMIN_NAME)
+  await db.update(userTable).set({ role: 'admin' }).where(eq(userTable.id, adminId))
+
   logger.info('-'.repeat(40))
   logger.info(`Login:     ${EMAIL} / ${PASSWORD}`)
   logger.info(`API token: ${apiKey.key}`)
   logger.info(`Switcher:  ${EMAIL} is also a member of ${MATE_NAME}'s workspace`)
+  logger.info(`Admin:     ${ADMIN_EMAIL} / ${PASSWORD} (platform-admin role)`)
   logger.info('-'.repeat(40))
   process.exit(0)
 }

@@ -4,7 +4,7 @@ import { initTRPC, TRPCError } from '@trpc/server'
 import { and, eq } from 'drizzle-orm'
 import { db } from '../db'
 import { member } from '../db/schemas/index'
-import { demo } from '../lib/env'
+import { cloud, demo } from '../lib/env'
 import { logger } from '../lib/logger'
 
 export const t = initTRPC.context<Context>().create()
@@ -54,4 +54,13 @@ export const adminProcedure = orgProcedure.use(async (opts) => {
   if (row?.role !== 'owner' && row?.role !== 'admin')
     throw new TRPCError({ code: 'FORBIDDEN', message: 'Requires an admin role' })
   return opts.next()
+})
+
+// Cross-org operator analytics. Distinct from adminProcedure (org member role)
+export const platformAdminProcedure = authProcedure.use(async (opts) => {
+  if (!cloud)
+    throw new TRPCError({ code: 'NOT_FOUND' })
+  if (opts.ctx.user.role !== 'admin')
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Requires platform admin' })
+  return opts.next({ ctx: { user: opts.ctx.user } })
 })

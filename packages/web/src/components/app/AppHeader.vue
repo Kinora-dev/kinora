@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Avatar, AvatarFallback, AvatarImage } from '@kinora/ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@kinora/ui/dropdown-menu'
-import { Check, ChevronsUpDown, LogOut, MessageSquarePlus, MonitorDown, Settings, SlidersHorizontal } from 'lucide-vue-next'
+import { Check, ChevronsUpDown, Gauge, LogOut, MessageSquarePlus, MonitorDown, Settings, SlidersHorizontal } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useServerConfig } from '@/composables/queries'
@@ -16,6 +16,8 @@ const user = session.user
 const { state: serverConfig } = useServerConfig()
 const feedbackEnabled = computed(() => serverConfig.value?.feedbackEnabled ?? false)
 const feedbackOpen = ref(false)
+
+const isAdmin = computed(() => (serverConfig.value?.adminEnabled ?? false) && user.value?.role === 'admin')
 
 const { orgs, org, setActive } = useOrg()
 const activeOrgId = computed(() => org.value?.id)
@@ -101,6 +103,12 @@ async function signOut(): Promise<void> {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem v-if="isAdmin" as-child>
+              <RouterLink :to="{ name: 'admin' }">
+                <Gauge class="size-4" />
+                Admin
+              </RouterLink>
+            </DropdownMenuItem>
             <DropdownMenuItem as-child>
               <RouterLink :to="{ name: 'settings-account' }">
                 <Settings class="size-4" />

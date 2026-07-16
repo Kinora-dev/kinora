@@ -41,3 +41,15 @@ export function useCompareRuns(projectId: string, baseRunId: string, headRunId: 
     { immediate: true },
   )
 }
+
+export function useAdminOverview() {
+  return useAsyncState(() => trpc.admin.overview.query(), null, { immediate: true })
+}
+
+export function useAdminTimeseries() {
+  return useAsyncState(() => trpc.admin.timeseries.query(), { signups: [], runs: [] }, { immediate: true })
+}
+
+export function useAdminAccounts() {
+  return useAsyncState(() => trpc.admin.accounts.query(), [], { immediate: true })
+}

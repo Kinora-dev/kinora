@@ -17,7 +17,7 @@ describe('user.me', () => {
     expect(me?.id).toBe(u.id)
     expect(me?.hasPassword).toBe(true) // created via email/password signup
     expect(me).not.toHaveProperty('mailerEnabled') // server caps moved to config.get
-    expect(me).not.toHaveProperty('role') // admin-plugin internals not exposed
+    expect(me?.role).toBe('user') // exposed for the platform-admin gate; 'user' (not 'admin') for non-admins
   })
 })
 

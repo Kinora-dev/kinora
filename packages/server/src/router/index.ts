@@ -1,4 +1,5 @@
 import { router } from '../trpc/index'
+import { adminRouter } from './admin'
 import { alertsRouter } from './alerts'
 import { billingRouter } from './billing'
 import { configRouter } from './config'
@@ -17,6 +18,7 @@ export const appRouter = router({
   project: projectRouter,
   tokens: tokenRouter,
   feedback: feedbackRouter,
+  admin: adminRouter,
 })
 
 export type AppRouter = typeof appRouter

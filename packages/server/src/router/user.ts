@@ -13,7 +13,7 @@ export const userRouter = router({
       columns: { id: true },
     })
 
-    const { id, email, name, image, emailVerified } = ctx.user
-    return { id, email, name, image, emailVerified, hasPassword: !!credential }
+    const { id, email, name, image, emailVerified, role } = ctx.user
+    return { id, email, name, image, emailVerified, role: role ?? null, hasPassword: !!credential }
   }),
 })

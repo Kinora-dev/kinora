@@ -1,4 +1,6 @@
+import { until } from '@vueuse/core'
 import { createRouter, createWebHistory } from 'vue-router'
+import { useServerConfig } from '@/composables/queries'
 import { session } from '@/lib/session'
 
 export const router = createRouter({
@@ -64,6 +66,7 @@ export const router = createRouter({
       component: () => import('@/pages/TestHistoryPage.vue'),
       props: true,
     },
+    { path: '/admin', name: 'admin', component: () => import('@/pages/AdminPage.vue'), meta: { admin: true } },
     { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/pages/NotFoundPage.vue') },
   ],
   scrollBehavior: () => ({ top: 0 }),
@@ -84,4 +87,12 @@ router.beforeEach(async (to) => {
   }
   if (authed && to.meta.public)
     return { name: 'overview' }
+  // Platform-admin page: cloud deployment + global admin role, matching the nav gate. Others bounce.
+  if (to.meta.admin) {
+    // isLoading settles on success or error; isReady never flips on a failed config fetch.
+    const { state: config, isLoading } = useServerConfig()
+    await until(isLoading).toBe(false)
+    if (!config.value?.adminEnabled || session.user.value?.role !== 'admin')
+      return { name: 'overview' }
+  }
 })

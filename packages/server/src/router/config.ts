@@ -1,4 +1,4 @@
-import { demo, githubOauthEnabled, googleOauthEnabled, slackApp } from '../lib/env'
+import { cloud, demo, githubOauthEnabled, googleOauthEnabled, slackApp } from '../lib/env'
 import { mailerEnabled } from '../lib/mailer'
 import { feedbackEnabled } from '../lib/stowline'
 import { publicProcedure, router } from '../trpc/index'
@@ -17,5 +17,7 @@ export const configRouter = router({
     demo,
     // Stowline configured (cloud)? front shows the "Send feedback" entry.
     feedbackEnabled,
+    // Cloud deployment? front shows the platform-admin nav entry to admin-role users.
+    adminEnabled: cloud !== null,
   })),
 })
