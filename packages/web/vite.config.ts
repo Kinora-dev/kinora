@@ -20,6 +20,7 @@ export default defineConfig({
         VITE_KINORA_VIEWER_URL: z.string().optional(),
         VITE_KINORA_CLOUD: z.string().optional(),
         VITE_KINORA_SENTRY_DSN: z.string().optional(),
+        VITE_UMAMI_WEBSITE_ID: z.string().optional(),
       },
     }),
     vue(),

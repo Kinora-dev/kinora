@@ -11,6 +11,7 @@ interface ImportMetaEnv {
   readonly VITE_KINORA_VIEWER_URL?: string
   readonly VITE_KINORA_CLOUD?: string
   readonly VITE_KINORA_SENTRY_DSN?: string
+  readonly VITE_UMAMI_WEBSITE_ID?: string
 }
 
 interface ImportMeta {

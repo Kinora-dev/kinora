@@ -16,6 +16,10 @@ ENV VITE_KINORA_CLOUD=$VITE_KINORA_CLOUD
 ARG VITE_KINORA_SENTRY_DSN
 ENV VITE_KINORA_SENTRY_DSN=$VITE_KINORA_SENTRY_DSN
 
+# Umami analytics (this app's own site). Only the cloud deploy passes it; self-host omits it.
+ARG VITE_UMAMI_WEBSITE_ID
+ENV VITE_UMAMI_WEBSITE_ID=$VITE_UMAMI_WEBSITE_ID
+
 # Source-map upload (cloud only): org/project are non-secret; the auth token comes via a
 # BuildKit secret so it never lands in an image layer. Absent token = upload skipped.
 ARG SENTRY_ORG

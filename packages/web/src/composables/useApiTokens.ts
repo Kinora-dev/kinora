@@ -1,5 +1,6 @@
 import { onMounted, ref } from 'vue'
 import { toast } from 'vue-sonner'
+import { track } from '@/lib/analytics'
 import { trpc } from '@/lib/trpc'
 
 export type ApiKey = Awaited<ReturnType<typeof trpc.tokens.list.query>>[number]
@@ -33,6 +34,7 @@ export function useApiTokens(options?: { autoLoad?: boolean }) {
     try {
       const { key } = await trpc.tokens.create.mutate({ name: trimmed })
       createdKey.value = key
+      track('token-generated')
       await load()
       return true
     }

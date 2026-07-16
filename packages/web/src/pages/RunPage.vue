@@ -261,6 +261,7 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
               :href="traceViewerHref(t.attachments)"
               target="_blank"
               rel="noopener"
+              data-umami-event="view-trace"
               class="inline-flex items-center gap-1 rounded border border-signal/40 bg-signal/10 px-2 py-0.5 text-[11px] font-medium text-signal transition-colors hover:bg-signal/20"
             >
               <Film class="size-3" />View trace

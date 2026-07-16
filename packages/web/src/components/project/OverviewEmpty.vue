@@ -136,7 +136,7 @@ const runSnippet = isSelfHost
               </div>
               <div class="relative">
                 <pre class="overflow-x-auto py-2.5 pr-10 pl-3 font-mono text-xs leading-relaxed whitespace-pre-wrap text-muted-foreground">{{ aiPrompt }}</pre>
-                <CopyButton :text="aiPrompt" class="absolute top-1.5 right-1.5" />
+                <CopyButton :text="aiPrompt" data-umami-event="onboarding-copy" data-umami-event-path="ai" class="absolute top-1.5 right-1.5" />
               </div>
             </div>
             <p class="mt-2 text-xs text-muted-foreground">
@@ -160,7 +160,7 @@ const runSnippet = isSelfHost
               </div>
               <div class="relative">
                 <pre class="overflow-x-auto py-2.5 pr-10 pl-3 font-mono text-xs leading-relaxed text-muted-foreground">{{ configSnippet }}</pre>
-                <CopyButton :text="configSnippet" class="absolute top-1.5 right-1.5" />
+                <CopyButton :text="configSnippet" data-umami-event="onboarding-copy" data-umami-event-path="config" class="absolute top-1.5 right-1.5" />
               </div>
             </div>
           </div>
@@ -180,7 +180,7 @@ const runSnippet = isSelfHost
               </div>
               <div class="relative">
                 <pre class="overflow-x-auto py-2.5 pr-10 pl-3 font-mono text-xs leading-relaxed text-muted-foreground">{{ runSnippet }}</pre>
-                <CopyButton :text="runSnippet" class="absolute top-1.5 right-1.5" />
+                <CopyButton :text="runSnippet" data-umami-event="onboarding-copy" data-umami-event-path="run" class="absolute top-1.5 right-1.5" />
               </div>
             </div>
           </div>

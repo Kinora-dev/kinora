@@ -1,6 +1,7 @@
 import { useAsyncState } from '@vueuse/core'
 import { ref } from 'vue'
 import { toast } from 'vue-sonner'
+import { track } from '@/lib/analytics'
 import { authClient } from '@/lib/auth'
 import { trpc } from '@/lib/trpc'
 
@@ -16,6 +17,7 @@ export function useBilling() {
 
   async function checkout(slug: 'team' | 'pro'): Promise<void> {
     pending.value = slug
+    track('upgrade-click', { plan: slug })
     try {
       const { error } = await authClient.checkout({ slug })
       if (error)

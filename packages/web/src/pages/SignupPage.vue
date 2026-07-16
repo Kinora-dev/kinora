@@ -9,6 +9,7 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { z } from 'zod'
 import AuthLayout from '@/components/auth/AuthLayout.vue'
 import SocialButtons from '@/components/auth/SocialButtons.vue'
+import { track } from '@/lib/analytics'
 import { authClient } from '@/lib/auth'
 import { session } from '@/lib/session'
 
@@ -49,6 +50,7 @@ const onSubmit = handleSubmit(async (values) => {
     serverError.value = 'Sign up failed'
     return
   }
+  track('signup')
   router.push(destination())
 })
 

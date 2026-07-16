@@ -1,9 +1,12 @@
 import * as Sentry from '@sentry/vue'
 import { createApp } from 'vue'
 import App from './App.vue'
+import { initAnalytics } from './lib/analytics'
 import { env } from './lib/env'
 import { router } from './router'
 import './style.css'
+
+initAnalytics()
 
 const app = createApp(App)
 
