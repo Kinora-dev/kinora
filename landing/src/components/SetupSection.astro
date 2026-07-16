@@ -10,6 +10,9 @@ const configSnippet = `export default defineConfig({
 
 const runSnippet = `KINORA_TOKEN=<token> npx playwright test`
 
+const aiPrompt = `Set up kinora Playwright reporting in this repository.
+Read ${SITE.url}/llms/setup.md and follow it.`
+
 const steps: {
   num: string
   title: string
@@ -84,7 +87,35 @@ const steps: {
         </a>
       </header>
 
-      <ol class="flex flex-col gap-8">
+      <div class="flex flex-col gap-10">
+        <div class="reveal rounded-xl border border-signal/30 bg-signal/[0.04] p-5 sm:p-6">
+          <h3 class="text-lg font-semibold tracking-tight">
+            Let your coding agent do it
+          </h3>
+          <p class="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+            Paste this into Claude Code, Cursor, or any agent. It reads the setup
+            doc and wires the reporter into your config.
+          </p>
+          <CodeBlock code={aiPrompt} filename="Prompt" event="copy-setup-ai" class="mt-3.5" />
+          <a
+            href={`${SITE.url}/llms/setup.md`}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="mt-4 inline-flex items-center gap-1.5 font-mono text-sm font-medium text-signal underline-offset-4 hover:underline"
+          >
+            View the setup doc &rarr;
+          </a>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <span class="h-px flex-1 bg-border" />
+          <span class="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+            or set it up by hand
+          </span>
+          <span class="h-px flex-1 bg-border" />
+        </div>
+
+        <ol class="flex flex-col gap-8">
         {
           steps.map((s, i) => (
             <li class="reveal flex gap-5" style={`--reveal-delay: ${i * 80}ms`}>
@@ -109,7 +140,8 @@ const steps: {
             </li>
           ))
         }
-      </ol>
+        </ol>
+      </div>
     </div>
   </div>
 </section>
