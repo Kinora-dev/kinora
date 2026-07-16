@@ -1,4 +1,7 @@
+import { eq } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
+import { db } from '../src/db'
+import { organization } from '../src/db/schemas/index'
 import { adminOverview, listAccounts, runsPerDay, signupsPerWeek } from '../src/reports/admin-queries'
 import { caller, createApiKey, createUser, ingest, ownedOrgId, runPayload } from './helpers'
 
@@ -53,6 +56,27 @@ describe('admin analytics queries', () => {
 
     const runs = await runsPerDay()
     expect(runs.reduce((s, b) => s + b.count, 0)).toBe(2)
+  })
+
+  it('excludes internal orgs and their owners from every metric', async () => {
+    const ext = await createUser('ext@test.dev')
+    const int = await createUser('dogfood@test.dev')
+    await ingest(await createApiKey(ext.id), runPayload('web-app'))
+    await ingest(await createApiKey(int.id), runPayload('web-app'))
+    await db.update(organization).set({ internal: true }).where(eq(organization.id, await ownedOrgId(int.id)))
+
+    const o = await adminOverview()
+    expect(o.users).toBe(1) // internal org owner excluded
+    expect(o.accounts).toBe(1)
+    expect(o.activeAccounts).toBe(1)
+    expect(o.testResults30d).toBe(1)
+
+    const rows = await listAccounts()
+    expect(rows).toHaveLength(1)
+    expect(rows[0].ownerEmail).toBe('ext@test.dev')
+
+    const runs = await runsPerDay()
+    expect(runs.reduce((s, b) => s + b.count, 0)).toBe(1) // internal run excluded
   })
 })
 

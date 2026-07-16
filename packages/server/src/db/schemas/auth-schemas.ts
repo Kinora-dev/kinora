@@ -105,6 +105,8 @@ export const organization = pgTable('organization', {
   slug: text('slug').notNull().unique(),
   logo: text('logo'),
   metadata: text('metadata'),
+  // Operator flag: dogfood/test orgs, excluded from platform-admin metrics by default.
+  internal: boolean('internal').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()),
 })

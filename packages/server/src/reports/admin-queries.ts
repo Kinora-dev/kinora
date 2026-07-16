@@ -1,10 +1,12 @@
-import { count, desc, eq, gte, max, sql } from 'drizzle-orm'
+import type { AnyColumn } from 'drizzle-orm'
+import { and, count, desc, eq, gte, inArray, max, notInArray, sql } from 'drizzle-orm'
 import { isActivePaid } from '../billing/entitlements'
 import { db } from '../db'
 import { member, organization, project, run, subscription, test, user } from '../db/schemas/index'
 
 // Cross-org operator analytics: unscoped, read-everything. Only ever reached via
 // platformAdminProcedure - never import this from a user-facing router.
+// Dogfood/test orgs flagged organization.internal are excluded from every metric.
 
 const DAY = 86_400_000
 
@@ -32,21 +34,41 @@ export interface AccountRow {
   lastRunAt: string | null
 }
 
+// Internal orgs and the users who own them, excluded from real-adoption metrics.
+async function internalIds(): Promise<{ orgIds: string[], userIds: string[] }> {
+  const orgs = await db.select({ id: organization.id }).from(organization).where(eq(organization.internal, true))
+  const orgIds = orgs.map(o => o.id)
+  if (!orgIds.length)
+    return { orgIds: [], userIds: [] }
+  const owners = await db
+    .select({ userId: member.userId })
+    .from(member)
+    .where(and(inArray(member.organizationId, orgIds), eq(member.role, 'owner')))
+  return { orgIds, userIds: owners.map(o => o.userId) }
+}
+
 export async function adminOverview(): Promise<AdminOverview> {
   const since30 = new Date(Date.now() - 30 * DAY)
   const since7 = new Date(Date.now() - 7 * DAY)
+  const { orgIds, userIds } = await internalIds()
+  const orgNot = (col: AnyColumn) => (orgIds.length ? notInArray(col, orgIds) : undefined)
+  const userNot = userIds.length ? notInArray(user.id, userIds) : undefined
 
   const [[users], [accounts], [projects], [newUsers7d], [testResults30d], [activeAccounts]] = await Promise.all([
-    db.select({ n: count() }).from(user),
-    db.select({ n: count() }).from(organization),
-    db.select({ n: count() }).from(project),
-    db.select({ n: count() }).from(user).where(gte(user.createdAt, since7)),
-    db.select({ n: count() }).from(test).where(gte(test.createdAt, since30)),
+    db.select({ n: count() }).from(user).where(userNot),
+    db.select({ n: count() }).from(organization).where(orgNot(organization.id)),
+    db.select({ n: count() }).from(project).where(orgNot(project.organizationId)),
+    db.select({ n: count() }).from(user).where(and(gte(user.createdAt, since7), userNot)),
+    db
+      .select({ n: count() })
+      .from(test)
+      .innerJoin(project, eq(test.projectId, project.id))
+      .where(and(gte(test.createdAt, since30), orgNot(project.organizationId))),
     db
       .select({ n: sql<number>`count(distinct ${project.organizationId})::int` })
       .from(run)
       .innerJoin(project, eq(run.projectId, project.id))
-      .where(gte(run.startedAt, since30)),
+      .where(and(gte(run.startedAt, since30), orgNot(project.organizationId))),
   ])
 
   return {
@@ -59,31 +81,37 @@ export async function adminOverview(): Promise<AdminOverview> {
   }
 }
 
-export function signupsPerWeek(weeks = 12): Promise<Bucket[]> {
+export async function signupsPerWeek(weeks = 12): Promise<Bucket[]> {
   const since = new Date(Date.now() - weeks * 7 * DAY)
+  const { userIds } = await internalIds()
   const bucket = sql`date_trunc('week', ${user.createdAt})`
   return db
     .select({ date: sql<string>`to_char(${bucket}, 'YYYY-MM-DD')`, count: sql<number>`count(*)::int` })
     .from(user)
-    .where(gte(user.createdAt, since))
+    .where(and(gte(user.createdAt, since), userIds.length ? notInArray(user.id, userIds) : undefined))
     .groupBy(bucket)
     .orderBy(bucket)
 }
 
-export function runsPerDay(days = 30): Promise<Bucket[]> {
+export async function runsPerDay(days = 30): Promise<Bucket[]> {
   const since = new Date(Date.now() - days * DAY)
+  const { orgIds } = await internalIds()
   const bucket = sql`date_trunc('day', ${run.startedAt})`
   return db
     .select({ date: sql<string>`to_char(${bucket}, 'YYYY-MM-DD')`, count: sql<number>`count(*)::int` })
     .from(run)
-    .where(gte(run.startedAt, since))
+    .innerJoin(project, eq(run.projectId, project.id))
+    .where(and(gte(run.startedAt, since), orgIds.length ? notInArray(project.organizationId, orgIds) : undefined))
     .groupBy(bucket)
     .orderBy(bucket)
 }
 
 export async function listAccounts(): Promise<AccountRow[]> {
   const [orgs, owners, memberCounts, projectCounts, lastRuns, subs] = await Promise.all([
-    db.select({ id: organization.id, name: organization.name }).from(organization),
+    db
+      .select({ id: organization.id, name: organization.name })
+      .from(organization)
+      .where(eq(organization.internal, false)),
     db
       .select({ orgId: member.organizationId, email: user.email })
       .from(member)
