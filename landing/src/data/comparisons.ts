@@ -111,7 +111,7 @@ export const COMPARISONS: Comparison[] = [
       { label: 'Free tier', kinora: '2,500 results / mo', them: false },
       { label: 'Entry price', kinora: '$0 self-host / $49 Team', them: '$49 / mo (10k results)' },
       { label: 'Desktop trace-viewer app', kinora: true, them: false },
-      { label: 'MCP server for coding agents', kinora: true, them: false },
+      { label: 'MCP server for coding agents', kinora: true, them: true },
       { label: 'Data ownership', kinora: 'Your infra (self-host)', them: 'Their cloud' },
     ],
     chooseKinora: [
@@ -164,7 +164,7 @@ export const COMPARISONS: Comparison[] = [
       { label: 'Embedded Playwright trace viewer', kinora: true, them: false },
       { label: 'Runs as a server / live dashboard', kinora: true, them: 'No (static HTML)' },
       { label: 'Alerts on regressions', kinora: true, them: false },
-      { label: 'MCP server for coding agents', kinora: true, them: false },
+      { label: 'MCP server for coding agents', kinora: true, them: 'Allure TestOps (paid)' },
       { label: 'Hosted cloud option', kinora: 'kinora cloud (free tier + paid)', them: 'Allure TestOps (separate paid)' },
       { label: 'Self-host', kinora: 'Docker Compose', them: 'Static files, host anywhere' },
     ],
@@ -220,7 +220,7 @@ export const COMPARISONS: Comparison[] = [
       { label: 'Alerts (Slack / email / webhook)', kinora: true, them: true },
       { label: 'Hosted cloud pricing', kinora: 'Free tier + plans from $49', them: 'SaaS, quote-based' },
       { label: 'Desktop trace-viewer app', kinora: true, them: false },
-      { label: 'MCP server for coding agents', kinora: true, them: false },
+      { label: 'MCP server for coding agents', kinora: true, them: true },
     ],
     chooseKinora: [
       'You\'re Playwright-first and want the embedded Playwright trace viewer.',
