@@ -81,7 +81,7 @@ const TIER_LABELS: Record<string, string> = {
   selfhost: 'Self-host',
 }
 
-const CONTACT_HREF = 'mailto:contact@kinora.dev?subject=kinora%20enterprise'
+const CONTACT_HREF = 'https://kinora.dev/contact'
 
 const isPaid = computed(() => ['team', 'pro', 'enterprise'].includes(billing.value?.tier ?? ''))
 
@@ -302,7 +302,7 @@ function fmtDate(d: Date | string | null | undefined): string {
           size="sm"
           class="self-start font-mono text-xs text-muted-foreground -mt-2"
         >
-          <a :href="CONTACT_HREF">
+          <a :href="CONTACT_HREF" target="_blank" rel="noopener noreferrer">
             <Building2 class="size-3.5" />
             Need more? Contact us about Enterprise
           </a>
