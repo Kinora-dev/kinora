@@ -45,6 +45,22 @@ describe('admin analytics queries', () => {
     expect(idle.lastRunAt).toBeNull()
   })
 
+  it('listAccounts sorts by lastRunAt desc, nulls last', async () => {
+    const a = await createUser('sort-a@test.dev')
+    const b = await createUser('sort-b@test.dev')
+    await createUser('sort-c@test.dev') // never ran (null)
+    await createUser('sort-d@test.dev') // never ran (null) -> exercises the equal-null branch
+    await ingest(await createApiKey(a.id), runPayload('web-app'))
+    await ingest(await createApiKey(b.id), runPayload('web-app')) // later run -> strict order vs a
+
+    const rows = await listAccounts()
+    const emails = rows.map(r => r.ownerEmail)
+    const ranMax = Math.max(emails.indexOf('sort-a@test.dev'), emails.indexOf('sort-b@test.dev'))
+    const nullMin = Math.min(emails.indexOf('sort-c@test.dev'), emails.indexOf('sort-d@test.dev'))
+    expect(ranMax).toBeLessThan(nullMin) // both ran accounts precede both null ones
+    expect(rows.find(r => r.ownerEmail === 'sort-c@test.dev')?.lastRunAt).toBeNull()
+  })
+
   it('time-series bucket the window by signup and run date', async () => {
     const a = await createUser('series@test.dev')
     const key = await createApiKey(a.id)

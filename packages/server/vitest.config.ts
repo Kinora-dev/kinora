@@ -15,7 +15,9 @@ export default defineConfig({
       provider: 'v8',
       include: ['src/**/*.ts'],
       // Declarative/entrypoint/non-test-graph + cloud-SDK glue that needs a live Polar to exercise.
-      exclude: ['src/db/schemas/**', 'src/index.ts', 'src/instrument.ts', 'src/billing/polar.ts', 'src/**/*.d.ts'],
+      // admin.ts: thin cloud-gated router wrappers (platformAdminProcedure NOT_FOUND when cloud=false),
+      // unreachable in the test env; the logic lives in reports/admin-queries.ts which is tested.
+      exclude: ['src/db/schemas/**', 'src/index.ts', 'src/instrument.ts', 'src/billing/polar.ts', 'src/router/admin.ts', 'src/**/*.d.ts'],
       reporter: ['text-summary', 'text', 'html'],
       // Regression floor, ~1-2pt under current (81/72/84/81); ratchet up as coverage grows.
       thresholds: {
