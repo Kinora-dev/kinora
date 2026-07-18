@@ -21,7 +21,7 @@ interface Props {
   editPath?: string
 }
 
-const { title, description, section, headings, editPath } = Astro.props
+const { title, description, headings, editPath } = Astro.props
 
 const norm = (h: string) => h.replace(/\/+$/, '') || '/'
 const here = norm(Astro.url.pathname)
@@ -30,11 +30,27 @@ const docTitle = here === '/' ? title : `${title} - kinora docs`
 const activeItem = NAV.flatMap(g => g.items).find(it => norm(hrefFor(it.slug)) === here)
 const { prev, next } = activeItem ? neighbors(activeItem.slug) : {}
 
+const activeGroup = NAV.find(g => g.items.some(it => norm(hrefFor(it.slug)) === here))
+const breadcrumb = here === '/'
+  ? null
+  : {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      'itemListElement': [
+        { '@type': 'ListItem', 'position': 1, 'name': 'Docs', 'item': SITE.url },
+        ...(activeGroup?.label ? [{ '@type': 'ListItem', 'position': 2, 'name': activeGroup.label }] : []),
+        { '@type': 'ListItem', 'position': activeGroup?.label ? 3 : 2, 'name': title },
+      ],
+    }
+
 const toc = headings.filter(h => h.depth === 2 || h.depth === 3)
 const editUrl = editPath ? `${SITE.repo}/edit/main/${editPath}` : SITE.repo
 ---
 
 <BaseLayout title={docTitle} description={description}>
+  {breadcrumb && (
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(breadcrumb)} />
+  )}
   <div class="min-h-screen">
     <!-- Header -->
     <header class="sticky top-0 z-40 border-b border-border/80 bg-background/85 backdrop-blur-md">
@@ -167,10 +183,16 @@ const editUrl = editPath ? `${SITE.repo}/edit/main/${editPath}` : SITE.repo
       <!-- Content -->
       <main class="min-w-0 px-5 py-10 sm:px-10 lg:py-14">
         <article class="docs-prose mx-auto max-w-3xl" data-pagefind-body>
-          {section && (
-            <p class="mb-3 font-mono text-xs font-medium uppercase tracking-[0.16em] text-signal">
-              {section}
-            </p>
+          {here !== '/' && (
+            <nav aria-label="Breadcrumb" class="mb-3 flex items-center gap-1.5 font-mono text-xs uppercase tracking-[0.16em]">
+              <a href="/" class="text-muted-foreground transition-colors hover:text-foreground">Docs</a>
+              {activeGroup?.label && (
+                <>
+                  <span class="text-muted-foreground/50" aria-hidden="true">/</span>
+                  <span class="font-medium text-signal">{activeGroup.label}</span>
+                </>
+              )}
+            </nav>
           )}
           <h1 class="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">{title}</h1>
           {description && (

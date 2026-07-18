@@ -48,6 +48,17 @@ const isProd = import.meta.env.MODE === 'production'
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
+    <script
+      is:inline
+      type="application/ld+json"
+      set:html={JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        'name': 'kinora docs',
+        'url': site.toString(),
+        'publisher': { '@type': 'Organization', 'name': 'kinora', 'url': SITE.home },
+      })}
+    />
   </head>
   <body>
     <slot />
