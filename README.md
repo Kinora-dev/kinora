@@ -2,7 +2,7 @@
 
 A dashboard for your Playwright tests - across projects and over time - with an embedded trace viewer.
 
-**[Live demo](https://demo.kinora.dev)** (read-only, no sign-up) · [Website](https://kinora.dev) · [Cloud](https://app.kinora.dev)
+**[Live demo](https://demo.kinora.dev)** (read-only, no sign-up) · [Website](https://kinora.dev) · [Docs](https://docs.kinora.dev) · [Cloud](https://app.kinora.dev)
 
 Playwright ships a great HTML report for a single run. kinora sits one level up: push every CI run to a kinora server and get one place to track pass rates, spot trends, and surface flaky tests over time. Failing tests get a **View trace** button that opens the full Playwright trace (DOM / timeline / network / console) right in the dashboard, no separate tooling.
 
