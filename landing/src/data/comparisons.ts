@@ -26,10 +26,49 @@ export interface Comparison {
   faqs: CompFaq[]
 }
 
+type Cell = boolean | string
+
+// Canonical kinora capability + default label, defined once. A comparison references a feature by id
+// and supplies only the competitor's value; label/kinora can be overridden per comparison for framing
+const FEATURES = {
+  traceViewer: { label: 'Embedded Playwright trace viewer', kinora: true },
+  flaky: { label: 'Flaky detection', kinora: true },
+  history: { label: 'Cross-run history & trends', kinora: true },
+  alerts: { label: 'Alerts (Slack / email / webhook)', kinora: true },
+  prComment: { label: 'GitHub PR comment on CI runs', kinora: true },
+  mcp: { label: 'MCP server for coding agents', kinora: true },
+  desktop: { label: 'Desktop trace-viewer app', kinora: true },
+  selfHost: { label: 'Self-hosting', kinora: true },
+  license: { label: 'Open source', kinora: 'Fair source (FSL-1.1)' },
+} satisfies Record<string, { label: string, kinora: Cell }>
+
+type FeatureId = keyof typeof FEATURES
+
+// A row either references a shared feature (label/kinora from the registry, overridable) or is fully inline.
+interface SourceRow {
+  feature?: FeatureId
+  label?: string
+  kinora?: Cell
+  them: Cell
+}
+
+interface ComparisonSource extends Omit<Comparison, 'rows'> {
+  rows: SourceRow[]
+}
+
+function resolveRow(r: SourceRow): CompRow {
+  const f = r.feature ? FEATURES[r.feature] : undefined
+  const label = r.label ?? f?.label
+  const kinora = r.kinora ?? f?.kinora
+  if (label === undefined || kinora === undefined)
+    throw new Error(`comparison row needs a feature or an explicit label+kinora: ${JSON.stringify(r)}`)
+  return { label, kinora, them: r.them }
+}
+
 const KINORA_IS
   = 'kinora is an open-source dashboard that ingests every Playwright run from CI and tracks pass rates, trends, and flaky tests across projects and over time, with the full Playwright trace viewer embedded inline.'
 
-export const COMPARISONS: Comparison[] = [
+const SOURCES: ComparisonSource[] = [
   {
     slug: 'playwright-html-report',
     them: 'Playwright\'s HTML report',
@@ -46,15 +85,15 @@ export const COMPARISONS: Comparison[] = [
       'The HTML report is excellent for the run in front of you. It does not persist across runs, merge shards and projects into one view, or tell you a test has been flaky for three weeks. kinora sits one level up and keeps that history, while embedding the very same trace viewer so you never lose the debugging experience.',
     rows: [
       { label: 'Single-run report', kinora: true, them: true },
-      { label: 'Embedded Playwright trace viewer', kinora: true, them: true },
-      { label: 'History across runs', kinora: true, them: false },
+      { feature: 'traceViewer', them: true },
+      { feature: 'history', label: 'History across runs', them: false },
       { label: 'Pass-rate trends over time', kinora: true, them: false },
-      { label: 'Flaky detection', kinora: 'Across run history', them: 'Per-run retries only' },
+      { feature: 'flaky', kinora: 'Across run history', them: 'Per-run retries only' },
       { label: 'Multiple repos/suites over time', kinora: true, them: false },
       { label: 'Runs from all CI shards merged', kinora: 'Automatic on ingest', them: 'Via blob + merge-reports' },
-      { label: 'Alerts on new failures / regressions', kinora: 'Slack, email, webhook', them: false },
-      { label: 'GitHub PR comment on CI runs', kinora: true, them: false },
-      { label: 'MCP server for coding agents', kinora: true, them: false },
+      { feature: 'alerts', label: 'Alerts on new failures / regressions', kinora: 'Slack, email, webhook', them: false },
+      { feature: 'prComment', them: false },
+      { feature: 'mcp', them: false },
       { label: 'Setup', kinora: 'Reporter or CLI', them: 'Built in' },
       { label: 'Cost', kinora: 'Free self-host / free cloud tier', them: 'Free (built in)' },
       { label: 'Hosting', kinora: 'Self-host or cloud', them: 'Local static files' },
@@ -101,19 +140,19 @@ export const COMPARISONS: Comparison[] = [
     intro:
       'Both give you Playwright run history, flaky detection, and traces in the cloud. The differences: Currents is cloud-only with no free tier and adds test orchestration and parallelization; kinora is open source, self-hostable free forever, has a free cloud tier and a desktop app, and stays focused on reporting rather than running your tests.',
     rows: [
-      { label: 'Run history & trends', kinora: true, them: true },
-      { label: 'Flaky detection', kinora: true, them: true },
-      { label: 'Playwright traces in the dashboard', kinora: true, them: true },
-      { label: 'Alerts (Slack / email / webhook)', kinora: true, them: true },
-      { label: 'GitHub PR comment on CI runs', kinora: true, them: true },
+      { feature: 'history', label: 'Run history & trends', them: true },
+      { feature: 'flaky', them: true },
+      { feature: 'traceViewer', label: 'Playwright traces in the dashboard', them: true },
+      { feature: 'alerts', them: true },
+      { feature: 'prComment', them: true },
       { label: 'Test orchestration / parallelization', kinora: false, them: true },
       { label: 'Flaky quarantine', kinora: false, them: true },
-      { label: 'Open source', kinora: 'Fair source (FSL-1.1)', them: false },
-      { label: 'Self-hosting', kinora: true, them: false },
+      { feature: 'license', them: false },
+      { feature: 'selfHost', them: false },
       { label: 'Free tier', kinora: '2,500 results / mo', them: false },
       { label: 'Entry price', kinora: '$0 self-host / $49 Team', them: '$49 / mo (10k results)' },
-      { label: 'Desktop trace-viewer app', kinora: true, them: false },
-      { label: 'MCP server for coding agents', kinora: true, them: true },
+      { feature: 'desktop', them: false },
+      { feature: 'mcp', them: true },
       { label: 'Data ownership', kinora: 'Yours (self-host) or kinora cloud', them: 'Their cloud' },
     ],
     chooseKinora: [
@@ -158,18 +197,18 @@ export const COMPARISONS: Comparison[] = [
     intro:
       'Allure Report is a great multi-language static report generator. But it\'s disposable: history across runs means carrying an Allure history folder between CI jobs, and persistent analytics really means the separate commercial Allure TestOps. kinora is a running dashboard: every run is stored, trends and flaky detection work out of the box, and the native Playwright trace viewer is embedded. Allure is framework-agnostic; kinora is Playwright-focused.',
     rows: [
-      { label: 'Open source', kinora: 'Fair source (FSL-1.1); MIT client libs', them: 'Apache-2.0' },
+      { feature: 'license', kinora: 'Fair source (FSL-1.1); MIT client libs', them: 'Apache-2.0' },
       { label: 'Frameworks', kinora: 'Playwright', them: '50+ languages / frameworks' },
-      { label: 'Persistent cross-run history', kinora: 'Built in', them: 'Manual history folder' },
+      { feature: 'history', label: 'Persistent cross-run history', kinora: 'Built in', them: 'Manual history folder' },
       { label: 'Trends & analytics dashboard', kinora: true, them: 'In-report trends; persistent dashboard needs TestOps' },
-      { label: 'Flaky detection', kinora: 'Across run history', them: 'Per-run categorization' },
-      { label: 'Embedded Playwright trace viewer', kinora: true, them: false },
+      { feature: 'flaky', kinora: 'Across run history', them: 'Per-run categorization' },
+      { feature: 'traceViewer', them: false },
       { label: 'Runs as a server / live dashboard', kinora: true, them: 'No (static HTML)' },
-      { label: 'Alerts on regressions', kinora: true, them: false },
-      { label: 'GitHub PR comment on CI runs', kinora: true, them: false },
-      { label: 'MCP server for coding agents', kinora: true, them: 'Allure TestOps (paid)' },
+      { feature: 'alerts', label: 'Alerts on regressions', them: false },
+      { feature: 'prComment', them: false },
+      { feature: 'mcp', them: 'Allure TestOps (paid)' },
       { label: 'Hosted cloud option', kinora: 'kinora cloud (free tier + paid)', them: 'Allure TestOps (separate paid)' },
-      { label: 'Self-host', kinora: 'Docker Compose', them: 'Static files, host anywhere' },
+      { feature: 'selfHost', label: 'Self-host', kinora: 'Docker Compose', them: 'Static files, host anywhere' },
     ],
     chooseKinora: [
       'You\'re Playwright-first and want a live dashboard with real cross-run history and trends.',
@@ -213,18 +252,18 @@ export const COMPARISONS: Comparison[] = [
     intro:
       'Both are open source and self-hostable. ReportPortal is broad and enterprise-oriented: many languages, ML auto-analysis of failures, a heavier infrastructure footprint, and quote-based SaaS. kinora is narrow by design: Playwright-native, a single-origin Docker Compose install (Postgres, server, web), the embedded Playwright trace viewer, a desktop app, and simple public pricing.',
     rows: [
-      { label: 'Open source & self-host', kinora: 'Fair source (FSL-1.1); self-host', them: 'Apache-2.0; self-host' },
+      { feature: 'license', label: 'Open source & self-host', kinora: 'Fair source (FSL-1.1); self-host', them: 'Apache-2.0; self-host' },
       { label: 'Frameworks', kinora: 'Playwright', them: 'Many languages / frameworks' },
-      { label: 'Embedded Playwright trace viewer', kinora: true, them: false },
+      { feature: 'traceViewer', them: false },
       { label: 'ML failure auto-analysis', kinora: false, them: true },
-      { label: 'Cross-run history & trends', kinora: true, them: true },
-      { label: 'Flaky detection', kinora: true, them: true },
+      { feature: 'history', them: true },
+      { feature: 'flaky', them: true },
       { label: 'Self-host footprint', kinora: 'Single Docker Compose', them: 'Heavier, multiple services' },
-      { label: 'Alerts (Slack / email / webhook)', kinora: true, them: true },
-      { label: 'GitHub PR comment on CI runs', kinora: true, them: false },
+      { feature: 'alerts', them: true },
+      { feature: 'prComment', them: false },
       { label: 'Hosted cloud pricing', kinora: 'Free tier + plans from $49', them: 'SaaS, quote-based' },
-      { label: 'Desktop trace-viewer app', kinora: true, them: false },
-      { label: 'MCP server for coding agents', kinora: true, them: true },
+      { feature: 'desktop', them: false },
+      { feature: 'mcp', them: true },
     ],
     chooseKinora: [
       'You\'re Playwright-first and want the embedded Playwright trace viewer.',
@@ -254,3 +293,5 @@ export const COMPARISONS: Comparison[] = [
     ],
   },
 ]
+
+export const COMPARISONS: Comparison[] = SOURCES.map(s => ({ ...s, rows: s.rows.map(resolveRow) }))
