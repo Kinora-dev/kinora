@@ -41,12 +41,22 @@ const isProd = import.meta.env.MODE === 'production'
     <slot />
     {
       isProd && (
-        <script
-          is:inline
-          defer
-          src="https://analytics.jorisgallot.dev/j.js"
-          data-website-id="163e0b73-1ee2-488b-9645-3fc7ca916a19"
-        />
+        <>
+          <script
+            is:inline
+            defer
+            src="https://analytics.jorisgallot.dev/j.js"
+            data-website-id="163e0b73-1ee2-488b-9645-3fc7ca916a19"
+          />
+          <script is:inline>
+            {`document.addEventListener('click', function (e) {
+  var t = e.target
+  var a = t && t.closest ? t.closest('a[href^="https://app.kinora.dev"]') : null
+  if (a && window.umami)
+    window.umami.track('to-app', { from: location.pathname })
+})`}
+          </script>
+        </>
       )
     }
   </body>

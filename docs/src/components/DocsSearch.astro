@@ -109,6 +109,8 @@ import { Search } from '@lucide/astro'
       input.value = ''
       render([])
       loadPf()
+      if (window.umami)
+        window.umami.track('search')
       requestAnimationFrame(() => {
         modal.setAttribute('data-open', '')
         input.focus()
