@@ -14,7 +14,7 @@ export const HOME_FAQS: Faq[] = [
   },
   {
     q: 'Is kinora free?',
-    a: 'Yes. You can self-host the full dashboard and trace viewer for free, forever, under the FSL-1.1 license. A hosted cloud version is also available, with a free tier (2,500 test results per month) and paid plans from $49/month.',
+    a: 'Yes. You can self-host the full dashboard and trace viewer for free, forever. The server and dashboard are FSL-1.1-licensed and the trace viewer is MIT. A hosted cloud version is also available, with a free tier (2,500 test results per month) and paid plans from $49/month.',
   },
   {
     q: 'Can I self-host kinora?',
