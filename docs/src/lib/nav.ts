@@ -36,6 +36,13 @@ export const NAV: NavGroup[] = [
       { label: 'Upgrading & backups', slug: 'self-hosting/upgrading' },
     ],
   },
+  {
+    label: 'Reference',
+    items: [
+      { label: 'Environment variables', slug: 'reference/environment' },
+      { label: 'REST API', slug: 'reference/api' },
+    ],
+  },
 ]
 
 export function hrefFor(slug: string): string {
