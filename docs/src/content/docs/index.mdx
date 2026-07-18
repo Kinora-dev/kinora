@@ -1,0 +1,53 @@
+---
+title: kinora documentation
+description: A dashboard for Playwright test reports across projects and over time, with an embedded trace viewer.
+template: splash
+hero:
+  tagline: Push every CI run to kinora and get one place to track pass rates, spot trends, and surface flaky tests over time, with the full Playwright trace embedded inline.
+  actions:
+    - text: Get started
+      link: /getting-started/
+      icon: right-arrow
+    - text: Self-host
+      link: /self-hosting/
+      variant: minimal
+    - text: GitHub
+      link: https://github.com/Kinora-dev/kinora
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components'
+
+## What kinora is
+
+Playwright ships a great HTML report for a single run on one machine. kinora sits one level
+up: it ingests every run from CI, keeps the history, and lets you compare runs, watch pass-rate
+trends, and surface flaky tests over time. The Playwright trace viewer is embedded directly in
+the dashboard, so a red test is one click from its full trace.
+
+## How it flows
+
+A result travels: **Playwright run → reporter or CLI → kinora server → dashboard**, with the
+`trace.zip` on a parallel path. Both upload paths derive the same cross-run test identity, so a
+test keeps stable history regardless of how it was pushed. The ingest API is plain REST authed
+by an API key, so any CI provider or a `curl` command works.
+
+## Run it two ways
+
+<CardGrid>
+  <Card title="Cloud" icon="rocket">
+    Sign up at [app.kinora.dev](https://app.kinora.dev). Free tier, no infrastructure to run.
+    Start with [Getting started](/getting-started/).
+  </Card>
+  <Card title="Self-host" icon="setting">
+    One `docker compose` for the whole stack, single origin, your data stays on your box.
+    See [Self-hosting](/self-hosting/).
+  </Card>
+</CardGrid>
+
+## Next
+
+<LinkCard title="Getting started" href="/getting-started/" description="Create a project, add the reporter, see your first run." />
+<LinkCard title="Self-hosting" href="/self-hosting/" description="Run the full stack with Docker Compose." />
+<LinkCard title="Live demo" href="https://demo.kinora.dev" description="The dashboard with seeded data, no sign-up." />

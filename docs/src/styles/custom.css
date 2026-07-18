@@ -1,0 +1,12 @@
+/* kinora brand accent: the "signal" orange from the app/landing. */
+:root {
+  --sl-color-accent-low: oklch(0.3 0.08 50);
+  --sl-color-accent: oklch(0.68 0.18 50);
+  --sl-color-accent-high: oklch(0.86 0.11 50);
+}
+
+:root[data-theme='light'] {
+  --sl-color-accent-low: oklch(0.93 0.04 50);
+  --sl-color-accent: oklch(0.58 0.19 50);
+  --sl-color-accent-high: oklch(0.38 0.13 50);
+}

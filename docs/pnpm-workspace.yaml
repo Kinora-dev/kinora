@@ -1,0 +1,4 @@
+# pnpm 11 replaces onlyBuiltDependencies with this map.
+allowBuilds:
+  esbuild: true
+  sharp: true
