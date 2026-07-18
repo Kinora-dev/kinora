@@ -1,0 +1,261 @@
+@import 'tailwindcss';
+
+/* kinora design tokens - mirrored from @kinora/ui theme.css. Follows the system color scheme. */
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.141 0.005 285.823);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.141 0.005 285.823);
+  --muted: oklch(0.967 0.001 286.375);
+  --muted-foreground: oklch(0.552 0.016 285.938);
+  --border: oklch(0.92 0.004 286.32);
+  --primary: oklch(0.21 0.006 285.885);
+  --primary-foreground: oklch(0.985 0 0);
+  --pass: oklch(0.6 0.15 150);
+  --flaky: oklch(0.72 0.15 75);
+  --fail: oklch(0.55 0.22 27);
+  --signal: oklch(0.68 0.18 50);
+  --info: oklch(0.6 0.16 250);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: oklch(0.141 0.005 285.823);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.21 0.006 285.885);
+    --card-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.274 0.006 286.033);
+    --muted-foreground: oklch(0.705 0.015 286.067);
+    --border: oklch(1 0 0 / 10%);
+    --primary: oklch(0.92 0.004 286.32);
+    --primary-foreground: oklch(0.21 0.006 285.885);
+    --pass: oklch(0.72 0.17 152);
+    --flaky: oklch(0.81 0.16 82);
+    --fail: oklch(0.68 0.2 25);
+    --signal: oklch(0.76 0.18 55);
+    --info: oklch(0.7 0.15 250);
+  }
+}
+
+@theme inline {
+  --font-sans: 'Hanken Grotesk Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-pass: var(--pass);
+  --color-flaky: var(--flaky);
+  --color-fail: var(--fail);
+  --color-signal: var(--signal);
+  --color-info: var(--info);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.font-mono,
+code,
+kbd {
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: color-mix(in oklch, var(--signal) 30%, transparent);
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
+/* Record-dot pulse - the wordmark signature. */
+@keyframes rec-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--signal) 60%, transparent);
+  }
+  50% {
+    opacity: 0.55;
+    box-shadow: 0 0 0 4px color-mix(in oklch, var(--signal) 0%, transparent);
+  }
+}
+.rec-dot {
+  animation: rec-pulse 2s ease-in-out infinite;
+}
+
+/* Shiki dual-theme (build-time highlight): transparent bg, follow system scheme. */
+.astro-code {
+  background: transparent !important;
+  margin: 0;
+  font-family: var(--font-mono);
+}
+.astro-code,
+.astro-code span {
+  color: var(--shiki-light);
+}
+@media (prefers-color-scheme: dark) {
+  .astro-code,
+  .astro-code span {
+    color: var(--shiki-dark);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .rec-dot {
+    animation: none;
+  }
+}
+
+/* --- Docs prose --- */
+.docs-prose {
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+.docs-prose h2 {
+  scroll-margin-top: 4.5rem;
+  margin-top: 3rem;
+  margin-bottom: 1rem;
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.docs-prose h3 {
+  scroll-margin-top: 4.5rem;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.docs-prose p {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  color: color-mix(in oklch, var(--foreground) 88%, transparent);
+}
+.docs-prose a {
+  color: var(--signal);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+.docs-prose a:hover {
+  text-decoration: underline;
+}
+.docs-prose strong {
+  font-weight: 600;
+  color: var(--foreground);
+}
+.docs-prose ul,
+.docs-prose ol {
+  margin: 1rem 0;
+  padding-left: 1.25rem;
+}
+.docs-prose ul {
+  list-style: none;
+}
+.docs-prose ul > li {
+  position: relative;
+  padding-left: 1rem;
+}
+.docs-prose ul > li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.65em;
+  width: 5px;
+  height: 5px;
+  border-radius: 1px;
+  background: color-mix(in oklch, var(--signal) 70%, transparent);
+}
+.docs-prose ol {
+  list-style: decimal;
+}
+.docs-prose li {
+  margin: 0.35rem 0;
+  color: color-mix(in oklch, var(--foreground) 88%, transparent);
+}
+.docs-prose li::marker {
+  color: var(--muted-foreground);
+}
+.docs-prose :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  background: var(--muted);
+  border: 1px solid color-mix(in oklch, var(--border) 70%, transparent);
+  padding: 0.1em 0.35em;
+  border-radius: var(--radius-sm);
+}
+.docs-prose pre.astro-code {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklch, var(--card) 60%, transparent) !important;
+  padding: 0.95rem 1.1rem;
+  overflow-x: auto;
+  margin: 1.25rem 0;
+  font-size: 0.82rem;
+  line-height: 1.65;
+}
+.docs-prose table {
+  width: 100%;
+  margin: 1.5rem 0;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  display: block;
+  overflow-x: auto;
+}
+.docs-prose thead th {
+  text-align: left;
+  font-weight: 600;
+  padding: 0.5rem 0.85rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.docs-prose tbody td {
+  padding: 0.5rem 0.85rem;
+  border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent);
+  vertical-align: top;
+}
+.docs-prose blockquote {
+  border-left: 2px solid var(--signal);
+  padding-left: 1rem;
+  margin: 1.25rem 0;
+  color: var(--muted-foreground);
+}
+.docs-prose hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 2rem 0;
+}
+
+/* TOC active (scroll-spy) */
+[data-toc-link][data-active] {
+  color: var(--signal);
+  border-left-color: var(--signal);
+  font-weight: 500;
+}

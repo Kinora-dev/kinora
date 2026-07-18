@@ -1,0 +1,209 @@
+---
+import { Search } from '@lucide/astro'
+---
+
+<button
+  id="docs-search-open"
+  type="button"
+  aria-label="Search docs"
+  class="flex h-9 w-full max-w-64 items-center gap-2 rounded-md border border-border bg-card/50 px-3 text-sm text-muted-foreground transition-colors hover:border-signal/50 hover:text-foreground"
+>
+  <Search class="size-4 shrink-0" aria-hidden="true" />
+  <span>Search</span>
+  <kbd class="ml-auto rounded border border-border px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
+</button>
+
+<div
+  id="docs-search-modal"
+  hidden
+  role="dialog"
+  aria-modal="true"
+  aria-label="Search docs"
+  class="fixed inset-0 z-50"
+>
+  <div id="docs-search-backdrop" class="absolute inset-0 bg-background/70 backdrop-blur-sm"></div>
+  <div class="absolute inset-x-0 top-[12vh] mx-auto w-full max-w-xl px-4">
+    <div class="overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
+      <div class="flex items-center gap-2 border-b border-border px-4">
+        <Search class="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+        <input
+          id="docs-search-input"
+          type="search"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="Search the docs"
+          class="h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+        />
+        <kbd class="shrink-0 rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">esc</kbd>
+      </div>
+      <ul id="docs-search-results" class="max-h-[58vh] overflow-y-auto p-2"></ul>
+      <div id="docs-search-empty" class="px-4 py-10 text-center text-sm text-muted-foreground">
+        Type to search.
+      </div>
+    </div>
+  </div>
+</div>
+
+<style is:global>
+  #docs-search-results mark {
+    background: transparent;
+    color: var(--signal);
+    font-weight: 600;
+  }
+  #docs-search-results .result-active {
+    background: color-mix(in oklch, var(--muted) 80%, transparent);
+  }
+</style>
+
+<script is:inline>
+  ;(() => {
+    const openBtn = document.getElementById('docs-search-open')
+    const modal = document.getElementById('docs-search-modal')
+    const backdrop = document.getElementById('docs-search-backdrop')
+    const input = document.getElementById('docs-search-input')
+    const list = document.getElementById('docs-search-results')
+    const empty = document.getElementById('docs-search-empty')
+    if (!openBtn || !modal || !input || !list || !empty)
+      return
+
+    let pf = null
+    let pfTried = false
+    let results = []
+    let active = -1
+    let lastFocus = null
+
+    async function loadPf() {
+      if (pfTried)
+        return pf
+      pfTried = true
+      try {
+        // Emitted by `pagefind` at build time under /pagefind/; absent in `astro dev`.
+        pf = await import(/* @vite-ignore */ '/pagefind/pagefind.js')
+        await pf.options?.({ excerptLength: 20 })
+      }
+      catch {
+        pf = null
+      }
+      return pf
+    }
+
+    function open() {
+      lastFocus = document.activeElement
+      modal.hidden = false
+      document.body.style.overflow = 'hidden'
+      input.value = ''
+      render([])
+      loadPf()
+      requestAnimationFrame(() => input.focus())
+    }
+
+    function close() {
+      modal.hidden = true
+      document.body.style.overflow = ''
+      results = []
+      active = -1
+      if (lastFocus && lastFocus.focus)
+        lastFocus.focus()
+    }
+
+    function setEmpty(msg) {
+      empty.textContent = msg
+      empty.hidden = false
+      list.hidden = true
+    }
+
+    function render(items) {
+      results = items
+      active = items.length ? 0 : -1
+      if (!items.length) {
+        setEmpty(input.value.trim() ? 'No results.' : 'Type to search.')
+        return
+      }
+      empty.hidden = true
+      list.hidden = false
+      list.innerHTML = items
+        .map(
+          (r, i) => `
+          <li>
+            <a href="${r.url}" data-i="${i}" class="block rounded-md px-3 py-2.5 ${i === 0 ? 'result-active' : ''}">
+              <span class="block text-sm font-medium text-foreground">${r.title}</span>
+              <span class="mt-0.5 block text-[13px] leading-snug text-muted-foreground">${r.excerpt}</span>
+            </a>
+          </li>`,
+        )
+        .join('')
+    }
+
+    function highlight(next) {
+      if (!results.length)
+        return
+      active = (next + results.length) % results.length
+      list.querySelectorAll('a').forEach((a, i) => {
+        a.classList.toggle('result-active', i === active)
+        if (i === active)
+          a.scrollIntoView({ block: 'nearest' })
+      })
+    }
+
+    function go() {
+      const a = list.querySelector(`a[data-i="${active}"]`)
+      if (a)
+        window.location.href = a.getAttribute('href')
+    }
+
+    let t = null
+    async function search(q) {
+      const pfm = await loadPf()
+      if (!pfm) {
+        setEmpty('Search is available in the production build.')
+        return
+      }
+      const s = await pfm.search(q)
+      const data = await Promise.all(s.results.slice(0, 8).map(r => r.data()))
+      render(
+        data.map(d => ({
+          url: d.url,
+          title: (d.meta && d.meta.title) || d.url,
+          excerpt: d.excerpt,
+        })),
+      )
+    }
+
+    input.addEventListener('input', () => {
+      const q = input.value.trim()
+      clearTimeout(t)
+      if (!q) {
+        render([])
+        return
+      }
+      t = setTimeout(() => search(q), 120)
+    })
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        highlight(active + 1)
+      }
+      else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        highlight(active - 1)
+      }
+      else if (e.key === 'Enter') {
+        e.preventDefault()
+        go()
+      }
+    })
+
+    openBtn.addEventListener('click', open)
+    backdrop.addEventListener('click', close)
+    document.addEventListener('keydown', (e) => {
+      if ((e.key === 'k' || e.key === 'K') && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        modal.hidden ? open() : close()
+      }
+      else if (e.key === 'Escape' && !modal.hidden) {
+        close()
+      }
+    })
+  })()
+</script>
