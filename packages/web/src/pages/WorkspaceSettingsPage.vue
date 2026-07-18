@@ -97,20 +97,29 @@ const overCap = computed(() => {
   return !!b && b.includedResults != null && b.usedResults >= b.includedResults
 })
 
-const upgradeOptions = computed(() => {
+interface UpgradeOption { slug: 'team' | 'pro', label: string, featured: boolean, action: 'checkout' | 'portal' }
+
+const upgradeOptions = computed<UpgradeOption[]>(() => {
   const tier = billing.value?.tier
   if (tier === 'free') {
     return [
-      { slug: 'team' as const, label: 'Upgrade to Team - $49/mo', featured: true },
-      { slug: 'pro' as const, label: 'Upgrade to Pro - $149/mo', featured: false },
+      { slug: 'team', label: 'Upgrade to Team - $49/mo', featured: true, action: 'checkout' },
+      { slug: 'pro', label: 'Upgrade to Pro - $149/mo', featured: false, action: 'checkout' },
     ]
   }
   if (tier === 'team')
-    return [{ slug: 'pro' as const, label: 'Upgrade to Pro - $149/mo', featured: true }]
+    return [{ slug: 'pro', label: 'Upgrade to Pro - $149/mo', featured: true, action: 'portal' }]
   return []
 })
 
-// Mirrors the landing pricing section and server entitlements; keep in sync by hand.
+function startUpgrade(opt: UpgradeOption): Promise<void> {
+  return opt.action === 'portal' ? openPortal() : checkout(opt.slug)
+}
+
+function upgradePending(opt: UpgradeOption): boolean {
+  return billingPending.value === (opt.action === 'portal' ? 'portal' : opt.slug)
+}
+
 const PLAN_COLUMNS = [
   { tier: 'free', name: 'Free', price: '$0/mo' },
   { tier: 'team', name: 'Team', price: '$49/mo' },
@@ -239,10 +248,10 @@ function fmtDate(d: Date | string | null | undefined): string {
             :variant="opt.featured ? 'default' : 'outline'"
             class="font-mono text-xs"
             :disabled="!!billingPending || isDemo"
-            @click="checkout(opt.slug)"
+            @click="startUpgrade(opt)"
           >
             <ArrowUpRight class="size-3.5" />
-            {{ billingPending === opt.slug ? 'Redirecting…' : opt.label }}
+            {{ upgradePending(opt) ? (opt.action === 'portal' ? 'Opening…' : 'Redirecting…') : opt.label }}
           </Button>
         </div>
 
