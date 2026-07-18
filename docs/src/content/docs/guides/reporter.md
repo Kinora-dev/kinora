@@ -5,7 +5,7 @@ description: Auto-upload every Playwright run to kinora with the @kinora/reporte
 
 `@kinora/reporter` is a Playwright reporter that uploads your results to kinora at the end of
 every run: pass rates, trends, flaky tests, and the full trace for failures. It runs on `onEnd`,
-posts the normalized run, then uploads the `trace.zip` for each failed/flaky test that has one.
+posts the normalized run, then uploads the `trace.zip` for each test that produced one.
 **Upload never fails your test run.**
 
 ## Install

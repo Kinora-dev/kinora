@@ -41,11 +41,11 @@ its top-level shape:
   "run": {
     "startedAt": "2026-07-18T10:00:00.000Z",
     "duration": 42000,
-    "counts": { "expected": 120, "unexpected": 2, "flaky": 1, "skipped": 3 },
+    "counts": { "total": 126, "expected": 120, "unexpected": 2, "flaky": 1, "skipped": 3 },
     "playwrightVersion": "1.50.0",
     "git": { "sha": "…", "branch": "main", "baseBranch": "main", "repoUrl": "…" },
-    "ci": { "provider": "github", "runUrl": "…", "runNumber": 42 },
-    "shards": null
+    "ci": { "provider": "github", "runUrl": "…", "runNumber": "42" },
+    "shards": 4
   },
   "tests": [{ "testKey": "…", "title": "…", "status": "expected", "…": "…" }]
 }
@@ -90,7 +90,7 @@ All read routes are `GET`, Bearer-authed, and scoped to your workspace.
 Every project with its latest run summary.
 
 ```json
-{ "projects": [{ "id": "web-app", "name": "Web App", "description": null, "latestRun": { "…": "…" } }] }
+{ "projects": [{ "id": "web-app", "name": "Web App", "description": "Customer-facing web app", "latestRun": { "…": "…" } }] }
 ```
 
 `id` is the project slug.
