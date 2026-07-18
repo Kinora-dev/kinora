@@ -1,6 +1,6 @@
 # @kinora/reporter
 
-Playwright reporter that uploads your test results to a [kinora](https://github.com/joris-gallot/kinora) server: pass rates, trends, flaky tests, and the full Playwright trace for failures, across projects and over time.
+Playwright reporter that uploads your test results to a [kinora](https://github.com/Kinora-dev/kinora) server: pass rates, trends, flaky tests, and the full Playwright trace for failures, across projects and over time.
 
 It runs on `onEnd`, posts the normalized run, then uploads the trace.zip for each failed/flaky test that has one. Upload never fails your test run.
 
@@ -33,7 +33,7 @@ The token comes from the environment (keep it out of the config file); the serve
 KINORA_TOKEN=<token> npx playwright test
 ```
 
-Create an API token in the kinora dashboard (Settings → Workspace). Self-hosting? Point at your server with `KINORA_URL` - see [selfhost/README.md](https://github.com/joris-gallot/kinora/blob/main/selfhost/README.md).
+Create an API token in the kinora dashboard (Settings → Workspace). Self-hosting? Point at your server with `KINORA_URL` - see [selfhost/README.md](https://github.com/Kinora-dev/kinora/blob/main/selfhost/README.md).
 
 ## Options
 

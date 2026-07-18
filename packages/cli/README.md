@@ -1,6 +1,6 @@
 # @kinora/cli
 
-CLI that uploads a Playwright `json` report to a [kinora](https://github.com/joris-gallot/kinora) server. Use it when you can't run the [`@kinora/reporter`](https://github.com/joris-gallot/kinora/tree/main/packages/reporter) inline (e.g. results are produced in one CI job and uploaded from another), or to bulk-import a backlog of historical reports.
+CLI that uploads a Playwright `json` report to a [kinora](https://github.com/Kinora-dev/kinora) server. Use it when you can't run the [`@kinora/reporter`](https://github.com/Kinora-dev/kinora/tree/main/packages/reporter) inline (e.g. results are produced in one CI job and uploaded from another), or to bulk-import a backlog of historical reports.
 
 ## Upload a single report
 
@@ -17,7 +17,7 @@ Then upload it:
 npx @kinora/cli upload results.json --project web-app --token <project-token>
 ```
 
-Create a project API token in the kinora dashboard (Settings → Workspace). Auth can also come from the environment: `KINORA_TOKEN` and `KINORA_URL`. Self-hosting? Point at your server with `--url` / `KINORA_URL` - see [selfhost/README.md](https://github.com/joris-gallot/kinora/blob/main/selfhost/README.md).
+Create a project API token in the kinora dashboard (Settings → Workspace). Auth can also come from the environment: `KINORA_TOKEN` and `KINORA_URL`. Self-hosting? Point at your server with `--url` / `KINORA_URL` - see [selfhost/README.md](https://github.com/Kinora-dev/kinora/blob/main/selfhost/README.md).
 
 ## Bulk import (historical backfill)
 
