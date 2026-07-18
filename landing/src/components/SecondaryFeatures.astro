@@ -3,12 +3,17 @@ import {
   FingerprintPattern,
   GitBranch,
   GitCompareArrows,
+  GitPullRequest,
   Server,
-  Tags,
   Upload,
 } from '@lucide/astro'
 
 const items = [
+  {
+    icon: GitPullRequest,
+    title: 'GitHub PR comments',
+    body: 'Post a run summary on the PR straight from CI: pass/fail, tests newly failing vs the base branch, one click to the trace.',
+  },
   {
     icon: GitBranch,
     title: 'Branch & tag filters',
@@ -28,11 +33,6 @@ const items = [
     icon: GitCompareArrows,
     title: 'Run-to-run compare',
     body: 'Diff two runs and see what is newly failing, what got fixed, and what just turned flaky.',
-  },
-  {
-    icon: Tags,
-    title: 'Annotations surfaced',
-    body: 'skip, fixme and slow annotations show up where they matter instead of hiding in the raw report.',
   },
   {
     icon: Server,

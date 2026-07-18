@@ -29,6 +29,10 @@ export const HOME_FAQS: Faq[] = [
     a: 'Yes, kinora is CI-agnostic. The ingest API is plain REST authed by an API key, so any CI provider such as GitHub Actions or GitLab CI, or a plain curl command, can push results.',
   },
   {
+    q: 'Does kinora comment on GitHub pull requests?',
+    a: 'Yes. On a pull_request run, the reporter or CLI posts (and keeps updating) a summary comment on the PR: pass/fail counts, tests newly failing versus the base branch, and a link to the run. It uses the CI job\'s own GITHUB_TOKEN, so no credentials are stored in kinora and it works self-host and cloud alike.',
+  },
+  {
     q: 'Where are my traces and artifacts stored?',
     a: 'trace.zip artifacts are stored on local disk by default, or in any S3-compatible store (AWS, Cloudflare R2, MinIO). When you self-host, everything stays on your own infrastructure.',
   },
