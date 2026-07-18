@@ -70,6 +70,7 @@ kinora runs two ways: self-host the full dashboard and trace viewer for free (FS
 - Live demo: ${SITE.demo}
 - App (sign up / log in): ${SITE.app}
 - GitHub: ${SITE.repo}
+- Docs: ${SITE.docs}
 - Self-host guide: ${SITE.selfhost}
 - Desktop app: ${SITE.download}
 
