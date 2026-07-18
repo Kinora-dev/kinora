@@ -25,6 +25,8 @@ const { title, description, section, headings, editPath } = Astro.props
 
 const norm = (h: string) => h.replace(/\/+$/, '') || '/'
 const here = norm(Astro.url.pathname)
+// Home title is already self-describing; inner pages get the site suffix.
+const docTitle = here === '/' ? title : `${title} - kinora docs`
 const activeItem = NAV.flatMap(g => g.items).find(it => norm(hrefFor(it.slug)) === here)
 const { prev, next } = activeItem ? neighbors(activeItem.slug) : {}
 
@@ -32,7 +34,7 @@ const toc = headings.filter(h => h.depth === 2 || h.depth === 3)
 const editUrl = editPath ? `${SITE.repo}/edit/main/${editPath}` : SITE.repo
 ---
 
-<BaseLayout title={`${title} - kinora docs`} description={description}>
+<BaseLayout title={docTitle} description={description}>
   <div class="min-h-screen">
     <!-- Header -->
     <header class="sticky top-0 z-40 border-b border-border/80 bg-background/85 backdrop-blur-md">

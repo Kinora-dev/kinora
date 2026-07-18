@@ -1,5 +1,5 @@
 ---
-title: kinora documentation
+title: kinora docs
 description: A dashboard for Playwright test reports across projects and over time, with an embedded trace viewer.
 ---
 
