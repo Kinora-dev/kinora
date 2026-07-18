@@ -4,7 +4,7 @@ MCP server that exposes your [kinora](https://kinora.dev) Playwright test data t
 
 ## Setup
 
-Add it to your agent's MCP config. It needs a kinora API key (create one in the dashboard under project settings) and, for self-host, your server URL.
+Add it to your agent's MCP config. It needs a kinora API key (create one in the kinora dashboard under Settings → Workspace) and, for self-host, your server URL.
 
 ```json
 {

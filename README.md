@@ -175,4 +175,4 @@ Run the whole stack with one `docker compose` (Postgres + server + dashboard, si
 
 ## Licensing
 
-kinora is fair source, the deployable product (`server`, `web`) is **FSL-1.1-MIT**, the client libraries (`reporter`, `cli`, `mcp`, `core`, `ui`) and the trace viewer are **MIT**. The trace engine under `packages/trace-viewer/src/core` and `src/sw` is vendored from [microsoft/playwright](https://github.com/microsoft/playwright) (Apache-2.0).
+kinora is fair source, the deployable product (`server`, `web`, `desktop`) is **FSL-1.1-MIT**, the client libraries (`reporter`, `cli`, `mcp`, `core`, `ui`) and the trace viewer are **MIT**. The trace engine under `packages/trace-viewer/src/core` and `src/sw` is vendored from [microsoft/playwright](https://github.com/microsoft/playwright) (Apache-2.0).

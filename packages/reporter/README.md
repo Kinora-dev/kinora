@@ -2,7 +2,7 @@
 
 Playwright reporter that uploads your test results to a [kinora](https://github.com/Kinora-dev/kinora) server: pass rates, trends, flaky tests, and the full Playwright trace for failures, across projects and over time.
 
-It runs on `onEnd`, posts the normalized run, then uploads the trace.zip for each failed/flaky test that has one. Upload never fails your test run.
+It runs on `onEnd`, posts the normalized run, then uploads the trace.zip for each test that produced one. Upload never fails your test run.
 
 ## Install
 
