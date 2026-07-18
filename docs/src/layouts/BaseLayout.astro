@@ -1,7 +1,7 @@
 ---
+import { SITE } from '../lib/site'
 import '@fontsource-variable/hanken-grotesk'
 import '@fontsource-variable/jetbrains-mono'
-import { SITE } from '../lib/site'
 import '../styles/global.css'
 
 interface Props {
@@ -61,12 +61,11 @@ const isProd = import.meta.env.MODE === 'production'
             data-website-id="163e0b73-1ee2-488b-9645-3fc7ca916a19"
           />
           <script is:inline>
-            {`document.addEventListener('click', function (e) {
-  var t = e.target
-  var a = t && t.closest ? t.closest('a[href^="https://app.kinora.dev"]') : null
-  if (a && window.umami)
-    window.umami.track('to-app', { from: location.pathname })
-})`}
+            document.addEventListener('click', (e) => {
+              const link = e.target instanceof Element ? e.target.closest('a[href^="https://app.kinora.dev"]') : null
+              if (link && window.umami)
+                window.umami.track('to-app', { from: location.pathname })
+            })
           </script>
         </>
       )

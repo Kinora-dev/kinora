@@ -123,7 +123,9 @@ import { Search } from '@lucide/astro'
       results = []
       active = -1
       clearTimeout(closeTimer)
-      closeTimer = setTimeout(() => { modal.hidden = true }, 160)
+      closeTimer = setTimeout(() => {
+        modal.hidden = true
+      }, 160)
       if (lastFocus && lastFocus.focus)
         lastFocus.focus()
     }

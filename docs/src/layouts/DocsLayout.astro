@@ -274,7 +274,10 @@ const editUrl = editPath ? `${SITE.repo}/edit/main/${editPath}` : SITE.repo
       }
       const io = new IntersectionObserver((entries) => {
         for (const e of entries) {
-          if (e.isIntersecting) { activate(e.target.id); break }
+          if (e.isIntersecting) {
+            activate(e.target.id)
+            break
+          }
         }
       }, { rootMargin: '-72px 0px -70% 0px', threshold: 0 })
       heads.forEach(h => io.observe(h))

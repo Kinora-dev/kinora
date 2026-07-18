@@ -8,7 +8,7 @@ export default antfu(
     ignores: [
       '**/dist/**',
       '**/node_modules/**',
-      'landing/.astro',
+      '**/.astro/**',
       // Vendored from microsoft/playwright (Apache-2.0): don't lint upstream code.
       'packages/trace-viewer/src/core/**',
       'packages/trace-viewer/src/sw/**',

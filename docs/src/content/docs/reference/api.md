@@ -47,7 +47,7 @@ its top-level shape:
     "ci": { "provider": "github", "runUrl": "…", "runNumber": 42 },
     "shards": null
   },
-  "tests": [ { "testKey": "…", "title": "…", "status": "expected", "…": "…" } ]
+  "tests": [{ "testKey": "…", "title": "…", "status": "expected", "…": "…" }]
 }
 ```
 
@@ -90,7 +90,7 @@ All read routes are `GET`, Bearer-authed, and scoped to your workspace.
 Every project with its latest run summary.
 
 ```json
-{ "projects": [ { "id": "web-app", "name": "Web App", "description": null, "latestRun": { "…": "…" } } ] }
+{ "projects": [{ "id": "web-app", "name": "Web App", "description": null, "latestRun": { "…": "…" } }] }
 ```
 
 `id` is the project slug.
@@ -100,7 +100,7 @@ Every project with its latest run summary.
 Run summaries, newest first. Query `limit` (default 50, max 200).
 
 ```json
-{ "runs": [ { "…": "…" } ] }
+{ "runs": [{ "…": "…" }] }
 ```
 
 ### GET /api/v1/projects/:slug/runs/:runId
@@ -114,7 +114,7 @@ The failing and flaky tests of a run (defaults to the latest). Query `runId` to 
 run.
 
 ```json
-{ "runId": "…", "startedAt": "…", "counts": { "…": "…" }, "failures": [ { "status": "unexpected", "…": "…" } ] }
+{ "runId": "…", "startedAt": "…", "counts": { "…": "…" }, "failures": [{ "status": "unexpected", "…": "…" }] }
 ```
 
 ### GET /api/v1/projects/:slug/history
@@ -122,7 +122,7 @@ run.
 Per-test history across the project's runs. Query `testKey` to narrow to one test; omit it for all.
 
 ```json
-{ "histories": [ { "testKey": "…", "…": "…" } ] }
+{ "histories": [{ "testKey": "…", "…": "…" }] }
 ```
 
 ## Examples
