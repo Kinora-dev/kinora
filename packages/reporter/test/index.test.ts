@@ -25,7 +25,7 @@ function fakeTest(over: { title?: string, outcome?: string, ok?: boolean, traceP
   } as unknown as TestCase
 }
 
-const GH_VARS = ['GITHUB_ACTIONS', 'GITHUB_SHA', 'GITHUB_REF_NAME', 'GITHUB_SERVER_URL', 'GITHUB_REPOSITORY', 'GITHUB_RUN_ID', 'GITHUB_RUN_NUMBER']
+const GH_VARS = ['GITHUB_ACTIONS', 'GITHUB_SHA', 'GITHUB_REF_NAME', 'GITHUB_SERVER_URL', 'GITHUB_REPOSITORY', 'GITHUB_RUN_ID', 'GITHUB_RUN_NUMBER', 'GITHUB_TOKEN', 'GITHUB_EVENT_NAME', 'GITHUB_EVENT_PATH', 'GITHUB_REF', 'GITHUB_BASE_REF', 'GITHUB_API_URL']
 
 function fakeSuite(tests: TestCase[]): Suite {
   return { allTests: () => tests } as unknown as Suite
@@ -144,5 +144,28 @@ describe('reporter onEnd', () => {
     const reporter = new KinoraReporter({ url: 'https://api.example.com', token: 't', project: { slug: 'web-app' } })
     reporter.onBegin({ version: '1.60.0' } as FullConfig, fakeSuite([fakeTest()]))
     await expect(reporter.onEnd(fakeResult())).resolves.toBeUndefined()
+  })
+
+  it('posts a GitHub PR comment when prComment is enabled on a pull_request', async () => {
+    const calls: string[] = []
+    vi.stubGlobal('fetch', vi.fn(async (url: unknown, init?: RequestInit) => {
+      const u = String(url)
+      calls.push(`${init?.method ?? 'GET'} ${u}`)
+      if (u.includes('/api/v1/runs'))
+        return new Response(JSON.stringify({ projectId: 'p', runId: 'r', tests: 1, runUrl: 'https://app.kinora.dev/x' }), { status: 201 })
+      // GitHub: list comments (GET) -> none; create (POST) -> ok
+      return new Response(JSON.stringify(init?.method === 'POST' ? {} : []), { status: init?.method === 'POST' ? 201 : 200 })
+    }))
+    process.env.GITHUB_TOKEN = 'ghtok'
+    process.env.GITHUB_EVENT_NAME = 'pull_request'
+    process.env.GITHUB_REPOSITORY = 'acme/app'
+    process.env.GITHUB_REF = 'refs/pull/9/merge'
+    process.env.GITHUB_EVENT_PATH = '/nonexistent/event.json' // exercises the injected file reader + its catch
+
+    const reporter = new KinoraReporter({ url: 'https://api.example.com', token: 't', project: { slug: 'web-app' }, prComment: true })
+    reporter.onBegin({ version: '1.60.0' } as FullConfig, fakeSuite([fakeTest()]))
+    await reporter.onEnd(fakeResult())
+
+    expect(calls.some(c => c.startsWith('POST') && c.includes('api.github.com/repos/acme/app/issues/9/comments'))).toBe(true)
   })
 })

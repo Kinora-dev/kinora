@@ -42,11 +42,31 @@ npx @kinora/cli import ./reports --project web-app --token <project-token> --con
 --ci-provider <name>
 --ci-run-url <url>
 --ci-run-number <n>
+--git-base-branch <b> PR base branch (or env GITHUB_BASE_REF); powers "regression vs base"
+--pr-comment          post/update a summary on the GitHub PR (needs GITHUB_TOKEN + pull-requests: write)
+--pr-label <label>    distinguish matrix legs that share one PR
+--pr-policy <policy>  always (default) | on-failure (skip the comment on green runs)
 --concurrency <n>     parallel uploads for bulk import (default: 6)
 -h, --help
 ```
 
 On GitHub Actions, `git` and `ci` metadata (including the repo URL) auto-detect from the standard `GITHUB_*` env vars; the flags override them. Pass the flags explicitly on other CI providers.
+
+## GitHub PR comment
+
+Same feature as the reporter, from the upload step: `--pr-comment` posts (and keeps updating) a summary on the `pull_request`: pass/fail counts, tests newly failing vs the base branch, and a link to the run. It uses the job's `GITHUB_TOKEN`, so kinora stores no credentials.
+
+```yaml
+# in your workflow job:
+permissions:
+  pull-requests: write # required for the PR comment
+steps:
+  - run: npx @kinora/cli upload results.json --project web-app --pr-comment
+    env:
+      KINORA_TOKEN: ${{ secrets.KINORA_TOKEN }}
+```
+
+Same-repo PRs only (fork tokens are read-only). Matrix legs sharing a PR: add `--pr-label <label>` so each keeps its own comment.
 
 ## CI example (GitHub Actions)
 

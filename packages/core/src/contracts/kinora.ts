@@ -19,6 +19,8 @@ const linkUrl = z.url({ protocol: /^https$/ }).optional().catch(undefined)
 export const gitMetaSchema = z.object({
   sha: z.string().optional(),
   branch: z.string().optional(),
+  // Base branch on a PR (from GITHUB_BASE_REF); powers "regression vs base" in the PR comment.
+  baseBranch: z.string().optional(),
   // Remote URL (e.g. https://github.com/org/repo) to link a sha to its commit.
   repoUrl: linkUrl,
 })

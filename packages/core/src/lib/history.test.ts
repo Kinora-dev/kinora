@@ -1,5 +1,6 @@
 import type { NormTest, RunReport } from '../contracts/kinora'
 import { describe, expect, it } from 'vitest'
+import { SCHEMA_VERSION } from '../contracts/kinora'
 import { buildTestHistories, byInstability, byRecency, isUnstable } from './history'
 
 function makeTest(over: Partial<NormTest> & { testKey: string, status: NormTest['status'] }): NormTest {
@@ -23,7 +24,7 @@ function makeTest(over: Partial<NormTest> & { testKey: string, status: NormTest[
 
 function makeReport(runId: string, startedAt: string, tests: NormTest[]): RunReport {
   return {
-    schemaVersion: 1,
+    schemaVersion: SCHEMA_VERSION,
     runId,
     projectId: 'p',
     startedAt,

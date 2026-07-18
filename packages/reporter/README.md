@@ -51,10 +51,36 @@ Create an API token in the kinora dashboard (Settings → Workspace). Self-hosti
 | `project` | `{ slug: string, name?: string }`    | required                     | Target project. `name` defaults to `slug`. |
 | `url`     | `string`                             | env `KINORA_URL`, then cloud | kinora server base URL. Set for self-host. |
 | `token`   | `string`                             | env `KINORA_TOKEN`           | Project API token. Prefer the env var.     |
-| `git`     | `{ sha?, branch?, repoUrl? }`        | auto on GitHub Actions       | Git metadata. `repoUrl` links a sha to its commit. |
+| `git`     | `{ sha?, branch?, baseBranch?, repoUrl? }` | auto on GitHub Actions | Git metadata. `repoUrl` links a sha to its commit; `baseBranch` powers "regression vs base" in the PR comment. |
 | `ci`      | `{ provider?, runUrl?, runNumber? }` | auto on GitHub Actions       | CI metadata for the run.                   |
+| `prComment` | `boolean \| { label?, policy? }`   | off                          | Post/update a summary comment on the GitHub PR (see below). |
 
 On GitHub Actions, `git` and `ci` are filled from the standard `GITHUB_*` env vars (including the repo URL, so shas link to their commit in the dashboard). Pass them explicitly on other CI providers.
+
+## GitHub PR comment
+
+On a `pull_request` run, the reporter can post (and keep updating) a summary comment on the PR: pass/fail counts, tests newly failing vs the base branch, and a link to the run. It uses the job's ambient `GITHUB_TOKEN`, so no credentials are stored in kinora.
+
+```ts
+reporter: [['@kinora/reporter', { project: { slug: 'web-app' }, prComment: true }]]
+```
+
+The workflow must grant write access to PRs:
+
+```yaml
+# in your workflow job:
+permissions:
+  pull-requests: write # required for the PR comment
+steps:
+  - run: npx playwright test
+    env:
+      KINORA_TOKEN: ${{ secrets.KINORA_TOKEN }}
+```
+
+- Same-repo PRs only: `GITHUB_TOKEN` is read-only on fork PRs, so the comment is skipped there.
+- Shard your run with `merge-reports` (blob report) so one merged run posts one comment; per-shard runs are skipped.
+- Matrix builds sharing a PR: set `prComment: { label: 'node20' }` so each leg keeps its own comment.
+- `policy: 'on-failure'` skips the comment on green runs (default posts always).
 
 ## CI example (GitHub Actions)
 

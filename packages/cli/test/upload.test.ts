@@ -31,7 +31,8 @@ describe('uploadReport', () => {
       fetch: fetchMock,
     })
 
-    expect(res).toEqual({ projectId: 'p1', runId: 'r1', tests: 2 })
+    expect(res).toMatchObject({ projectId: 'p1', runId: 'r1', tests: 2 })
+    expect(res.counts).toMatchObject({ total: 2 })
     expect(captured?.url).toBe('https://api.example.com/api/v1/runs')
     expect((captured?.init.headers as Record<string, string>).authorization).toBe('Bearer secret')
 

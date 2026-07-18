@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import process from 'node:process'
 import { parseArgs } from 'node:util'
-import { DEFAULT_KINORA_URL, IngestError } from '@kinora/core'
+import { DEFAULT_KINORA_URL, IngestError, postPrComment, resolvePrContext } from '@kinora/core'
 import { importReports } from './import'
 import { uploadReport } from './upload'
 
@@ -29,6 +29,9 @@ Options:
   --ci-run-url <url>
   --ci-run-number <n>
   (In GitHub Actions, git + ci metadata auto-detect from the env; flags override.)
+  --pr-comment          Post/update a summary on the GitHub PR (needs GITHUB_TOKEN + pull-requests: write)
+  --pr-label <label>    Distinguish matrix legs that share one PR
+  --pr-policy <policy>  always (default) | on-failure (skip the comment on green runs)
   --concurrency <n>     Parallel uploads for bulk import (default 6)
   -h, --help`
 
@@ -52,6 +55,10 @@ async function main(): Promise<void> {
       'ci-provider': { type: 'string' },
       'ci-run-url': { type: 'string' },
       'ci-run-number': { type: 'string' },
+      'git-base-branch': { type: 'string' },
+      'pr-comment': { type: 'boolean' },
+      'pr-label': { type: 'string' },
+      'pr-policy': { type: 'string' },
       'concurrency': { type: 'string' },
       'help': { type: 'boolean', short: 'h' },
     },
@@ -100,8 +107,9 @@ async function main(): Promise<void> {
     : undefined
   const sha = values['git-sha'] ?? process.env.GITHUB_SHA
   const branch = values['git-branch'] ?? process.env.GITHUB_REF_NAME
+  const baseBranch = values['git-base-branch'] ?? process.env.GITHUB_BASE_REF ?? undefined
   const repoUrl = values['git-repo-url'] ?? ghRepoUrl
-  const git = sha || branch || repoUrl ? { sha, branch, repoUrl } : undefined
+  const git = sha || branch || repoUrl || baseBranch ? { sha, branch, baseBranch, repoUrl } : undefined
 
   const ghActions = !!process.env.GITHUB_ACTIONS
   const ciProvider = values['ci-provider'] ?? (ghActions ? 'github' : undefined)
@@ -117,9 +125,41 @@ async function main(): Promise<void> {
     token,
     git,
     ci,
+    regression: !!values['pr-comment'],
   })
 
   console.log(`uploaded ${res.tests} tests to ${values.project} (run ${res.runId})`)
+
+  // Best-effort GitHub PR comment (uses the job's GITHUB_TOKEN). Never fails the upload.
+  if (values['pr-comment']) {
+    try {
+      const ctx = resolvePrContext(process.env, (p) => {
+        try {
+          return readFileSync(p, 'utf8')
+        }
+        catch {
+          return undefined
+        }
+      })
+      if (ctx) {
+        const policy = values['pr-policy'] === 'on-failure' ? 'on-failure' : 'always'
+        const outcome = await postPrComment(ctx, {
+          projectSlug: values.project,
+          projectName: values.name ?? values.project,
+          label: values['pr-label'],
+          runUrl: res.runUrl,
+          ciRunUrl: ci?.runUrl,
+          counts: res.counts,
+          regression: res.regression,
+        }, policy)
+        if (outcome !== 'skipped')
+          console.log(`PR comment ${outcome}`)
+      }
+    }
+    catch (err) {
+      console.warn(`warning: PR comment failed: ${err instanceof Error ? err.message : err}`)
+    }
+  }
 }
 
 main().catch((err) => {

@@ -1,8 +1,9 @@
-import type { CiMeta, Counts, GitMeta, IngestRun, NormTest } from '@kinora/core'
+import type { CiMeta, Counts, GitMeta, IngestRun, IngestRunResult, NormTest } from '@kinora/core'
 import type { FullConfig, FullResult, Reporter, Suite, TestCase } from '@playwright/test/reporter'
+import { readFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import process from 'node:process'
-import { createIngestClient, DEFAULT_KINORA_URL, effectiveAttachments, IngestError, isTraceAttachment, makeTestKey } from '@kinora/core'
+import { createIngestClient, DEFAULT_KINORA_URL, effectiveAttachments, IngestError, isTraceAttachment, makeTestKey, postPrComment, resolvePrContext } from '@kinora/core'
 
 export interface KinoraReporterOptions {
   /** kinora server base URL. Defaults to env KINORA_URL, then the hosted cloud. Set for self-host. */
@@ -13,6 +14,11 @@ export interface KinoraReporterOptions {
   project: { slug: string, name?: string }
   git?: GitMeta
   ci?: CiMeta
+  /**
+   * Post/update a summary comment on the GitHub PR (uses the job's GITHUB_TOKEN; needs
+   * `permissions: pull-requests: write`). `label` distinguishes matrix legs sharing one PR.
+   */
+  prComment?: boolean | { label?: string, policy?: 'always' | 'on-failure' }
 }
 
 // Rebuild the json-report identity (file path + title path + project) from the
@@ -74,11 +80,12 @@ function countsOf(tests: NormTest[]): Counts {
 function detectGit(): GitMeta | undefined {
   const sha = process.env.GITHUB_SHA
   const branch = process.env.GITHUB_REF_NAME
+  const baseBranch = process.env.GITHUB_BASE_REF || undefined // set on pull_request events
   const { GITHUB_SERVER_URL, GITHUB_REPOSITORY } = process.env
   const repoUrl = GITHUB_SERVER_URL && GITHUB_REPOSITORY ? `${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}` : undefined
   if (!sha && !branch && !repoUrl)
     return undefined
-  return { sha, branch, repoUrl }
+  return { sha, branch, baseBranch, repoUrl }
 }
 
 function detectCi(): CiMeta | undefined {
@@ -125,7 +132,7 @@ export default class KinoraReporter implements Reporter {
     }
 
     try {
-      const client = createIngestClient({ baseUrl: url, token })
+      const client = createIngestClient({ baseUrl: url, token, regression: !!this.options.prComment })
       const res = await client.uploadRun(payload)
 
       let traces = 0
@@ -144,12 +151,51 @@ export default class KinoraReporter implements Reporter {
       }
       // eslint-disable-next-line no-console -- a reporter's job is to report
       console.log(`[kinora] uploaded ${res.tests} tests + ${traces} traces (run ${res.runId})`)
+
+      await this.maybePostPrComment(payload, res)
     }
     catch (err) {
       if (err instanceof IngestError && err.status === 402)
         console.warn(`[kinora] ${err.message}`)
       else
         console.error(`[kinora] upload failed:`, err instanceof Error ? err.message : err)
+    }
+  }
+
+  // Best-effort GitHub PR comment from the CI job. Never throws (mirrors "upload never fails the run").
+  private async maybePostPrComment(payload: IngestRun, res: IngestRunResult): Promise<void> {
+    if (!this.options.prComment)
+      return
+    const opt = this.options.prComment
+    const label = typeof opt === 'object' ? opt.label : undefined
+    const policy = typeof opt === 'object' ? opt.policy : undefined
+    try {
+      // config.shard set => a per-shard run; only the merged/single run should comment.
+      const env = this.config?.shard ? { ...process.env, __KINORA_IS_SHARD: '1' } : process.env
+      const ctx = resolvePrContext(env, (p) => {
+        try {
+          return readFileSync(p, 'utf8')
+        }
+        catch {
+          return undefined
+        }
+      })
+      if (!ctx)
+        return
+      const outcome = await postPrComment(ctx, {
+        projectSlug: payload.project.slug,
+        projectName: payload.project.name,
+        label,
+        runUrl: res.runUrl,
+        ciRunUrl: payload.run.ci?.runUrl,
+        counts: payload.run.counts,
+        regression: res.regression,
+      }, policy ?? 'always')
+      if (outcome !== 'skipped')
+        console.warn(`[kinora] PR comment ${outcome}`)
+    }
+    catch (err) {
+      console.warn('[kinora] PR comment failed:', err instanceof Error ? err.message : err)
     }
   }
 }

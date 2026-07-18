@@ -1,6 +1,8 @@
-import type { CiMeta, GitMeta, IngestRunResult } from '@kinora/core'
+import type { CiMeta, Counts, GitMeta, IngestRunResult } from '@kinora/core'
 import { readFile } from 'node:fs/promises'
 import { buildIngestRun, createIngestClient, isTraceAttachment } from '@kinora/core'
+
+export type UploadResult = IngestRunResult & { counts: Counts }
 
 export interface UploadOptions {
   project: { slug: string, name?: string }
@@ -9,17 +11,19 @@ export interface UploadOptions {
   git?: GitMeta
   ci?: CiMeta
   fetch?: typeof globalThis.fetch
+  // Ask the server to return a regression summary (for --pr-comment).
+  regression?: boolean
 }
 
 // Parse a Playwright json report and upload it to a kinora server. Shares the
 // normalize + ingest-client logic with the reporter via @kinora/core.
-export async function uploadReport(raw: unknown, opts: UploadOptions): Promise<IngestRunResult> {
+export async function uploadReport(raw: unknown, opts: UploadOptions): Promise<UploadResult> {
   const payload = buildIngestRun(raw, {
     project: { slug: opts.project.slug, name: opts.project.name ?? opts.project.slug },
     git: opts.git,
     ci: opts.ci,
   })
-  const client = createIngestClient({ baseUrl: opts.url, token: opts.token, fetch: opts.fetch })
+  const client = createIngestClient({ baseUrl: opts.url, token: opts.token, fetch: opts.fetch, regression: opts.regression })
   const res = await client.uploadRun(payload)
 
   for (const t of payload.tests) {
@@ -36,5 +40,5 @@ export async function uploadReport(raw: unknown, opts: UploadOptions): Promise<I
     }
   }
 
-  return res
+  return { ...res, counts: payload.run.counts }
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { gitMetaSchema, manifestSchema, runSummarySchema } from './kinora'
+import { gitMetaSchema, manifestSchema, runSummarySchema, SCHEMA_VERSION } from './kinora'
 
 describe('runSummarySchema', () => {
   it('defaults countsByTag to an empty object', () => {
@@ -18,7 +18,7 @@ describe('runSummarySchema', () => {
 describe('manifestSchema', () => {
   it('accepts a minimal valid manifest', () => {
     const ok = manifestSchema.safeParse({
-      schemaVersion: 1,
+      schemaVersion: SCHEMA_VERSION,
       generatedAt: '2026-01-01T00:00:00Z',
       projects: [],
     })

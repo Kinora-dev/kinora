@@ -18,6 +18,7 @@ import { env } from '../lib/env'
 import { logger } from '../lib/logger'
 import { sendMail } from '../lib/mailer'
 import { storage } from '../lib/storage'
+import { computeRegression } from '../reports/regression'
 import { registerReadRoutes } from './read'
 
 const BEARER_PREFIX = 'Bearer '
@@ -184,7 +185,25 @@ publicApi.post('/runs', ingestJsonLimit, zValidator('json', ingestRunSchema), as
     }
   }
 
-  return c.json(result, 201)
+  // Durable dashboard URL (client only knows the api origin). Regression is only computed when the
+  // client asks (?regression=1, set by prComment users) so the hot path isn't taxed for everyone,
+  // and never fails the response for an already-committed run.
+  const runUrl = `${env.WEB_ORIGIN}/projects/${input.project.slug}/runs/${result.runId}`
+  let regression
+  if (!backfill && result.projectId && c.req.query('regression') === '1') {
+    try {
+      regression = await computeRegression(result.projectId, input.tests, {
+        branch: input.run.git?.branch,
+        baseBranch: input.run.git?.baseBranch,
+        startedAt: new Date(input.run.startedAt),
+      })
+    }
+    catch (error) {
+      logger.error({ error, runId: result.runId }, 'regression compute failed')
+    }
+  }
+
+  return c.json({ ...result, runUrl, ...(regression ? { regression } : {}) }, 201)
 })
 
 interface StreamedArtifact {

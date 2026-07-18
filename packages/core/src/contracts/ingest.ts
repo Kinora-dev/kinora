@@ -25,10 +25,29 @@ export const ingestRunSchema = z.object({
 })
 export type IngestRun = z.infer<typeof ingestRunSchema>
 
+const regressionTestSchema = z.object({
+  testKey: z.string(),
+  title: z.string(),
+  file: z.string(),
+})
+
+// What the ingested run changed vs its comparison baseline; drives the GitHub PR comment.
+export const runRegressionSchema = z.object({
+  // Which baseline we diffed against.
+  base: z.enum(['base-branch', 'previous-run', 'none']),
+  newlyFailing: z.array(regressionTestSchema),
+  newlyFlaky: z.array(regressionTestSchema),
+  fixed: z.number(),
+})
+export type RunRegression = z.infer<typeof runRegressionSchema>
+
 export const ingestRunResultSchema = z.object({
   projectId: z.string(),
   runId: z.string(),
   tests: z.number(),
+  // Durable dashboard run URL (built server-side from WEB_ORIGIN). Optional: older servers omit it.
+  runUrl: z.string().optional(),
+  regression: runRegressionSchema.optional(),
 })
 export type IngestRunResult = z.infer<typeof ingestRunResultSchema>
 

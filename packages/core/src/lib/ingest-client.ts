@@ -43,6 +43,8 @@ export interface IngestClientOptions {
   fetch?: typeof globalThis.fetch
   // Historical/bulk import: tells the server to skip alerts for these runs.
   backfill?: boolean
+  // Ask the server to include a regression summary in the run response (for the PR comment).
+  regression?: boolean
 }
 
 export interface UploadArtifactInput {
@@ -84,7 +86,13 @@ export function createIngestClient(opts: IngestClientOptions) {
   const base = opts.baseUrl.slice(0, end)
   const doFetch = opts.fetch ?? globalThis.fetch
   const auth = `Bearer ${opts.token}`
-  const runsUrl = `${base}/api/v1/runs${opts.backfill ? '?backfill=1' : ''}`
+  const params = new URLSearchParams()
+  if (opts.backfill)
+    params.set('backfill', '1')
+  if (opts.regression)
+    params.set('regression', '1')
+  const query = params.toString()
+  const runsUrl = `${base}/api/v1/runs${query ? `?${query}` : ''}`
 
   return {
     async uploadRun(input: IngestRun): Promise<IngestRunResult> {

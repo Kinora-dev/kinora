@@ -1,19 +1,18 @@
 import type { Counts, NormTest } from '@kinora/core'
 import type { AlertPayload, AlertPolicy } from './core'
 import { compareRuns } from '@kinora/core'
-import { and, desc, eq, lt, sql } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { getEntitlements } from '../billing/entitlements'
 import { db } from '../db'
-import { alertChannel, project, run, slackIntegration, test } from '../db/schemas/index'
+import { alertChannel, project, slackIntegration } from '../db/schemas/index'
 import { env } from '../lib/env'
 import { logger } from '../lib/logger'
 import { sendMail } from '../lib/mailer'
+import { previousRunTests } from '../reports/regression'
 import { shouldFire } from './core'
 import { buildAlertEmail } from './email'
 import { buildSlackMessage, sendSlack } from './slack'
 import { postWebhook } from './webhook'
-
-type TestRow = typeof test.$inferSelect
 
 export interface NotifyRunInput {
   organizationId: string
@@ -23,45 +22,6 @@ export interface NotifyRunInput {
   branch?: string
   counts: Counts
   tests: NormTest[]
-}
-
-function rowToNormTest(t: TestRow): NormTest {
-  return {
-    testKey: t.testKey,
-    title: t.title,
-    titlePath: t.titlePath,
-    file: t.file,
-    line: t.line,
-    column: t.column,
-    projectName: t.projectName,
-    status: t.status,
-    ok: t.ok,
-    duration: t.duration,
-    retries: t.retries,
-    tags: t.tags,
-    annotations: t.annotations,
-    errors: t.errors,
-    attachments: t.attachments,
-  }
-}
-
-// Tests of the most recent run on the same branch before this one (regression baseline).
-async function previousRunTests(projectId: string, before: Date, branch?: string): Promise<NormTest[]> {
-  const conds = [eq(run.projectId, projectId), lt(run.startedAt, before)]
-  if (branch)
-    conds.push(sql`(${run.git} ->> 'branch') = ${branch}`)
-
-  const [prev] = await db
-    .select({ id: run.id })
-    .from(run)
-    .where(and(...conds))
-    .orderBy(desc(run.startedAt))
-    .limit(1)
-  if (!prev)
-    return []
-
-  const rows = await db.query.test.findMany({ where: eq(test.runId, prev.id) })
-  return rows.map(rowToNormTest)
 }
 
 export async function notifyRun(input: NotifyRunInput): Promise<void> {
