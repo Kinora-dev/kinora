@@ -12,8 +12,15 @@ The kinora desktop app is two things in one shell:
 
 ## Download
 
-[Download for macOS](https://github.com/Kinora-dev/kinora/releases/latest) (Apple Silicon). It
-auto-updates from there: new versions download in the background and install on restart.
+Grab the latest build for your platform from the
+[releases page](https://github.com/Kinora-dev/kinora/releases/latest):
+
+- **macOS** - `.dmg` for Apple Silicon and Intel, signed and notarized.
+- **Windows** - `.exe` installer.
+- **Linux** - `AppImage`.
+
+It auto-updates from there: new versions download in the background and install on restart. The
+Windows and Linux builds are currently unsigned, so your OS may warn on first launch.
 
 ## What you can do
 
@@ -33,7 +40,7 @@ Three ways, no account needed:
 
 - **File → Open Trace…**
 - **Drag-drop** a `.zip` onto the window.
-- Pass a path as an argument, or open a `.zip` with the app on macOS.
+- Pass a path as an argument, or open a `.zip` file with the app.
 
 ## Signing in
 

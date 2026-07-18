@@ -64,9 +64,9 @@ Get notified when a run brings new failures or regressions. Each project can pos
 
 ## Desktop app
 
-A macOS app that signs into your account and opens straight on the latest run's failures. Re-run a failing test locally with your repo's own Playwright, jump to the source in your editor, copy a ready-to-paste AI prompt, or open the full trace inline. It also opens any local `trace.zip` with no account at all, a self-contained replacement for `playwright show-trace`.
+A desktop app that signs into your account and opens straight on the latest run's failures. Re-run a failing test locally with your repo's own Playwright, jump to the source in your editor, copy a ready-to-paste AI prompt, or open the full trace inline. It also opens any local `trace.zip` with no account at all, a self-contained replacement for `playwright show-trace`.
 
-[Download for macOS](https://github.com/Kinora-dev/kinora/releases/latest) (Apple Silicon). Auto-updates from there.
+[Download](https://github.com/Kinora-dev/kinora/releases/latest) for macOS, Windows, or Linux. Auto-updates from there.
 
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="docs/screenshots/desktop-light.png">
