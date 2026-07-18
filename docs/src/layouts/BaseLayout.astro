@@ -13,6 +13,8 @@ interface Props {
 const site = Astro.site ?? new URL(SITE.url)
 const { title, description = SITE.description, robots = 'index,follow' } = Astro.props
 const canonical = new URL(Astro.url.pathname, site).toString()
+
+const isProd = import.meta.env.MODE === 'production'
 ---
 
 <!doctype html>
@@ -37,5 +39,15 @@ const canonical = new URL(Astro.url.pathname, site).toString()
   </head>
   <body>
     <slot />
+    {
+      isProd && (
+        <script
+          is:inline
+          defer
+          src="https://analytics.jorisgallot.dev/j.js"
+          data-website-id="163e0b73-1ee2-488b-9645-3fc7ca916a19"
+        />
+      )
+    }
   </body>
 </html>
