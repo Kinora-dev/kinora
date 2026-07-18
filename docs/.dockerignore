@@ -1,0 +1,11 @@
+node_modules
+dist
+.astro
+.git
+.gitignore
+Dockerfile
+.dockerignore
+*.log
+.DS_Store
+.env
+.env.production
