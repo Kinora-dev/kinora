@@ -1,5 +1,5 @@
 ---
-import { Menu, X } from '@lucide/astro'
+import { Menu, Search, X } from '@lucide/astro'
 import DocsSearch from '../components/DocsSearch.astro'
 import GithubIcon from '../components/GithubIcon.astro'
 import Wordmark from '../components/Wordmark.astro'
@@ -44,9 +44,16 @@ const editUrl = editPath ? `${SITE.repo}/edit/main/${editPath}` : SITE.repo
           </span>
         </a>
 
-        <div class="ml-auto flex w-full max-w-64 lg:ml-6">
-          <DocsSearch />
-        </div>
+        <button
+          id="docs-search-open"
+          type="button"
+          aria-label="Search docs"
+          class="ml-auto flex h-9 w-full max-w-64 items-center gap-2 rounded-md border border-border bg-card/50 px-3 text-sm text-muted-foreground transition-colors hover:border-signal/50 hover:text-foreground lg:ml-6"
+        >
+          <Search class="size-4 shrink-0" aria-hidden="true" />
+          <span>Search</span>
+          <kbd class="ml-auto rounded border border-border px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
+        </button>
 
         <div class="ml-auto flex shrink-0 items-center gap-1">
           <a
@@ -223,6 +230,8 @@ const editUrl = editPath ? `${SITE.repo}/edit/main/${editPath}` : SITE.repo
         </div>
       </aside>
     </div>
+
+    <DocsSearch />
   </div>
 
   <script is:inline>

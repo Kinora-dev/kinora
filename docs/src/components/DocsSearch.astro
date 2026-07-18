@@ -2,17 +2,6 @@
 import { Search } from '@lucide/astro'
 ---
 
-<button
-  id="docs-search-open"
-  type="button"
-  aria-label="Search docs"
-  class="flex h-9 w-full max-w-64 items-center gap-2 rounded-md border border-border bg-card/50 px-3 text-sm text-muted-foreground transition-colors hover:border-signal/50 hover:text-foreground"
->
-  <Search class="size-4 shrink-0" aria-hidden="true" />
-  <span>Search</span>
-  <kbd class="ml-auto rounded border border-border px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
-</button>
-
 <div
   id="docs-search-modal"
   hidden
@@ -21,8 +10,8 @@ import { Search } from '@lucide/astro'
   aria-label="Search docs"
   class="fixed inset-0 z-50"
 >
-  <div id="docs-search-backdrop" class="absolute inset-0 bg-background/70 backdrop-blur-sm"></div>
-  <div class="absolute inset-x-0 top-[12vh] mx-auto w-full max-w-xl px-4">
+  <div id="docs-search-backdrop" class="absolute inset-0 bg-background/70 backdrop-blur-[2px]"></div>
+  <div id="docs-search-panel" class="absolute inset-x-0 top-[12vh] mx-auto w-full max-w-xl px-4">
     <div class="overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
       <div class="flex items-center gap-2 border-b border-border px-4">
         <Search class="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
@@ -45,6 +34,30 @@ import { Search } from '@lucide/astro'
 </div>
 
 <style is:global>
+  #docs-search-modal {
+    opacity: 0;
+    transition: opacity 130ms ease;
+  }
+  #docs-search-modal[data-open] {
+    opacity: 1;
+  }
+  #docs-search-panel {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.99);
+    transition:
+      transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 160ms ease;
+  }
+  #docs-search-modal[data-open] #docs-search-panel {
+    opacity: 1;
+    transform: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #docs-search-modal,
+    #docs-search-panel {
+      transition: none;
+    }
+  }
   #docs-search-results mark {
     background: transparent;
     color: var(--signal);
@@ -71,6 +84,7 @@ import { Search } from '@lucide/astro'
     let results = []
     let active = -1
     let lastFocus = null
+    let closeTimer = null
 
     async function loadPf() {
       if (pfTried)
@@ -88,20 +102,26 @@ import { Search } from '@lucide/astro'
     }
 
     function open() {
+      clearTimeout(closeTimer)
       lastFocus = document.activeElement
       modal.hidden = false
       document.body.style.overflow = 'hidden'
       input.value = ''
       render([])
       loadPf()
-      requestAnimationFrame(() => input.focus())
+      requestAnimationFrame(() => {
+        modal.setAttribute('data-open', '')
+        input.focus()
+      })
     }
 
     function close() {
-      modal.hidden = true
+      modal.removeAttribute('data-open')
       document.body.style.overflow = ''
       results = []
       active = -1
+      clearTimeout(closeTimer)
+      closeTimer = setTimeout(() => { modal.hidden = true }, 160)
       if (lastFocus && lastFocus.focus)
         lastFocus.focus()
     }
@@ -176,7 +196,7 @@ import { Search } from '@lucide/astro'
         render([])
         return
       }
-      t = setTimeout(() => search(q), 120)
+      t = setTimeout(search, 120, q)
     })
 
     input.addEventListener('keydown', (e) => {

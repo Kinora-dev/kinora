@@ -86,8 +86,7 @@ kbd {
 }
 
 a:focus-visible,
-button:focus-visible,
-input:focus-visible {
+button:focus-visible {
   outline: 2px solid var(--signal);
   outline-offset: 2px;
 }
