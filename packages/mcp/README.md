@@ -4,7 +4,7 @@ MCP server that exposes your [kinora](https://kinora.dev) Playwright test data t
 
 ## Setup
 
-Add it to your agent's MCP config. It needs a kinora API key (create one in the dashboard under project settings / tokens) and, for self-host, your server URL.
+Add it to your agent's MCP config. It needs a kinora API key (create one in the dashboard under project settings) and, for self-host, your server URL.
 
 ```json
 {
@@ -23,15 +23,11 @@ Add it to your agent's MCP config. It needs a kinora API key (create one in the 
 
 `KINORA_URL` defaults to the hosted cloud; set it to your own origin for self-host. Both can also be passed as `--token` / `--url` flags.
 
-## Tools
+## Documentation
 
-| Tool            | What it returns                                                                                                                  |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `list_projects` | Every project with its latest run summary.                                                                                       |
-| `list_failures` | Failing/flaky tests of a run (defaults to latest): error, `file:line`, trace URL.                                                |
-| `get_run`       | Full report for one run: counts, git/CI metadata, all test statuses, failures.                                                   |
-| `test_history`  | Per-test history: pass/fail/flaky rates + `newlyBroken`/`newlyFlaky` flags to tell a fresh regression from a chronic/flaky test. |
-| `get_trace`     | The Playwright `trace.zip` URL for one test, to open in the viewer or download.                                                  |
+The full tool list (`list_projects`, `list_failures`, `get_run`, `test_history`, `get_trace`) is in the docs:
+
+**https://docs.kinora.dev/guides/mcp/**
 
 ## License
 
