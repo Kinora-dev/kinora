@@ -16,12 +16,12 @@ export const SITE = {
   email: 'contact@kinora.dev',
 } as const
 
-export const NAV = [
+export const NAV: { label: string, href: string, event?: string }[] = [
   { label: 'Features', href: '/#features' },
   { label: 'Trace viewer', href: '/#trace' },
   { label: 'Desktop', href: '/#desktop' },
   { label: 'Agents', href: '/#mcp' },
   { label: 'Pricing', href: '/#pricing' },
   { label: 'Setup', href: '/#setup' },
-  { label: 'Docs', href: SITE.docs },
-] as const
+  { label: 'Docs', href: SITE.docs, event: 'docs-nav' },
+]

@@ -18,6 +18,7 @@ import Wordmark from './Wordmark.astro';
         NAV.map(item => (
           <a
             href={item.href}
+            data-umami-event={item.event}
             class="rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             {item.label}
@@ -85,6 +86,7 @@ import Wordmark from './Wordmark.astro';
         NAV.map(item => (
           <a
             href={item.href}
+            data-umami-event={item.event}
             class="rounded-md px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             {item.label}
