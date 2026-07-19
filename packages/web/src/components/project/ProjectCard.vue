@@ -5,7 +5,7 @@ import { Card } from '@kinora/ui/card'
 import { HealthBadge } from '@kinora/ui/health-badge'
 import { RunStrip } from '@kinora/ui/run-strip'
 import { Sparkline } from '@kinora/ui/sparkline'
-import { ArrowRight } from 'lucide-vue-next'
+import { ArrowRight } from '@lucide/vue'
 import { computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Button } from '@kinora/ui/button'
-import { Loader2 } from 'lucide-vue-next'
+import { Loader2 } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { authClient } from '@/lib/auth'

@@ -29,7 +29,6 @@
     "better-auth": "^1.6.20",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lucide-vue-next": "^1.0.0",
     "reka-ui": "^2.10.0",
     "tailwind-merge": "^3.6.0",
     "vee-validate": "^4.15.1",

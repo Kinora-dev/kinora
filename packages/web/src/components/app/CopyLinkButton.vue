@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Button } from '@kinora/ui/button'
-import { Check, Link2 } from 'lucide-vue-next'
+import { Check, Link2 } from '@lucide/vue'
 import { ref } from 'vue'
 
 const copied = ref(false)

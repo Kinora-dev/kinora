@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { SegmentedControl } from '@kinora/ui/segmented-control'
 import { colorMode } from '@kinora/ui/theme'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@kinora/ui/tooltip'
-import { ArrowUpCircle, Check, ChevronsUpDown, ExternalLink, FolderGit2, FolderOpen, LogOut, Monitor, Moon, Settings, Sun } from 'lucide-vue-next'
+import { ArrowUpCircle, Check, ChevronsUpDown, ExternalLink, FolderGit2, FolderOpen, LogOut, Monitor, Moon, Settings, Sun } from '@lucide/vue'
 import { computed } from 'vue'
 
 const props = defineProps<{ projects: ProjectEntry[], activeId: string | null, user: SessionUser | null, projectPath: string | null, highlightLink: boolean, updateReady: boolean }>()

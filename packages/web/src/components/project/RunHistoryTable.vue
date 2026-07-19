@@ -20,9 +20,9 @@ import {
   TableRow,
 } from '@kinora/ui/table'
 import { valueUpdater } from '@kinora/ui/table/utils'
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, ChevronsUpDown } from '@lucide/vue'
 import { getCoreRowModel, getPaginationRowModel, getSortedRowModel, useVueTable } from '@tanstack/vue-table'
 import { useRouteQuery } from '@vueuse/router'
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, ChevronsUpDown } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 

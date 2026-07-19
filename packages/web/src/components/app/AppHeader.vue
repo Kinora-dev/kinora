@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Avatar, AvatarFallback, AvatarImage } from '@kinora/ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@kinora/ui/dropdown-menu'
-import { Check, ChevronsUpDown, Gauge, LogOut, MessageSquarePlus, MonitorDown, Settings, SlidersHorizontal } from 'lucide-vue-next'
+import { Check, ChevronsUpDown, Gauge, LogOut, MessageSquarePlus, MonitorDown, Settings, SlidersHorizontal } from '@lucide/vue'
 import { computed, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useServerConfig } from '@/composables/queries'

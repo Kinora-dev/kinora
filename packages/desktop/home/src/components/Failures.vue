@@ -4,7 +4,7 @@ import { formatPct, passRate, stripAnsi } from '@kinora/core'
 import { Button } from '@kinora/ui/button'
 import { Card } from '@kinora/ui/card'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@kinora/ui/tooltip'
-import { Check, Copy, FileCode2, Play, RefreshCw, Sparkles } from 'lucide-vue-next'
+import { Check, Copy, FileCode2, Play, RefreshCw, Sparkles } from '@lucide/vue'
 import { computed, ref } from 'vue'
 
 const props = defineProps<{

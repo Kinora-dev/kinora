@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { cn } from '@kinora/ui'
-import { Check, ChevronRight, X } from 'lucide-vue-next'
+import { Check, ChevronRight, X } from '@lucide/vue'
 import { computed, ref } from 'vue'
 import { actionDuration, actionStatus, actionTitle } from '../lib/action'
 import { formatMs } from '../lib/format'

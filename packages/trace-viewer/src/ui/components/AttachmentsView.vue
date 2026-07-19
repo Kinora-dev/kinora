@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Attachment } from '@isomorphic/trace/traceModel'
-import { Download, Paperclip } from 'lucide-vue-next'
+import { Download, Paperclip } from '@lucide/vue'
 import { computed, reactive, watchEffect } from 'vue'
 import { groupImageDiffs } from '../lib/attachments'
 import { useTraceStore } from '../store'

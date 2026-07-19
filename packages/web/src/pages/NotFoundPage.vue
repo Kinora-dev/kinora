@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Button } from '@kinora/ui/button'
-import { ArrowLeft, LayoutGrid } from 'lucide-vue-next'
+import { ArrowLeft, LayoutGrid } from '@lucide/vue'
 import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
 import { cn } from '@kinora/ui'
-import { Search, X } from 'lucide-vue-next'
+import { Search, X } from '@lucide/vue'
 
 defineOptions({ inheritAttrs: false })
 defineProps<{ placeholder?: string, class?: HTMLAttributes['class'] }>()

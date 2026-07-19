@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { cn } from '@kinora/ui'
-import { ChevronLeft, ChevronRight, Pause, Play, ZoomOut } from 'lucide-vue-next'
+import { ChevronLeft, ChevronRight, Pause, Play, ZoomOut } from '@lucide/vue'
 import { computed, ref } from 'vue'
 import { actionStatus, actionTitle } from '../lib/action'
 import { xToTime } from '../lib/timeline'

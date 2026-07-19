@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Badge } from '@kinora/ui/badge'
-import { Loader2 } from 'lucide-vue-next'
+import { Loader2 } from '@lucide/vue'
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { toast } from 'vue-sonner'

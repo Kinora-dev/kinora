@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Button } from '@kinora/ui/button'
 import { Input } from '@kinora/ui/input'
-import { Check, Copy, Plus } from 'lucide-vue-next'
+import { Check, Copy, Plus } from '@lucide/vue'
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import CopyButton from '@/components/app/CopyButton.vue'

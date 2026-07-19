@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Input } from '@kinora/ui/input'
-import { Search, X } from 'lucide-vue-next'
+import { Search, X } from '@lucide/vue'
 
 defineProps<{ placeholder?: string }>()
 const model = defineModel<string>({ default: '' })

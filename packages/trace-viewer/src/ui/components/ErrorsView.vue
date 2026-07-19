@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Check, CircleAlert, Copy } from 'lucide-vue-next'
+import { Check, CircleAlert, Copy } from '@lucide/vue'
 import { computed, ref, watchEffect } from 'vue'
 import { useTraceStore } from '../store'
 

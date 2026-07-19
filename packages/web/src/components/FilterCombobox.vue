@@ -3,7 +3,7 @@ import { Button } from '@kinora/ui/button'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@kinora/ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from '@kinora/ui/popover'
 import { cn } from '@kinora/ui/utils'
-import { Check, ChevronsUpDown } from 'lucide-vue-next'
+import { Check, ChevronsUpDown } from '@lucide/vue'
 import { ref } from 'vue'
 
 const props = defineProps<{
