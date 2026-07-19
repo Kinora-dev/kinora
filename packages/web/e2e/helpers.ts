@@ -23,7 +23,8 @@ export async function login(page: Page, creds = DEMO): Promise<void> {
   await page.locator('input[type="email"]').fill(creds.email)
   await page.locator('input[type="password"]').fill(creds.password)
   await page.locator('button[type="submit"]').click()
-  await expect(page).toHaveURL('/')
+  // Auth round-trip + SPA redirect races the default 5s under parallel CI load.
+  await expect(page).toHaveURL('/', { timeout: 15_000 })
 }
 
 export async function stubMe(page: Page, flags: { mailerEnabled?: boolean, emailVerified?: boolean }): Promise<void> {

@@ -75,6 +75,13 @@ function pickStatus(): NormTest['status'] {
   return 'skipped'
 }
 
+// One run must carry every shape the e2e finders probe for; random status picks
+// alone can starve findAnnotatedRun (skipped is ~3%/test, so ~1.4% of seeds have none).
+function coverStatuses(count: number): NormTest['status'][] {
+  const required: NormTest['status'][] = ['unexpected', 'flaky', 'skipped']
+  return Array.from({ length: count }, (_, i) => required[i] ?? 'expected')
+}
+
 function makeTest(def: { file: string, title: string }, status: NormTest['status']): NormTest {
   const titlePath = [def.file, def.title]
   const failed = status === 'unexpected'
@@ -142,13 +149,15 @@ async function seedProjects(orgId: string, defs: typeof PROJECTS, failTrace: Buf
   // Fresh data: cascade-deletes runs/tests/artifacts via FKs.
   await db.delete(project).where(eq(project.organizationId, orgId))
 
-  for (const pdef of defs) {
+  for (const [pi, pdef] of defs.entries()) {
     const projectId = randomUUID()
     await db.insert(project).values({ id: projectId, organizationId: orgId, slug: pdef.slug, name: pdef.name })
 
     for (let i = RUNS_PER_PROJECT - 1; i >= 0; i--) {
       const startedAt = new Date(Date.now() - i * DAY - Math.floor(Math.random() * 6 * 3_600_000))
-      const tests = pdef.tests.map(d => makeTest(d, pickStatus()))
+      const guaranteed = pi === 0 && i === RUNS_PER_PROJECT - 1
+      const statuses = guaranteed ? coverStatuses(pdef.tests.length) : pdef.tests.map(() => pickStatus())
+      const tests = pdef.tests.map((d, idx) => makeTest(d, statuses[idx]))
       const runId = randomUUID()
 
       await db.insert(run).values({
