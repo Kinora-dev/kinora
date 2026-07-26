@@ -1,4 +1,6 @@
 ---
+import hankenLatin from '@fontsource-variable/hanken-grotesk/files/hanken-grotesk-latin-wght-normal.woff2?url'
+import jetbrainsLatin from '@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2?url'
 import { SITE } from '../lib/site'
 import '@fontsource-variable/hanken-grotesk'
 import '@fontsource-variable/jetbrains-mono'
@@ -10,6 +12,7 @@ interface Props {
   pathname?: string
   robots?: string
   image?: string
+  schemas?: Record<string, unknown>[]
 }
 
 const site = Astro.site ?? new URL(SITE.url)
@@ -19,6 +22,7 @@ const {
   pathname = Astro.url.pathname,
   robots = 'index,follow',
   image = '/og-image.png',
+  schemas = [],
 } = Astro.props
 
 const canonical = new URL(pathname, site).toString()
@@ -49,13 +53,20 @@ const structuredData = {
     },
     {
       '@type': 'SoftwareApplication',
+      '@id': `${site.origin}/#software`,
       'name': SITE.name,
       'description': SITE.description,
       'url': site.toString(),
       'applicationCategory': 'DeveloperApplication',
+      'applicationSubCategory': 'Test reporting',
       'operatingSystem': 'Web, macOS, Windows, Linux, self-hosted',
       'publisher': { '@id': orgId },
       'sameAs': [SITE.repo],
+      'softwareHelp': SITE.docs,
+      'downloadUrl': SITE.download,
+      'license': 'https://fsl.software/',
+      'isAccessibleForFree': true,
+      'keywords': 'Playwright, test report, test dashboard, flaky tests, trace viewer, CI',
       'featureList': [
         'Playwright test dashboard across projects and over time',
         'Pass-rate and trend tracking',
@@ -77,6 +88,7 @@ const structuredData = {
         ],
       },
     },
+    ...schemas,
   ],
 };
 ---
@@ -97,6 +109,21 @@ const structuredData = {
       media="(prefers-color-scheme: dark)"
     />
     <link rel="canonical" href={canonical} />
+    <link rel="sitemap" type="application/xml" href="/sitemap-index.xml" />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href={hankenLatin}
+      crossorigin
+    />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href={jetbrainsLatin}
+      crossorigin
+    />
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="shortcut icon" href="/favicon.ico" />
@@ -108,11 +135,13 @@ const structuredData = {
     <meta name="robots" content={robots} />
 
     <meta property="og:site_name" content="kinora" />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonical} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={imageUrl} />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content={`${SITE.name} - ${SITE.tagline}`} />

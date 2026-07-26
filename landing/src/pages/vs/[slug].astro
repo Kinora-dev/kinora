@@ -15,27 +15,34 @@ export function getStaticPaths() {
 const { c } = Astro.props
 const site = Astro.site ?? new URL(SITE.url)
 
-const faqSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  'mainEntity': c.faqs.map(f => ({
-    '@type': 'Question',
-    'name': f.q,
-    'acceptedAnswer': { '@type': 'Answer', 'text': f.a },
-  })),
-}
+const others = COMPARISONS.filter(o => o.slug !== c.slug)
 
-const breadcrumbSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'BreadcrumbList',
-  'itemListElement': [
-    { '@type': 'ListItem', 'position': 1, 'name': 'kinora', 'item': site.toString() },
-    { '@type': 'ListItem', 'position': 2, 'name': `vs ${c.themShort}`, 'item': new URL(`/vs/${c.slug}`, site).toString() },
-  ],
-}
+const schemas = [
+  {
+    '@type': 'FAQPage',
+    'mainEntity': c.faqs.map(f => ({
+      '@type': 'Question',
+      'name': f.q,
+      'acceptedAnswer': { '@type': 'Answer', 'text': f.a },
+    })),
+  },
+  {
+    '@type': 'BreadcrumbList',
+    'itemListElement': [
+      { '@type': 'ListItem', 'position': 1, 'name': 'kinora', 'item': site.toString() },
+      { '@type': 'ListItem', 'position': 2, 'name': 'Comparisons', 'item': new URL('/vs', site).toString() },
+      { '@type': 'ListItem', 'position': 3, 'name': `vs ${c.themShort}`, 'item': new URL(`/vs/${c.slug}`, site).toString() },
+    ],
+  },
+]
 ---
 
-<Layout title={c.title} description={c.description} pathname={`/vs/${c.slug}`}>
+<Layout
+  title={c.title}
+  description={c.description}
+  pathname={`/vs/${c.slug}`}
+  schemas={schemas}
+>
   <SiteHeader />
   <main>
     <section class="relative overflow-hidden border-b border-border">
@@ -50,6 +57,8 @@ const breadcrumbSchema = {
           aria-label="Breadcrumb"
         >
           <a href="/" class="transition-colors hover:text-foreground">kinora</a>
+          <span class="px-1.5" aria-hidden="true">/</span>
+          <a href="/vs" class="transition-colors hover:text-foreground">Compare</a>
           <span class="px-1.5" aria-hidden="true">/</span>
           <span class="text-foreground">vs {c.themShort}</span>
         </nav>
@@ -209,7 +218,21 @@ const breadcrumbSchema = {
           }
         </div>
 
-        <div class="reveal mt-10 flex flex-wrap items-center gap-4 text-sm">
+        <div class="reveal mt-10 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+          <span class="font-mono text-[11px] uppercase tracking-wider">Also compare:</span>
+          {
+            others.map(o => (
+              <a
+                href={`/vs/${o.slug}`}
+                class="underline decoration-border underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground"
+              >
+                vs {o.themShort}
+              </a>
+            ))
+          }
+        </div>
+
+        <div class="reveal mt-6 flex flex-wrap items-center gap-4 text-sm">
           <a href={SITE.repo} target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground">
             <GithubIcon class="size-3.5" /> Source on GitHub
           </a>
@@ -224,7 +247,4 @@ const breadcrumbSchema = {
     <CtaSection />
   </main>
   <SiteFooter />
-
-  <script is:inline type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
-  <script is:inline type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
 </Layout>

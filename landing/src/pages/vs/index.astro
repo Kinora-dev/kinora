@@ -1,0 +1,116 @@
+---
+import { ArrowRight } from '@lucide/astro'
+import CtaSection from '../../components/CtaSection.astro'
+import SiteFooter from '../../components/SiteFooter.astro'
+import SiteHeader from '../../components/SiteHeader.astro'
+import { COMPARISONS } from '../../data/comparisons'
+import { SOLUTIONS } from '../../data/solutions'
+import Layout from '../../layouts/Layout.astro'
+import { SITE } from '../../lib/site'
+
+const site = Astro.site ?? new URL(SITE.url)
+
+const schemas = [
+  {
+    '@type': 'BreadcrumbList',
+    'itemListElement': [
+      { '@type': 'ListItem', 'position': 1, 'name': 'kinora', 'item': site.toString() },
+      { '@type': 'ListItem', 'position': 2, 'name': 'Comparisons', 'item': new URL('/vs', site).toString() },
+    ],
+  },
+  {
+    '@type': 'ItemList',
+    'name': 'Playwright reporting tools compared with kinora',
+    'itemListElement': COMPARISONS.map((c, i) => ({
+      '@type': 'ListItem',
+      'position': i + 1,
+      'name': `kinora vs ${c.themShort}`,
+      'url': new URL(`/vs/${c.slug}`, site).toString(),
+    })),
+  },
+]
+---
+
+<Layout
+  title="Playwright reporting tools compared | kinora"
+  description="How kinora compares to the Playwright HTML report, Currents, Allure Report, and ReportPortal: history, flaky detection, embedded trace viewer, self-hosting, and price."
+  pathname="/vs"
+  schemas={schemas}
+>
+  <SiteHeader />
+  <main>
+    <section class="relative overflow-hidden border-b border-border">
+      <div
+        class="app-grid pointer-events-none absolute inset-0 [mask-image:radial-gradient(120%_80%_at_50%_0%,black,transparent)]"
+        aria-hidden="true"
+      >
+      </div>
+      <div class="relative mx-auto max-w-4xl px-5 pt-16 pb-14 text-center sm:px-8 sm:pt-24">
+        <nav
+          class="reveal mb-6 font-mono text-[11px] uppercase tracking-wider text-muted-foreground"
+          aria-label="Breadcrumb"
+        >
+          <a href="/" class="transition-colors hover:text-foreground">kinora</a>
+          <span class="px-1.5" aria-hidden="true">/</span>
+          <span class="text-foreground">Comparisons</span>
+        </nav>
+        <h1
+          class="reveal text-balance text-4xl font-semibold leading-[1.08] tracking-tight sm:text-5xl"
+          style="--reveal-delay: 60ms"
+        >
+          Playwright reporting tools, compared
+        </h1>
+        <p
+          class="reveal mx-auto mt-6 max-w-2xl text-pretty text-lg text-muted-foreground"
+          style="--reveal-delay: 140ms"
+        >
+          Every option here reports Playwright results. They differ on what happens after the run ends:
+          whether history survives, whether flaky tests get named, and how far you are from the trace.
+        </p>
+      </div>
+    </section>
+
+    <section class="border-b border-border">
+      <div class="mx-auto max-w-5xl px-5 py-16 sm:px-8 sm:py-20">
+        <div class="grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-2">
+          {
+            COMPARISONS.map((c, i) => (
+              <article class="reveal flex flex-col bg-background p-7" style={`--reveal-delay: ${(i % 2) * 70}ms`}>
+                <h2 class="text-xl font-semibold tracking-tight">
+                  <a href={`/vs/${c.slug}`} class="transition-colors hover:text-signal">
+                    kinora <span class="text-muted-foreground">vs</span> {c.themShort}
+                  </a>
+                </h2>
+                <p class="mt-3 grow text-pretty text-sm leading-relaxed text-muted-foreground">{c.tldr}</p>
+                <a
+                  href={`/vs/${c.slug}`}
+                  class="mt-5 inline-flex items-center gap-1.5 font-mono text-xs font-semibold uppercase tracking-wider text-signal"
+                >
+                  Read the comparison
+                  <ArrowRight class="size-3.5" aria-hidden="true" />
+                </a>
+              </article>
+            ))
+          }
+        </div>
+
+        <div class="reveal mt-10 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+          <span class="font-mono text-[11px] uppercase tracking-wider">Use cases:</span>
+          {
+            SOLUTIONS.map(s => (
+              <a
+                href={`/${s.slug}`}
+                class="underline decoration-border underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground"
+              >
+                {s.h1}
+              </a>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <CtaSection />
+  </main>
+  <SiteFooter />
+</Layout>

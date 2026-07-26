@@ -37,6 +37,7 @@ kinora runs two ways: self-host the full dashboard and trace viewer for free (FS
 ${useCases}
 
 ## Comparisons
+- [All comparisons](${url}/vs): how kinora compares to the other Playwright reporting tools
 ${comparisons}
 
 ## Key facts

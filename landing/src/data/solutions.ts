@@ -1,4 +1,4 @@
-export type ShotKey = 'overview' | 'test-history' | 'tests' | 'trace-viewer' | 'compare'
+export type ShotKey = 'overview' | 'test-history' | 'tests' | 'trace-viewer' | 'compare' | 'project'
 
 export interface SolPoint {
   title: string
@@ -228,6 +228,98 @@ export const SOLUTIONS: Solution[] = [
       {
         q: 'Does it work with self-hosted kinora?',
         a: 'Yes. The MCP server runs locally over stdio and points at either kinora cloud or your self-hosted server, authenticated with your API token.',
+      },
+    ],
+  },
+  {
+    slug: 'playwright-report-github-actions',
+    eyebrow: 'GitHub Actions',
+    h1: 'Playwright reports for GitHub Actions',
+    title: 'Playwright test report for GitHub Actions | kinora',
+    description:
+      'Publish Playwright results from GitHub Actions: every run kept with its commit and branch, a summary comment on the pull request, and traces you open in the browser.',
+    tldr:
+      'Add the reporter to your workflow and every GitHub Actions run lands in kinora with its commit, branch, and run link. Pull requests get a summary comment, and the trace for any failure opens in the browser.',
+    intro:
+      'The Actions log tells you a test failed. It does not tell you whether that test has been failing all week, whether this branch made it worse, or what the browser was doing when it broke. Uploading the HTML report as an artifact gets you a zip to download and a local server to start. kinora takes the results straight from the job: every run is kept with its commit and branch, the pull request gets a comment listing what newly failed, and the full Playwright trace opens inline.',
+    shot: 'project',
+    shotAlt: 'kinora project view listing GitHub Actions runs with pass rate, flaky count, and commit SHA',
+    points: [
+      {
+        title: 'One step in the workflow',
+        body: 'Add @kinora/reporter to playwright.config and put KINORA_TOKEN in the job env. No artifact upload, no extra step, no change to your tests.',
+      },
+      {
+        title: 'Commit, branch, and run linked',
+        body: 'The commit SHA, branch, base branch, and the Actions run URL are picked up from the job environment, so every run in kinora points back at the workflow that produced it.',
+      },
+      {
+        title: 'A comment on the pull request',
+        body: 'On a pull_request run, kinora posts pass/fail counts and the tests newly failing versus the base branch, then edits that same comment on every re-run. It uses the job\'s own GITHUB_TOKEN, so no credentials are stored.',
+      },
+      {
+        title: 'Traces without the artifact dance',
+        body: 'No upload-artifact, no download, no local show-trace. Click a red test and the real Playwright trace viewer opens in the dashboard.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'How do I publish a Playwright report from GitHub Actions?',
+        a: 'Add @kinora/reporter to your playwright.config, store a kinora API token as a repository secret, and pass it to the test step as KINORA_TOKEN. The reporter uploads results when the run ends; nothing else in the workflow changes.',
+      },
+      {
+        q: 'Can kinora comment on the pull request?',
+        a: 'Yes. On pull_request runs it posts a summary with pass/fail counts and the tests newly failing versus the base branch, and updates that same comment on re-runs. The job needs pull-requests: write permission. Pull requests from forks are skipped, because their GITHUB_TOKEN is read-only.',
+      },
+      {
+        q: 'Does it work with sharded or matrix jobs?',
+        a: 'Yes. Merge shards with Playwright\'s merge-reports so the run uploads once as a single report. For matrix legs that share one pull request, give each leg its own PR comment label so they keep separate comments.',
+      },
+    ],
+  },
+  {
+    slug: 'self-hosted-playwright-dashboard',
+    eyebrow: 'Self-hosting',
+    h1: 'A self-hosted Playwright dashboard',
+    title: 'Self-hosted Playwright test dashboard | kinora',
+    description:
+      'Run kinora on your own infrastructure with one docker compose: dashboard, embedded trace viewer, and Postgres. Free, no seat limits, and traces never leave your disk.',
+    tldr:
+      'kinora self-hosts with one docker compose: Postgres, the dashboard, and the embedded trace viewer on a single origin. Free forever, every feature unlocked, and your traces stay on your own storage.',
+    intro:
+      'Test results carry your app\'s screenshots, network traffic, and sometimes production-shaped data, which is why plenty of teams cannot ship them to a vendor. The self-host bundle runs the same dashboard as the cloud on your own box: one docker compose brings up Postgres, the server, and the web container, with the trace viewer served from the same origin.',
+    shot: 'overview',
+    shotAlt: 'kinora overview showing pass rate and run health across several self-hosted projects',
+    points: [
+      {
+        title: 'One docker compose',
+        body: 'Postgres, a one-shot migration, the server, and the web container. Set PUBLIC_URL, AUTH_SECRET, and a database password, then bring it up.',
+      },
+      {
+        title: 'Single origin, no CORS',
+        body: 'The web container serves the dashboard and trace viewer and proxies the API to the server, so the session cookie stays host-only and there is nothing cross-origin to configure.',
+      },
+      {
+        title: 'Your traces, your storage',
+        body: 'trace.zip artifacts land on a local volume by default, or in any S3-compatible store: AWS, Cloudflare R2, MinIO, or Hetzner.',
+      },
+      {
+        title: 'Nothing metered',
+        body: 'Self-host runs with billing off: no seat cap, no retention window, no usage limit, and no license key to check in with.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Is self-hosting kinora free?',
+        a: 'Yes, free forever. The server, dashboard, and desktop app are fair source (FSL-1.1-MIT, which converts to MIT after two years); the reporter, CLI, core, and trace viewer are MIT. There is no license key and no seat cap.',
+      },
+      {
+        q: 'What do I need to run it?',
+        a: 'A host with Docker. The bundle brings its own Postgres and keeps traces on a local volume, so a single small VM is enough to start. Point it at an S3-compatible bucket when artifacts outgrow the disk.',
+      },
+      {
+        q: 'Do self-hosted runs lose any features?',
+        a: 'No, the opposite. Self-host unlocks everything: unlimited projects and retention, alerts, GitHub PR comments, the MCP server, and the desktop app all work the same as on cloud.',
       },
     ],
   },

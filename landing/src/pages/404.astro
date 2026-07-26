@@ -1,0 +1,76 @@
+---
+import { ArrowRight } from '@lucide/astro'
+import SiteFooter from '../components/SiteFooter.astro'
+import SiteHeader from '../components/SiteHeader.astro'
+import { COMPARISONS } from '../data/comparisons'
+import { SOLUTIONS } from '../data/solutions'
+import Layout from '../layouts/Layout.astro'
+import { SITE } from '../lib/site'
+---
+
+<Layout
+  title="Page not found | kinora"
+  description="That page does not exist."
+  robots="noindex,follow"
+>
+  <SiteHeader />
+  <main>
+    <section class="relative overflow-hidden border-b border-border">
+      <div
+        class="app-grid pointer-events-none absolute inset-0 [mask-image:radial-gradient(120%_80%_at_50%_0%,black,transparent)]"
+        aria-hidden="true"
+      >
+      </div>
+      <div class="relative mx-auto max-w-3xl px-5 pt-20 pb-16 text-center sm:px-8 sm:pt-28">
+        <p class="font-mono text-xs font-medium uppercase tracking-wider text-signal">
+          [ 404 ]
+        </p>
+        <h1 class="mt-4 text-balance text-4xl font-semibold leading-[1.08] tracking-tight sm:text-5xl">
+          This page failed to resolve
+        </h1>
+        <p class="mx-auto mt-6 max-w-xl text-pretty text-lg text-muted-foreground">
+          The link is dead or the page moved. Everything below still works.
+        </p>
+        <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <a
+            href="/"
+            class="inline-flex h-11 items-center gap-2 rounded-md bg-signal px-6 font-mono text-sm font-semibold text-background transition-opacity hover:opacity-90"
+          >
+            Back home
+            <ArrowRight class="size-4" aria-hidden="true" />
+          </a>
+          <a
+            href={SITE.docs}
+            class="inline-flex h-11 items-center gap-2 rounded-md border border-border bg-background px-6 font-mono text-sm font-semibold transition-colors hover:bg-muted"
+          >
+            Docs
+          </a>
+        </div>
+
+        <div class="mt-12 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+          {
+            SOLUTIONS.map(s => (
+              <a
+                href={`/${s.slug}`}
+                class="underline decoration-border underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground"
+              >
+                {s.h1}
+              </a>
+            ))
+          }
+          {
+            COMPARISONS.map(c => (
+              <a
+                href={`/vs/${c.slug}`}
+                class="underline decoration-border underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground"
+              >
+                vs {c.themShort}
+              </a>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+  </main>
+  <SiteFooter />
+</Layout>

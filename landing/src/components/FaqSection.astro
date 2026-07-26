@@ -2,16 +2,6 @@
 import { ChevronDown } from '@lucide/astro'
 import { COMPARISONS } from '../data/comparisons'
 import { HOME_FAQS as faqs } from '../data/faq'
-
-const faqSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  'mainEntity': faqs.map(f => ({
-    '@type': 'Question',
-    'name': f.q,
-    'acceptedAnswer': { '@type': 'Answer', 'text': f.a },
-  })),
-};
 ---
 
 <section id="faq" class="border-b border-border">
@@ -64,10 +54,4 @@ const faqSchema = {
       }
     </div>
   </div>
-
-  <script
-    is:inline
-    type="application/ld+json"
-    set:html={JSON.stringify(faqSchema)}
-  />
 </section>

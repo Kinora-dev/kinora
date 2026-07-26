@@ -11,12 +11,25 @@ import SetupSection from '../components/SetupSection.astro'
 import SiteFooter from '../components/SiteFooter.astro'
 import SiteHeader from '../components/SiteHeader.astro'
 import TraceSection from '../components/TraceSection.astro'
-import Layout from '../layouts/Layout.astro';
+import { HOME_FAQS } from '../data/faq'
+import Layout from '../layouts/Layout.astro'
+
+const schemas = [
+  {
+    '@type': 'FAQPage',
+    'mainEntity': HOME_FAQS.map(f => ({
+      '@type': 'Question',
+      'name': f.q,
+      'acceptedAnswer': { '@type': 'Answer', 'text': f.a },
+    })),
+  },
+];
 ---
 
 <Layout
   title="kinora - Playwright test dashboard: history, flaky tracking, inline trace viewer"
   description="Open-source dashboard for Playwright tests across runs. Track pass rate and trends, surface flaky tests, and open the full trace inline. Self-host free or use the cloud."
+  schemas={schemas}
 >
   <SiteHeader />
   <main>

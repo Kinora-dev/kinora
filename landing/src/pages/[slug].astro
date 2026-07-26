@@ -6,6 +6,8 @@ import compareDark from '../assets/screenshots/compare-dark.png'
 import compareLight from '../assets/screenshots/compare-light.png'
 import overviewDark from '../assets/screenshots/overview-dark.png'
 import overviewLight from '../assets/screenshots/overview-light.png'
+import projectDark from '../assets/screenshots/project-dark.png'
+import projectLight from '../assets/screenshots/project-light.png'
 import testHistoryDark from '../assets/screenshots/test-history-dark.png'
 import testHistoryLight from '../assets/screenshots/test-history-light.png'
 import testsDark from '../assets/screenshots/tests-dark.png'
@@ -34,32 +36,37 @@ const SHOTS: Record<ShotKey, { light: ImageMetadata, dark: ImageMetadata, label:
   'tests': { light: testsLight, dark: testsDark, label: 'kinora.dev/tests' },
   'trace-viewer': { light: traceViewerLight, dark: traceViewerDark, label: 'kinora.dev/trace' },
   'compare': { light: compareLight, dark: compareDark, label: 'kinora.dev/compare' },
+  'project': { light: projectLight, dark: projectDark, label: 'kinora.dev/project' },
 }
 const shot = s.shot ? SHOTS[s.shot] : null
 
-const faqSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  'mainEntity': s.faqs.map(f => ({
-    '@type': 'Question',
-    'name': f.q,
-    'acceptedAnswer': { '@type': 'Answer', 'text': f.a },
-  })),
-}
-
-const breadcrumbSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'BreadcrumbList',
-  'itemListElement': [
-    { '@type': 'ListItem', 'position': 1, 'name': 'kinora', 'item': site.toString() },
-    { '@type': 'ListItem', 'position': 2, 'name': s.h1, 'item': new URL(`/${s.slug}`, site).toString() },
-  ],
-}
+const schemas = [
+  {
+    '@type': 'FAQPage',
+    'mainEntity': s.faqs.map(f => ({
+      '@type': 'Question',
+      'name': f.q,
+      'acceptedAnswer': { '@type': 'Answer', 'text': f.a },
+    })),
+  },
+  {
+    '@type': 'BreadcrumbList',
+    'itemListElement': [
+      { '@type': 'ListItem', 'position': 1, 'name': 'kinora', 'item': site.toString() },
+      { '@type': 'ListItem', 'position': 2, 'name': s.h1, 'item': new URL(`/${s.slug}`, site).toString() },
+    ],
+  },
+]
 
 const related = SOLUTIONS.filter(o => o.slug !== s.slug)
 ---
 
-<Layout title={s.title} description={s.description} pathname={`/${s.slug}`}>
+<Layout
+  title={s.title}
+  description={s.description}
+  pathname={`/${s.slug}`}
+  schemas={schemas}
+>
   <SiteHeader />
   <main>
     <section class="relative overflow-hidden border-b border-border">
@@ -191,6 +198,12 @@ const related = SOLUTIONS.filter(o => o.slug !== s.slug)
               </a>
             ))
           }
+          <a
+            href="/vs"
+            class="underline decoration-border underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground"
+          >
+            Compare with other tools
+          </a>
         </div>
       </div>
     </section>
@@ -198,7 +211,4 @@ const related = SOLUTIONS.filter(o => o.slug !== s.slug)
     <CtaSection />
   </main>
   <SiteFooter />
-
-  <script is:inline type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
-  <script is:inline type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
 </Layout>
