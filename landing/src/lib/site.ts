@@ -13,7 +13,7 @@ export const SITE = {
   description:
     'A dashboard for your Playwright tests, across projects and over time, with an embedded trace viewer. Track pass rates, spot trends, surface flaky tests, and open the full trace inline.',
   cal: 'https://cal.com/joris-gallot',
-  email: 'contact@kinora.dev',
+  email: 'hi@kinora.dev',
 } as const
 
 export const NAV: { label: string, href: string, event?: string }[] = [
