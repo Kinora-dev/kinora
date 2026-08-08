@@ -1,4 +1,3 @@
-# transitive (electron-builder), freshly published; exempt from pnpm 11's default release cooldown.
 minimumReleaseAgeExclude:
   - unzipper@0.12.5
 shellEmulator: true
@@ -18,7 +17,7 @@ packages:
 
 overrides:
   # Dedupe to one @codemirror/view: two copies make the editor silently drop syntax-highlight decorations.
-  '@codemirror/view': ^6.43.1
+  '@codemirror/view': ^6.43.8
   # CVE fix (dependabot #4): bump only the vite/vitest esbuild; leave the 0.18.x esbuild-kit tree.
   esbuild@0.28.0: 0.28.1
 
