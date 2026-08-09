@@ -33,7 +33,7 @@
     "vue": "^3.5.38"
   },
   "devDependencies": {
-    "@playwright/test": "^1.61.0",
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/vite": "^4.3.1",
     "@types/node": "^26.0.0",
     "@vitejs/plugin-vue": "^6.0.7",

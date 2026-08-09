@@ -39,13 +39,13 @@
     "prepublishOnly": "tsdown"
   },
   "peerDependencies": {
-    "@playwright/test": ">=1.40.0"
+    "@playwright/test": ">=1.62.1"
   },
   "dependencies": {
     "@kinora/core": "workspace:*"
   },
   "devDependencies": {
-    "@playwright/test": "^1.61.0",
+    "@playwright/test": "^1.62.1",
     "@types/node": "^26.0.0",
     "@vitest/coverage-v8": "^4.1.9",
     "tsdown": "^0.22.3",
