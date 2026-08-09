@@ -28,7 +28,7 @@
     "@trpc/server": "11.18.0",
     "electron-updater": "^6.8.9",
     "fflate": "^0.8.3",
-    "vue": "^3.5.38"
+    "vue": "^3.5.41"
   },
   "devDependencies": {
     "@kinora/server": "workspace:*",
