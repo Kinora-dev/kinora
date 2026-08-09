@@ -14,7 +14,7 @@
     "test:e2e": "pnpm --filter @kinora/server db:reset:e2e && playwright test"
   },
   "dependencies": {
-    "@better-auth/api-key": "^1.6.20",
+    "@better-auth/api-key": "^1.6.26",
     "@kinora/core": "workspace:*",
     "@kinora/ui": "workspace:*",
     "@lucide/vue": "^1.21.0",
