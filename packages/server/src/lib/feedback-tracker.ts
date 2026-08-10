@@ -53,7 +53,7 @@ export async function createFeedbackTask(params: CreateTaskParams) {
     body: JSON.stringify({
       title: params.title,
       description: params.description,
-      status: 'planned',
+      status: 'to-do',
       priority: 'no-priority',
     }),
   })
