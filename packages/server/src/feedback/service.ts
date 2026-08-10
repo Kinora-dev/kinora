@@ -1,5 +1,4 @@
-import { stowlineConfig } from '../lib/env'
-import { stowline } from '../lib/stowline'
+import { createFeedbackTask } from '../lib/feedback-tracker'
 
 export type FeedbackType = 'bug' | 'feature'
 
@@ -11,17 +10,9 @@ interface CreateFeedbackParams {
 }
 
 export async function createFeedbackIssue(params: CreateFeedbackParams) {
-  if (!stowline || !stowlineConfig)
-    throw new Error('Feedback is not configured')
-
-  return stowline.issues.create.mutate({
-    projectId: stowlineConfig.projectId,
+  return createFeedbackTask({
     title: params.title,
-    description: params.description,
+    description: `${params.description}\n\nSubmitted by: ${params.userEmail}`,
     labels: ['user-feedback', params.type],
-    status: 'backlog',
-    metadata: {
-      submittedBy: params.userEmail,
-    },
   })
 }

@@ -91,7 +91,7 @@ One codebase, two deployment modes gated by `KINORA_CLOUD` (env). Self-host (`fa
 
 - **Billing** (`src/billing/`): `polar.ts` (Polar SDK + better-auth plugin), `entitlements.ts` / `usage.ts` (plan limits), `retention.ts` (per-plan run-retention windows, swept by `purge-expired-runs`).
 - **Alerts** (`src/alerts/`): per-project notifications on new failures / regressions. Channels are `slack.ts`, `email.ts` (nodemailer/SMTP), `webhook.ts`, dispatched by `notify.ts` with an every-run / on-failure / on-regression policy (`core.ts`).
-- **Feedback** (`src/feedback/`, `feedback` tRPC router): in-app "Send feedback" posts bug/feature reports to the Stowline issue tracker (`@stowline/sdk`). Cloud-only: `resolveStowline` in `env.ts` returns null unless `KINORA_CLOUD=true` and all three `STOWLINE_*` are set; `config.get.feedbackEnabled` gates the web UI.
+- **Feedback** (`src/feedback/`, `feedback` tRPC router): in-app "Send feedback" posts bug/feature reports to the private cloud task tracker. Cloud-only: `resolveFeedbackTracker` in `env.ts` returns null unless `KINORA_CLOUD=true` and all `FEEDBACK_TRACKER_*` vars are set; `config.get.feedbackEnabled` gates the web UI.
 - Email (password reset, verification, invitations, alerts) needs `SMTP_*`; social login needs `GOOGLE_*` / `GITHUB_*`. All optional - empty disables the flow.
 
 ### Persistence

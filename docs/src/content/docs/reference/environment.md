@@ -95,11 +95,11 @@ without all four.
 | --- | --- |
 | `SENTRY_DSN` | Server error reporting. Empty disables it. |
 
-## Feedback (Stowline, cloud-only)
+## Feedback tracker (cloud-only)
 
-Powers the in-app "Send feedback" form. Cloud-only: a self-host instance never posts to the kinora
+Powers the in-app "Send feedback" form. Cloud-only: a self-host instance never posts to the Kinora
 issue tracker, so these are ignored unless `KINORA_CLOUD=true`.
 
 | Variable | Notes |
 | --- | --- |
-| `STOWLINE_API_KEY` / `STOWLINE_PROJECT_ID` / `STOWLINE_API_URL` | Stowline issue-tracker credentials and endpoint. |
+| `FEEDBACK_TRACKER_API_KEY` / `FEEDBACK_TRACKER_PROJECT_ID` / `FEEDBACK_TRACKER_WORKSPACE_ID` / `FEEDBACK_TRACKER_API_URL` | Private task tracker credentials and endpoint. Leave empty for self-host. |

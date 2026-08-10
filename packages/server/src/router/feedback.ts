@@ -1,7 +1,7 @@
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import { createFeedbackIssue } from '../feedback/service'
-import { feedbackEnabled } from '../lib/stowline'
+import { feedbackEnabled } from '../lib/feedback-tracker'
 import { authProcedure, router } from '../trpc/index'
 
 export const feedbackRouter = router({

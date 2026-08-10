@@ -45,9 +45,10 @@ const envSchema = z.object({
   SMTP_PASS: z.string().optional(),
   SMTP_FROM: z.string().optional(),
   SENTRY_DSN: z.string().optional(),
-  STOWLINE_API_KEY: z.string().optional(),
-  STOWLINE_PROJECT_ID: z.string().optional(),
-  STOWLINE_API_URL: z.union([z.literal(''), z.url()]).optional(),
+  FEEDBACK_TRACKER_API_KEY: z.string().optional(),
+  FEEDBACK_TRACKER_PROJECT_ID: z.string().optional(),
+  FEEDBACK_TRACKER_WORKSPACE_ID: z.string().optional(),
+  FEEDBACK_TRACKER_API_URL: z.union([z.literal(''), z.url()]).optional(),
 }).refine(
   e => !e.KINORA_CLOUD || Boolean(e.POLAR_ACCESS_TOKEN && e.POLAR_WEBHOOK_SECRET && e.POLAR_PRODUCT_TEAM_ID && e.POLAR_PRODUCT_PRO_ID),
   { message: 'KINORA_CLOUD=true requires POLAR_ACCESS_TOKEN, POLAR_WEBHOOK_SECRET, POLAR_PRODUCT_TEAM_ID and POLAR_PRODUCT_PRO_ID' },
@@ -149,20 +150,26 @@ function resolveSmtp(): SmtpConfig | null {
 
 export const smtp = resolveSmtp()
 
-export interface StowlineConfig {
+export interface FeedbackTrackerConfig {
   apiKey: string
   projectId: string
+  workspaceId: string
   apiUrl: string
 }
 
-// User feedback -> Stowline issue tracker. Cloud-only: a self-host instance must not post to our tracker.
-function resolveStowline(): StowlineConfig | null {
+// User feedback -> private task tracker. Cloud-only: self-host instances must not post to our tracker.
+function resolveFeedbackTracker(): FeedbackTrackerConfig | null {
   if (!env.KINORA_CLOUD)
     return null
-  const { STOWLINE_API_KEY: apiKey, STOWLINE_PROJECT_ID: projectId, STOWLINE_API_URL: apiUrl } = env
-  if (!apiKey || !projectId || !apiUrl)
+  const {
+    FEEDBACK_TRACKER_API_KEY: apiKey,
+    FEEDBACK_TRACKER_PROJECT_ID: projectId,
+    FEEDBACK_TRACKER_WORKSPACE_ID: workspaceId,
+    FEEDBACK_TRACKER_API_URL: apiUrl,
+  } = env
+  if (!apiKey || !projectId || !workspaceId || !apiUrl)
     return null
-  return { apiKey, projectId, apiUrl }
+  return { apiKey, projectId, workspaceId, apiUrl }
 }
 
-export const stowlineConfig = resolveStowline()
+export const feedbackTrackerConfig = resolveFeedbackTracker()

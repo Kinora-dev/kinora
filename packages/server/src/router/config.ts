@@ -1,6 +1,6 @@
 import { cloud, demo, githubOauthEnabled, googleOauthEnabled, slackApp } from '../lib/env'
 import { mailerEnabled } from '../lib/mailer'
-import { feedbackEnabled } from '../lib/stowline'
+import { feedbackEnabled } from '../lib/feedback-tracker'
 import { publicProcedure, router } from '../trpc/index'
 
 // App-level server capabilities the dashboard gates UI on: static per deployment, not per-user.
@@ -15,7 +15,7 @@ export const configRouter = router({
     githubOauthEnabled,
     // Public read-only demo? front shows a banner + hides mutation UI.
     demo,
-    // Stowline configured (cloud)? front shows the "Send feedback" entry.
+    // Feedback tracker configured (cloud)? front shows the "Send feedback" entry.
     feedbackEnabled,
     // Cloud deployment? front shows the platform-admin nav entry to admin-role users.
     adminEnabled: cloud !== null,
