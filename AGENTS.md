@@ -1,5 +1,3 @@
-@~/.claude/stack/web-saas.md
-
 # kinora
 
 Guidance for agents in this repo. Shared stack conventions are imported above; everything below is kinora-specific and overrides the profile where they differ.
