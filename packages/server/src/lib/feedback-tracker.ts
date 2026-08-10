@@ -36,9 +36,13 @@ async function kaneoRequest<T>(path: string, init: RequestInit = {}): Promise<T>
 }
 
 function labelColor(name: string) {
-  const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#14b8a6', '#3b82f6', '#8b5cf6', '#ec4899']
+  const normalized = name.toLowerCase()
+  if (normalized === 'bug')
+    return '#ef4444'
+
+  const colors = ['#f97316', '#eab308', '#22c55e', '#14b8a6', '#3b82f6', '#8b5cf6', '#ec4899']
   let hash = 0
-  for (const char of name)
+  for (const char of normalized)
     hash = (hash * 31 + char.charCodeAt(0)) >>> 0
   return colors[hash % colors.length]!
 }
