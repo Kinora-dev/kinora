@@ -1,3 +1,5 @@
+import type { Page } from '@playwright/test'
+import { readFile } from 'node:fs/promises'
 import { expect, test } from '@playwright/test'
 
 test.beforeEach(async ({ page }) => {
@@ -89,4 +91,43 @@ test('loads a trace passed via ?trace=', async ({ page, baseURL }) => {
   await page.goto(`/?trace=${encodeURIComponent(traceUrl)}`)
   await expect(page.getByTestId('action').first()).toBeVisible()
   expect(await page.getByTestId('action').count()).toBeGreaterThan(5)
+})
+
+async function openVideoTrace(page: Page, baseURL: string | undefined): Promise<void> {
+  await page.goto(`/?trace=${encodeURIComponent(`${baseURL}/fixtures/video-trace.zip`)}`)
+  await expect(page.getByTestId('action').first()).toBeVisible()
+  await page.getByRole('button', { name: /^Attachments/ }).click()
+}
+
+test('plays a video attachment inline', async ({ page, baseURL }) => {
+  await openVideoTrace(page, baseURL)
+  const video = page.locator('video')
+  await expect(video).toBeVisible()
+  await expect.poll(() => video.evaluate((v: HTMLVideoElement) => v.duration)).toBeGreaterThan(0)
+})
+
+// Chromium never routes `<a download>` through the service worker, so downloading from the raw
+// sha1 url saves the app's SPA fallback page instead of the attachment.
+test('downloads attachment bodies rather than the app shell', async ({ page, baseURL }) => {
+  await openVideoTrace(page, baseURL)
+
+  const cases = [
+    { contentType: 'video/webm', filename: 'video.webm', magic: '1a45dfa3' },
+    { contentType: 'image/png', filename: 'screenshot.png', magic: '89504e47' },
+  ]
+  for (const { contentType, filename, magic } of cases) {
+    const row = page.getByTestId('attachment').filter({ hasText: contentType })
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      row.getByTestId('attachment-download').click(),
+    ])
+    expect(download.suggestedFilename()).toBe(filename)
+    const body = await readFile((await download.path())!)
+    expect(body.subarray(0, 4).toString('hex')).toBe(magic)
+  }
+})
+
+test('opens the tab named by ?tab=', async ({ page, baseURL }) => {
+  await page.goto(`/?trace=${encodeURIComponent(`${baseURL}/fixtures/video-trace.zip`)}&tab=attachments`)
+  await expect(page.getByTestId('attachment').first()).toBeVisible()
 })

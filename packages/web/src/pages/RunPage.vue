@@ -15,7 +15,7 @@ import SearchInput from '@/components/app/SearchInput.vue'
 import TestStatusBadge from '@/components/viz/TestStatusBadge.vue'
 import { useManifest, useRun } from '@/composables/queries'
 import { testLabel } from '@/lib/test-display'
-import { traceViewerHref } from '@/lib/trace'
+import { isTraceAttachment, traceViewerHref } from '@/lib/trace'
 import { httpsUrl } from '@/lib/url'
 
 const props = defineProps<{ projectId: string, runId: string }>()
@@ -85,6 +85,16 @@ const filtered = computed(() =>
     ? searchMatched.value
     : searchMatched.value.filter(t => t.status === filter.value),
 )
+
+type Attachment = NonNullable<typeof report.value>['tests'][number]['attachments'][number]
+
+// Playwright embeds screenshots and videos inside trace.zip, so a badge opens them in the
+// viewer's attachments tab; their own `path` is a CI-runner path the server never received.
+function attachmentBadges(attachments: Attachment[]): Attachment[] {
+  return traceViewerHref(attachments) ? attachments.filter(a => !isTraceAttachment(a)) : attachments
+}
+
+const BADGE_CLASS = 'inline-flex items-center gap-1 rounded border border-border px-2 py-0.5 font-mono text-[10px] text-muted-foreground'
 
 const dateFmt = new Intl.DateTimeFormat(undefined, {
   weekday: 'short',
@@ -266,13 +276,20 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
             >
               <Film class="size-3" />View trace
             </a>
-            <span
-              v-for="a in t.attachments"
-              :key="a.name"
-              class="inline-flex items-center gap-1 rounded border border-border px-2 py-0.5 font-mono text-[10px] text-muted-foreground"
-            >
-              <Paperclip class="size-3" />{{ a.name }}
-            </span>
+            <template v-for="a in attachmentBadges(t.attachments)" :key="a.name">
+              <a
+                v-if="traceViewerHref(t.attachments, 'attachments')"
+                :href="traceViewerHref(t.attachments, 'attachments')"
+                target="_blank"
+                rel="noopener"
+                class="transition-colors hover:border-signal/40 hover:text-signal" :class="BADGE_CLASS"
+              >
+                <Paperclip class="size-3" />{{ a.name }}
+              </a>
+              <span v-else :class="BADGE_CLASS">
+                <Paperclip class="size-3" />{{ a.name }}
+              </span>
+            </template>
           </div>
         </div>
 

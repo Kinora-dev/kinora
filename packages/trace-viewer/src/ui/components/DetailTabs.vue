@@ -13,8 +13,15 @@ import NetworkView from './NetworkView.vue'
 import SourceView from './SourceView.vue'
 
 const store = useTraceStore()
-type Tab = 'source' | 'call' | 'log' | 'network' | 'attachments' | 'errors' | 'console'
-const active = ref<Tab>('source')
+const TAB_IDS = ['source', 'call', 'log', 'network', 'attachments', 'errors', 'console'] as const
+type Tab = typeof TAB_IDS[number]
+
+function initialTab(): Tab {
+  const tab = new URLSearchParams(window.location.search).get('tab')
+  return TAB_IDS.find(id => id === tab) ?? 'source'
+}
+
+const active = ref<Tab>(initialTab())
 
 const errorCount = computed(() => store.model.value?.errorDescriptors.length ?? 0)
 const consoleCount = computed(() => {
