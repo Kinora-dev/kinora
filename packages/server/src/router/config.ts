@@ -1,6 +1,6 @@
 import { cloud, demo, githubOauthEnabled, googleOauthEnabled, slackApp } from '../lib/env'
-import { mailerEnabled } from '../lib/mailer'
 import { feedbackEnabled } from '../lib/feedback-tracker'
+import { mailerEnabled } from '../lib/mailer'
 import { publicProcedure, router } from '../trpc/index'
 
 // App-level server capabilities the dashboard gates UI on: static per deployment, not per-user.

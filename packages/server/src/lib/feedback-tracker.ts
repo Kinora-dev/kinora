@@ -21,7 +21,7 @@ async function kaneoRequest<T>(path: string, init: RequestInit = {}): Promise<T>
   const response = await fetch(`${feedbackTrackerConfig.apiUrl}${path}`, {
     ...init,
     headers: {
-      Authorization: `Bearer ${feedbackTrackerConfig.apiKey}`,
+      'Authorization': `Bearer ${feedbackTrackerConfig.apiKey}`,
       'Content-Type': 'application/json',
       ...init.headers,
     },
