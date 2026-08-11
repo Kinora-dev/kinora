@@ -14,6 +14,7 @@ interface AttachmentView {
   contentType: string
   url?: string
   isImage: boolean
+  isVideo: boolean
   isText: boolean
 }
 
@@ -44,9 +45,32 @@ const attachments = computed<AttachmentView[]>(() =>
     contentType: att.contentType,
     url: attachmentUrl(att),
     isImage: att.contentType.startsWith('image/'),
+    isVideo: att.contentType.startsWith('video/'),
     isText: att.contentType.startsWith('text/') || att.contentType.includes('json') || att.contentType.includes('xml'),
   })),
 )
+
+const downloadFailed = reactive<Record<string, boolean>>({})
+
+// Chromium never routes `<a download>` through the service worker, so the raw sha1 url
+// would hit the static server and save its SPA fallback page instead of the attachment.
+async function download(att: AttachmentView): Promise<void> {
+  if (!att.url)
+    return
+  try {
+    const body = await (await fetch(att.url)).arrayBuffer()
+    const href = URL.createObjectURL(new Blob([body], { type: att.contentType }))
+    const a = document.createElement('a')
+    a.href = href
+    a.download = att.name
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(href), 0)
+    downloadFailed[att.key] = false
+  }
+  catch {
+    downloadFailed[att.key] = true
+  }
+}
 
 // Lazily fetch textual attachment contents.
 const texts = reactive<Record<string, string>>({})
@@ -85,22 +109,24 @@ watchEffect(() => {
         <ImageDiff :name="d.name" :expected="d.expected" :actual="d.actual" :diff="d.diff" />
       </div>
 
-      <div v-for="a in attachments" :key="a.key" class="overflow-hidden rounded-md border border-border">
+      <div v-for="a in attachments" :key="a.key" data-testid="attachment" class="overflow-hidden rounded-md border border-border">
         <div class="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-1.5">
           <Paperclip class="size-3.5 text-muted-foreground" />
           <span class="text-xs font-medium">{{ a.name }}</span>
           <span class="font-mono text-[10px] text-muted-foreground">{{ a.contentType }}</span>
-          <a
+          <button
             v-if="a.url"
-            :href="a.url"
-            :download="a.name"
-            class="ml-auto flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+            type="button"
+            data-testid="attachment-download"
+            class="ml-auto flex cursor-pointer items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+            @click="download(a)"
           >
-            <Download class="size-3" /> download
-          </a>
+            <Download class="size-3" /> {{ downloadFailed[a.key] ? 'unavailable' : 'download' }}
+          </button>
         </div>
         <div class="p-3">
           <img v-if="a.isImage && a.url" :src="a.url" :alt="a.name" class="max-h-80 rounded border border-border">
+          <video v-else-if="a.isVideo && a.url" :src="a.url" controls class="max-h-80 rounded border border-border" />
           <pre v-else-if="a.isText" class="overflow-auto font-mono text-xs whitespace-pre-wrap text-foreground/90">{{ texts[a.key] }}</pre>
           <span v-else class="text-xs text-muted-foreground">No preview</span>
         </div>

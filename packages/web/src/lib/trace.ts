@@ -6,12 +6,17 @@ interface AttachmentLike {
   url?: string
 }
 
+export function isTraceAttachment(a: AttachmentLike): boolean {
+  return a.name === 'trace' || a.contentType === 'application/zip'
+}
+
 // Link to open a test's trace in the bundled trace viewer, or undefined if the
 // test has no hosted trace. The server returns an absolute artifact URL.
-export function traceViewerHref(attachments: AttachmentLike[]): string | undefined {
-  const trace = attachments.find(a => a.url && (a.name === 'trace' || a.contentType === 'application/zip'))
+export function traceViewerHref(attachments: AttachmentLike[], tab?: 'attachments'): string | undefined {
+  const trace = attachments.find(a => a.url && isTraceAttachment(a))
   if (!trace?.url)
     return undefined
   const viewer = env.viewerBaseUrl.endsWith('/') ? env.viewerBaseUrl : `${env.viewerBaseUrl}/`
-  return `${viewer}?trace=${encodeURIComponent(trace.url)}`
+  const href = `${viewer}?trace=${encodeURIComponent(trace.url)}`
+  return tab ? `${href}&tab=${tab}` : href
 }
