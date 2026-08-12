@@ -17,6 +17,11 @@
     {
       "matchManagers": ["github-actions"],
       "automerge": true
+    },
+    {
+      "description": "better-auth packages pin better-call to an exact version, so bumping one alone splits @better-auth/core into two pnpm instances and every plugin endpoint drops out of InferAPI",
+      "groupName": "better-auth",
+      "matchSourceUrls": ["https://github.com/better-auth/better-auth"]
     }
   ]
 }
