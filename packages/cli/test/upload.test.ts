@@ -1,3 +1,7 @@
+import { Buffer } from 'node:buffer'
+import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { uploadReport } from '../src/upload'
 
@@ -41,5 +45,41 @@ describe('uploadReport', () => {
     expect(body.tests).toHaveLength(2)
     expect(body.run.counts.total).toBe(2)
     expect(body.run.counts.unexpected).toBe(1)
+  })
+
+  it('uploads a video attachment only when --upload-attachments asks for it', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'kinora-cli-'))
+    const videoPath = join(dir, 'video.webm')
+    await writeFile(videoPath, Buffer.from('webm'))
+    const spec = RAW.suites[0].specs[0]
+    const raw = {
+      ...RAW,
+      suites: [{
+        ...RAW.suites[0],
+        specs: [{
+          ...spec,
+          tests: [{
+            status: 'expected',
+            projectName: 'chromium',
+            results: [{ status: 'passed', duration: 5, attachments: [{ name: 'video', contentType: 'video/webm', path: videoPath }] }],
+          }],
+        }],
+      }],
+    }
+
+    const calls: string[] = []
+    const fetchMock = (async (url: string | URL | Request) => {
+      calls.push(String(url))
+      return new Response(JSON.stringify({ projectId: 'p1', runId: 'r1', tests: 1 }), { status: 201 })
+    }) as typeof globalThis.fetch
+    const opts = { project: { slug: 'web-app' }, url: 'https://api.example.com', token: 'secret', fetch: fetchMock }
+
+    await uploadReport(raw, opts)
+    expect(calls.filter(u => u.endsWith('/artifacts'))).toHaveLength(0)
+
+    await uploadReport(raw, { ...opts, uploadAttachments: ['trace', 'video'] })
+    expect(calls.filter(u => u.endsWith('/artifacts'))).toHaveLength(1)
+
+    await rm(dir, { recursive: true, force: true })
   })
 })

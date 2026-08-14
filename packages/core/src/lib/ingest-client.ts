@@ -126,7 +126,29 @@ export function createIngestClient(opts: IngestClientOptions) {
   }
 }
 
+export type AttachmentKind = 'trace' | 'video' | 'screenshot'
+
+export const DEFAULT_UPLOAD_ATTACHMENTS: AttachmentKind[] = ['trace']
+
 // Trace-like attachments worth uploading (the viewer's flagship input).
 export function isTraceAttachment(a: { name: string, contentType: string, path?: string }): boolean {
   return !!a.path && (a.name === 'trace' || a.contentType === 'application/zip' || a.path.endsWith('.zip'))
+}
+
+// null = nothing we know how to host (text/plain logs, markdown annotations, ...).
+export function attachmentKind(a: { name: string, contentType: string, path?: string }): AttachmentKind | null {
+  if (!a.path)
+    return null
+  if (isTraceAttachment(a))
+    return 'trace'
+  if (a.contentType.startsWith('video/'))
+    return 'video'
+  if (a.contentType.startsWith('image/'))
+    return 'screenshot'
+  return null
+}
+
+export function isUploadableAttachment(a: { name: string, contentType: string, path?: string }, kinds: readonly AttachmentKind[]): boolean {
+  const kind = attachmentKind(a)
+  return kind !== null && kinds.includes(kind)
 }

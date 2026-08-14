@@ -9,10 +9,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import KinoraReporter from '../src/index'
 
 // Minimal fakes of the Playwright reporter objects the reporter reads.
-function fakeTest(over: { title?: string, outcome?: string, ok?: boolean, tracePath?: string } = {}): TestCase {
+function fakeTest(over: { title?: string, outcome?: string, ok?: boolean, tracePath?: string, videoPath?: string } = {}): TestCase {
   const projectSuite = { type: 'project', title: 'chromium', parent: undefined }
   const fileSuite = { type: 'file', title: 'a.spec.ts', parent: projectSuite }
-  const attachments = over.tracePath ? [{ name: 'trace', contentType: 'application/zip', path: over.tracePath }] : []
+  const attachments = [
+    ...over.tracePath ? [{ name: 'trace', contentType: 'application/zip', path: over.tracePath }] : [],
+    ...over.videoPath ? [{ name: 'video', contentType: 'video/webm', path: over.videoPath }] : [],
+  ]
   return {
     parent: fileSuite,
     title: over.title ?? 'passes',
@@ -127,6 +130,30 @@ describe('reporter onEnd', () => {
 
     expect(urls).toContain('https://api.example.com/api/v1/runs')
     expect(urls.some(u => u.endsWith('/artifacts'))).toBe(true)
+    await rm(dir, { recursive: true, force: true })
+  })
+
+  it('leaves a video on the runner unless uploadAttachments asks for it', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'kinora-reporter-'))
+    const videoPath = join(dir, 'video.webm')
+    await writeFile(videoPath, Buffer.from('webm'))
+    const artifactPosts = vi.fn()
+    vi.stubGlobal('fetch', vi.fn(async (url: unknown) => {
+      if (String(url).endsWith('/artifacts'))
+        artifactPosts()
+      return new Response(JSON.stringify({ projectId: 'p', runId: 'r', tests: 1, url: 'http://x/a.webm' }), { status: 201 })
+    }))
+
+    const reporter = new KinoraReporter({ url: 'https://api.example.com', token: 't', project: { slug: 'web-app' } })
+    reporter.onBegin({ version: '1.60.0' } as FullConfig, fakeSuite([fakeTest({ videoPath })]))
+    await reporter.onEnd(fakeResult())
+    expect(artifactPosts).not.toHaveBeenCalled()
+
+    const withVideo = new KinoraReporter({ url: 'https://api.example.com', token: 't', project: { slug: 'web-app' }, uploadAttachments: ['trace', 'video'] })
+    withVideo.onBegin({ version: '1.60.0' } as FullConfig, fakeSuite([fakeTest({ videoPath })]))
+    await withVideo.onEnd(fakeResult())
+    expect(artifactPosts).toHaveBeenCalledTimes(1)
+
     await rm(dir, { recursive: true, force: true })
   })
 

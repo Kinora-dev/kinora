@@ -1,6 +1,6 @@
-import type { CiMeta, Counts, GitMeta, IngestRunResult } from '@kinora/core'
+import type { AttachmentKind, CiMeta, Counts, GitMeta, IngestRunResult } from '@kinora/core'
 import { readFile } from 'node:fs/promises'
-import { buildIngestRun, createIngestClient, isTraceAttachment } from '@kinora/core'
+import { buildIngestRun, createIngestClient, DEFAULT_UPLOAD_ATTACHMENTS, isUploadableAttachment } from '@kinora/core'
 
 export type UploadResult = IngestRunResult & { counts: Counts }
 
@@ -13,6 +13,8 @@ export interface UploadOptions {
   fetch?: typeof globalThis.fetch
   // Ask the server to return a regression summary (for --pr-comment).
   regression?: boolean
+  // Attachment kinds to upload; defaults to traces only.
+  uploadAttachments?: AttachmentKind[]
 }
 
 // Parse a Playwright json report and upload it to a kinora server. Shares the
@@ -26,16 +28,17 @@ export async function uploadReport(raw: unknown, opts: UploadOptions): Promise<U
   const client = createIngestClient({ baseUrl: opts.url, token: opts.token, fetch: opts.fetch, regression: opts.regression })
   const res = await client.uploadRun(payload)
 
+  const kinds = opts.uploadAttachments ?? DEFAULT_UPLOAD_ATTACHMENTS
   for (const t of payload.tests) {
     for (const a of t.attachments) {
-      if (!a.path || !isTraceAttachment(a))
+      if (!a.path || !isUploadableAttachment(a, kinds))
         continue
       try {
         const art = await client.uploadArtifact({ runId: res.runId, testKey: t.testKey, name: a.name, contentType: a.contentType, body: await readFile(a.path) })
-        console.log(`  trace ${t.testKey} -> ${art.url}`)
+        console.log(`  ${a.name} ${t.testKey} -> ${art.url}`)
       }
       catch (err) {
-        console.warn(`warning: trace upload failed for ${t.testKey}: ${err instanceof Error ? err.message : err}`)
+        console.warn(`warning: ${a.name} upload failed for ${t.testKey}: ${err instanceof Error ? err.message : err}`)
       }
     }
   }
