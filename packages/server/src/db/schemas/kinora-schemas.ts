@@ -69,7 +69,10 @@ export const artifact = pgTable('artifact', {
   sha1: text('sha1'),
   size: integer('size'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-}, table => [index('artifact_runId_idx').on(table.runId)])
+}, table => [
+  index('artifact_runId_idx').on(table.runId),
+  index('artifact_projectId_idx').on(table.projectId),
+])
 
 // Cached Polar billing state, synced from the customer.state_changed webhook.
 export const subscription = pgTable('subscription', {

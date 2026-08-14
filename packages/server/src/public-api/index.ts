@@ -8,9 +8,9 @@ import { and, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import { notifyRun } from '../alerts/notify'
-import { getEntitlements, ingestCapError, quotaCrossing, quotaWarningText } from '../billing/entitlements'
+import { getEntitlements, ingestCapError, quotaCrossing, quotaWarningText, storageCapError } from '../billing/entitlements'
 import { meterTestResults, polarClient } from '../billing/polar'
-import { currentPeriodResults, projectCount, startOfMonthUtc } from '../billing/usage'
+import { currentPeriodResults, projectCount, startOfMonthUtc, storageBytes } from '../billing/usage'
 import { db } from '../db'
 import { artifact, member, project, run, test, user } from '../db/schemas/index'
 import { auth } from '../lib/auth'
@@ -320,11 +320,25 @@ publicApi.post('/runs/:runId/artifacts', async (c) => {
   if (!owner)
     return c.json({ error: 'Run not found' }, 404)
 
+  // One usage read per upload, reused after streaming to judge the artifact that just landed.
+  const entitlements = await getEntitlements(orgId)
+  const usedBytes = Number.isFinite(entitlements.storageBytes) ? await storageBytes(orgId) : 0
+  // Probe with a single byte: no room for that means no room for anything, so skip reading the body.
+  const full = storageCapError(entitlements, usedBytes, 1)
+  if (full)
+    return c.json(full, 402)
+
   const uploaded = await streamArtifact(c, r.projectId, runId)
   if (!uploaded)
     return c.json({ error: 'file is required' }, 400)
   if ('tooLarge' in uploaded)
     return c.json({ error: 'Artifact too large' }, 413)
+
+  const overCap = storageCapError(entitlements, usedBytes, uploaded.size)
+  if (overCap) {
+    await storage.delete(uploaded.key).catch(error => logger.error({ error, key: uploaded.key }, 'over-cap artifact cleanup failed'))
+    return c.json(overCap, 402)
+  }
 
   const t = uploaded.testKey
     ? await db.query.test.findFirst({

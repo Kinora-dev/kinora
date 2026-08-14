@@ -11,20 +11,24 @@ export interface Entitlements {
   maxProjects: number
   retentionDays: number
   includedResults: number
+  storageBytes: number
   alerts: boolean
 }
+
+const GB = 1024 ** 3
 
 const UNLIMITED: Omit<Entitlements, 'tier'> = {
   maxProjects: Number.POSITIVE_INFINITY,
   retentionDays: Number.POSITIVE_INFINITY,
   includedResults: Number.POSITIVE_INFINITY,
+  storageBytes: Number.POSITIVE_INFINITY,
   alerts: true,
 }
 
 const LIMITS: Record<Tier, Omit<Entitlements, 'tier'>> = {
-  free: { maxProjects: 1, retentionDays: 7, includedResults: 2_500, alerts: false },
-  team: { maxProjects: Number.POSITIVE_INFINITY, retentionDays: 90, includedResults: 10_000, alerts: true },
-  pro: { maxProjects: Number.POSITIVE_INFINITY, retentionDays: 365, includedResults: 50_000, alerts: true },
+  free: { maxProjects: 1, retentionDays: 7, includedResults: 2_500, storageBytes: 2 * GB, alerts: false },
+  team: { maxProjects: Number.POSITIVE_INFINITY, retentionDays: 90, includedResults: 10_000, storageBytes: 50 * GB, alerts: true },
+  pro: { maxProjects: Number.POSITIVE_INFINITY, retentionDays: 365, includedResults: 50_000, storageBytes: 250 * GB, alerts: true },
   enterprise: UNLIMITED,
   selfhost: UNLIMITED,
 }
@@ -224,4 +228,27 @@ export function ingestCapError(e: Entitlements, usedResults: number, isNewProjec
     return { error: 'Plan project limit reached. Upgrade to add more projects.', limit: e.maxProjects }
 
   return null
+}
+
+// Artifact storage cap. `incoming` is the artifact about to be stored (0 for a pre-flight check).
+export function storageCapError(e: Entitlements, usedBytes: number, incoming = 0): IngestCap | null {
+  if (!Number.isFinite(e.storageBytes) || usedBytes + incoming <= e.storageBytes)
+    return null
+  return {
+    error: `Plan artifact storage limit reached (${formatBytes(e.storageBytes)}). Older runs free up space as they expire, or upgrade for more.`,
+    limit: e.storageBytes,
+  }
+}
+
+export function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes))
+    return 'unlimited'
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  let value = bytes
+  let unit = 0
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024
+    unit++
+  }
+  return `${Math.round(value * 10) / 10} ${units[unit]}`
 }
