@@ -154,6 +154,7 @@ const PLAN_ROWS: { label: string, values: [string | boolean, string | boolean, s
   { label: 'Extra results', values: [false, '$5 / 1k', '$4 / 1k'] },
   { label: 'Projects', values: ['1', 'Unlimited', 'Unlimited'] },
   { label: 'History', values: ['7 days', '90 days', '1 year'] },
+  { label: 'Artifact storage', values: ['2 GB', '50 GB', '250 GB'] },
   { label: 'Regression alerts', values: [false, true, true] },
   { label: 'Seats', values: ['Unlimited', 'Unlimited', 'Unlimited'] },
   { label: 'Support', values: ['Community', 'Email', 'Priority'] },
