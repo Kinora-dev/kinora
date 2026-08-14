@@ -1,6 +1,6 @@
-import { and, count, eq, gte } from 'drizzle-orm'
+import { and, count, eq, gte, sum } from 'drizzle-orm'
 import { db } from '../db'
-import { project, run, test } from '../db/schemas/index'
+import { artifact, project, run, test } from '../db/schemas/index'
 
 export function startOfMonthUtc(): Date {
   const now = new Date()
@@ -18,6 +18,17 @@ export async function currentPeriodResults(organizationId: string): Promise<numb
     .where(and(eq(project.organizationId, organizationId), gte(run.startedAt, startOfMonthUtc())))
 
   return row?.total ?? 0
+}
+
+// Bytes currently stored for an org. Retention purges shrink it, so it is a live total, not a period one.
+export async function storageBytes(organizationId: string): Promise<number> {
+  const [row] = await db
+    .select({ total: sum(artifact.size) })
+    .from(artifact)
+    .innerJoin(project, eq(artifact.projectId, project.id))
+    .where(eq(project.organizationId, organizationId))
+
+  return Number(row?.total ?? 0)
 }
 
 export async function projectCount(organizationId: string): Promise<number> {

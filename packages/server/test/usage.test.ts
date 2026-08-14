@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { currentPeriodResults, projectCount } from '../src/billing/usage'
+import { currentPeriodResults, projectCount, storageBytes } from '../src/billing/usage'
 import { db } from '../src/db'
-import { project, run, test as testRow } from '../src/db/schemas/index'
+import { artifact, project, run, test as testRow } from '../src/db/schemas/index'
 import { createUser, ownedOrgId, resetDb } from './helpers'
 
 beforeEach(resetDb)
@@ -87,5 +87,38 @@ describe('projectCount', () => {
     const b = await createUser('b@test.dev')
     await seedTests(a.id, 1)
     expect(await projectCount(await ownedOrgId(b.id))).toBe(0)
+  })
+})
+
+describe('storageBytes', () => {
+  async function seedArtifact(userId: string, size: number): Promise<void> {
+    await seedTests(userId, 1)
+    const r = (await db.query.run.findMany()).at(-1)!
+    await db.insert(artifact).values({
+      id: randomUUID(),
+      projectId: r.projectId,
+      runId: r.id,
+      name: 'trace',
+      contentType: 'application/zip',
+      storageKey: `${r.projectId}/${r.id}/trace.zip`,
+      size,
+    })
+  }
+
+  it('sums the artifact sizes of the org', async () => {
+    const user = await createUser()
+    const org = await ownedOrgId(user.id)
+    expect(await storageBytes(org)).toBe(0)
+
+    await seedArtifact(user.id, 300)
+    await seedArtifact(user.id, 700)
+    expect(await storageBytes(org)).toBe(1000)
+  })
+
+  it('ignores another org artifacts', async () => {
+    const a = await createUser('a@test.dev')
+    const b = await createUser('b@test.dev')
+    await seedArtifact(a.id, 500)
+    expect(await storageBytes(await ownedOrgId(b.id))).toBe(0)
   })
 })

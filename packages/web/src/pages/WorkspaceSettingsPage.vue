@@ -97,6 +97,29 @@ const overCap = computed(() => {
   return !!b && b.includedResults != null && b.usedResults >= b.includedResults
 })
 
+const storagePct = computed(() => {
+  const b = billing.value
+  if (!b || b.storageBytes == null)
+    return 0
+  return Math.min(100, Math.round((b.usedStorageBytes / b.storageBytes) * 100))
+})
+
+const overStorageCap = computed(() => {
+  const b = billing.value
+  return !!b && b.storageBytes != null && b.usedStorageBytes >= b.storageBytes
+})
+
+function formatBytes(bytes: number): string {
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  let value = bytes
+  let unit = 0
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024
+    unit++
+  }
+  return `${Math.round(value * 10) / 10} ${units[unit]}`
+}
+
 interface UpgradeOption { slug: 'team' | 'pro', label: string, featured: boolean, action: 'checkout' | 'portal' }
 
 const upgradeOptions = computed<UpgradeOption[]>(() => {
@@ -200,7 +223,7 @@ function fmtDate(d: Date | string | null | undefined): string {
     <Card v-if="billing && billing.tier !== 'selfhost'">
       <CardHeader>
         <CardTitle>Plan</CardTitle>
-        <CardDescription>Your subscription and monthly test-result usage.</CardDescription>
+        <CardDescription>Your subscription, monthly test-result usage, and artifact storage.</CardDescription>
       </CardHeader>
       <CardContent class="flex flex-col gap-6">
         <div class="flex items-center justify-between gap-4">
@@ -236,6 +259,25 @@ function fmtDate(d: Date | string | null | undefined): string {
           </p>
           <p class="font-mono text-[11px] text-muted-foreground">
             {{ billing.retentionDays != null ? `${billing.retentionDays}-day history` : 'Unlimited history' }}
+          </p>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <div class="flex items-baseline justify-between">
+            <span :class="labelClass">Artifact storage</span>
+            <span class="font-mono text-xs tabular-nums" :class="overStorageCap ? 'text-fail' : 'text-muted-foreground'">
+              {{ formatBytes(billing.usedStorageBytes) }}<template v-if="billing.storageBytes != null"> / {{ formatBytes(billing.storageBytes) }}</template><template v-else> · unlimited</template>
+            </span>
+          </div>
+          <div v-if="billing.storageBytes != null" class="h-2 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              class="h-full rounded-full transition-all duration-500"
+              :class="overStorageCap ? 'bg-fail' : 'bg-signal'"
+              :style="{ width: `${storagePct}%` }"
+            />
+          </div>
+          <p v-if="overStorageCap" class="font-mono text-[11px] text-fail">
+            Storage limit reached - traces and videos are rejected until older runs expire.
           </p>
         </div>
 

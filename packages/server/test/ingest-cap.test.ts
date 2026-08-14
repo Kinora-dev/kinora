@@ -1,9 +1,9 @@
 import type { Entitlements } from '../src/billing/entitlements'
 import { describe, expect, it } from 'vitest'
-import { ingestCapError, quotaCrossing, quotaWarningText } from '../src/billing/entitlements'
+import { formatBytes, ingestCapError, quotaCrossing, quotaWarningText, storageCapError } from '../src/billing/entitlements'
 
-const free: Entitlements = { tier: 'free', includedResults: 2500, maxProjects: 1, retentionDays: 7, alerts: false }
-const selfhost: Entitlements = { tier: 'selfhost', includedResults: Infinity, maxProjects: Infinity, retentionDays: Infinity, alerts: true }
+const free: Entitlements = { tier: 'free', includedResults: 2500, maxProjects: 1, retentionDays: 7, storageBytes: 2 * 1024 ** 3, alerts: false }
+const selfhost: Entitlements = { tier: 'selfhost', includedResults: Infinity, maxProjects: Infinity, retentionDays: Infinity, storageBytes: Infinity, alerts: true }
 
 describe('ingestCapError', () => {
   it('blocks free tier once the monthly result limit is reached', () => {
@@ -23,9 +23,37 @@ describe('ingestCapError', () => {
   })
 
   it('the result cap only applies to free, not paid tiers', () => {
-    const team: Entitlements = { tier: 'team', includedResults: 10_000, maxProjects: Infinity, retentionDays: 90, alerts: true }
+    const team: Entitlements = { tier: 'team', includedResults: 10_000, maxProjects: Infinity, retentionDays: 90, storageBytes: 50 * 1024 ** 3, alerts: true }
     // Team is metered (overage billed), never hard-capped on results.
     expect(ingestCapError(team, 999_999, false, 0)).toBeNull()
+  })
+})
+
+describe('storageCapError', () => {
+  const small: Entitlements = { ...free, storageBytes: 1000 }
+
+  it('allows an artifact that still fits', () => {
+    expect(storageCapError(small, 900, 100)).toBeNull()
+  })
+
+  it('blocks the artifact that would cross the limit', () => {
+    expect(storageCapError(small, 900, 101)).toEqual({ error: expect.stringContaining('storage'), limit: 1000 })
+  })
+
+  it('blocks everything once full, including a single byte', () => {
+    expect(storageCapError(small, 1000, 1)).not.toBeNull()
+  })
+
+  it('never caps an unlimited tier', () => {
+    expect(storageCapError(selfhost, 1e15, 1e9)).toBeNull()
+  })
+})
+
+describe('formatBytes', () => {
+  it('scales to the largest fitting unit', () => {
+    expect(formatBytes(512)).toBe('512 B')
+    expect(formatBytes(2 * 1024 ** 3)).toBe('2 GB')
+    expect(formatBytes(1536)).toBe('1.5 KB')
   })
 })
 
