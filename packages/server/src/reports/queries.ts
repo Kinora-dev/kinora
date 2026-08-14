@@ -29,7 +29,10 @@ export function runSummary(slug: string, r: RunRow): RunSummary {
   }
 }
 
-export function toNormTest(t: TestRow, urls?: Map<string, string>): NormTest {
+// Attachment names repeat within a test (two toHaveScreenshot assertions both attach "actual"),
+// so urls are queued per name and handed out in upload order.
+export function toNormTest(t: TestRow, urls?: Map<string, string[]>): NormTest {
+  const seen = new Map<string, number>()
   return {
     testKey: t.testKey,
     title: t.title,
@@ -45,11 +48,15 @@ export function toNormTest(t: TestRow, urls?: Map<string, string>): NormTest {
     tags: t.tags,
     annotations: t.annotations,
     errors: t.errors,
-    attachments: t.attachments.map(a => ({ ...a, url: urls?.get(a.name) ?? a.url })),
+    attachments: t.attachments.map((a) => {
+      const index = seen.get(a.name) ?? 0
+      seen.set(a.name, index + 1)
+      return { ...a, url: urls?.get(a.name)?.[index] ?? a.url }
+    }),
   }
 }
 
-export function runReport(slug: string, r: RunRow, tests: TestRow[], urlsByTest?: Map<string, Map<string, string>>): RunReport {
+export function runReport(slug: string, r: RunRow, tests: TestRow[], urlsByTest?: Map<string, Map<string, string[]>>): RunReport {
   return {
     schemaVersion: SCHEMA_VERSION,
     runId: r.id,
@@ -92,14 +99,14 @@ export function loadRunSummaries(p: ProjectRow, limit = MAX_DASHBOARD_RUNS): Pro
 // Artifact URLs are resolved (signed local / presigned S3) at read time, not stored.
 export async function loadRunReport(p: ProjectRow, r: RunRow): Promise<RunReport> {
   const tests = await db.query.test.findMany({ where: eq(test.runId, r.id), orderBy: asc(test.file) })
-  const arts = await db.query.artifact.findMany({ where: eq(artifact.runId, r.id) })
+  const arts = await db.query.artifact.findMany({ where: eq(artifact.runId, r.id), orderBy: asc(artifact.createdAt) })
 
-  const urlsByTest = new Map<string, Map<string, string>>()
+  const urlsByTest = new Map<string, Map<string, string[]>>()
   for (const a of arts) {
     if (!a.testId)
       continue
-    const m = urlsByTest.get(a.testId) ?? new Map<string, string>()
-    m.set(a.name, await storage.url(a.storageKey))
+    const m = urlsByTest.get(a.testId) ?? new Map<string, string[]>()
+    m.set(a.name, [...(m.get(a.name) ?? []), await storage.url(a.storageKey)])
     urlsByTest.set(a.testId, m)
   }
 

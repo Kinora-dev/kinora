@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import type { AttachmentKind } from '@kinora/core'
 import { existsSync, readFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import process from 'node:process'
@@ -33,7 +34,23 @@ Options:
   --pr-label <label>    Distinguish matrix legs that share one PR
   --pr-policy <policy>  always (default) | on-failure (skip the comment on green runs)
   --concurrency <n>     Parallel uploads for bulk import (default 6)
+  --upload-attachments <kinds>
+                        Comma-separated: trace (default), video, screenshot.
+                        Add video/screenshot when your suite runs without traces
+                        (with tracing on they already ride inside the trace.zip).
   -h, --help`
+
+const ATTACHMENT_KINDS: AttachmentKind[] = ['trace', 'video', 'screenshot']
+
+function parseAttachmentKinds(raw: string | undefined): AttachmentKind[] | undefined {
+  if (raw === undefined)
+    return undefined
+  const kinds = raw.split(',').map(k => k.trim()).filter(Boolean)
+  const unknown = kinds.filter(k => !ATTACHMENT_KINDS.includes(k as AttachmentKind))
+  if (unknown.length)
+    fail(`unknown --upload-attachments value: ${unknown.join(', ')} (allowed: ${ATTACHMENT_KINDS.join(', ')})`)
+  return kinds as AttachmentKind[]
+}
 
 function fail(msg: string): never {
   console.error(`error: ${msg}\n`)
@@ -60,6 +77,7 @@ async function main(): Promise<void> {
       'pr-label': { type: 'string' },
       'pr-policy': { type: 'string' },
       'concurrency': { type: 'string' },
+      'upload-attachments': { type: 'string' },
       'help': { type: 'boolean', short: 'h' },
     },
   })
@@ -126,6 +144,7 @@ async function main(): Promise<void> {
     git,
     ci,
     regression: !!values['pr-comment'],
+    uploadAttachments: parseAttachmentKinds(values['upload-attachments']),
   })
 
   console.log(`uploaded ${res.tests} tests to ${values.project} (run ${res.runId})`)

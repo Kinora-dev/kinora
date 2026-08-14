@@ -6,7 +6,8 @@ import { db } from '../src/db'
 import { artifactSignature, verifyArtifactSignature } from '../src/lib/artifact-url'
 import { env } from '../src/lib/env'
 import { storage } from '../src/lib/storage'
-import { createApiKey, createUser, ingest, resetDb } from './helpers'
+import { findProject, loadRun, loadRunReport } from '../src/reports/queries'
+import { createApiKey, createUser, ingest, ownedOrgId, resetDb, runPayload } from './helpers'
 
 beforeEach(resetDb)
 
@@ -67,6 +68,32 @@ describe('artifact upload', () => {
     const got = await app.request(url.pathname + url.search)
     expect(got.status).toBe(200)
     expect([...new Uint8Array(await got.arrayBuffer())]).toEqual([...bytes])
+  })
+
+  it('keeps the media extension so the artifact serves with its own content type', async () => {
+    const user = await createUser()
+    const apiKey = await createApiKey(user.id)
+    await ingest(apiKey)
+    const run = (await db.query.run.findMany())[0]
+
+    const form = new FormData()
+    // The reporter names the part after the Playwright attachment ("video"), extension-less.
+    form.set('file', new File([new Uint8Array([1, 2, 3])], 'video', { type: 'video/webm' }))
+    form.set('name', 'video')
+    const res = await app.request(`/api/v1/runs/${run.id}/artifacts`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}` },
+      body: form,
+    })
+    expect(res.status).toBe(201)
+
+    const a = (await db.query.artifact.findMany())[0]
+    expect(a.storageKey.endsWith('.webm')).toBe(true)
+    expect(a.contentType).toBe('video/webm')
+
+    const url = new URL((await res.json() as { url: string }).url)
+    const got = await app.request(url.pathname + url.search)
+    expect(got.headers.get('content-type')).toContain('video/webm')
   })
 
   it('rejects an empty (no file part) upload', async () => {
@@ -164,6 +191,41 @@ describe('artifact upload - access + linking', () => {
 
     const res = await postArtifact(run.id, apiKey, { body: JSON.stringify({ not: 'multipart' }) })
     expect(res.status).toBe(400)
+  })
+})
+
+describe('run report artifact urls', () => {
+  it('gives each occurrence of a repeated attachment name its own url', async () => {
+    const user = await createUser()
+    const apiKey = await createApiKey(user.id)
+    const payload = runPayload()
+    payload.tests[0].attachments = [
+      { name: 'screenshot', contentType: 'image/png', hasBody: false },
+      { name: 'screenshot', contentType: 'image/png', hasBody: false },
+    ]
+    await ingest(apiKey, payload)
+    const r = (await db.query.run.findMany())[0]
+    const t = (await db.query.test.findMany())[0]
+
+    for (const byte of [1, 2]) {
+      const form = new FormData()
+      form.set('file', new File([new Uint8Array([byte])], 'screenshot', { type: 'image/png' }))
+      form.set('name', 'screenshot')
+      form.set('testKey', t.testKey)
+      const res = await app.request(`/api/v1/runs/${r.id}/artifacts`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}` },
+        body: form,
+      })
+      expect(res.status).toBe(201)
+    }
+
+    const p = await findProject(await ownedOrgId(user.id), payload.project.slug)
+    const report = await loadRunReport(p!, (await loadRun(p!.id, r.id))!)
+    const [first, second] = report.tests[0].attachments
+    expect(first.url).toBeTruthy()
+    expect(second.url).toBeTruthy()
+    expect(first.url).not.toBe(second.url)
   })
 })
 

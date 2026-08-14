@@ -214,6 +214,25 @@ interface StreamedArtifact {
   size: number
 }
 
+const MIME_EXTENSIONS: Record<string, string> = {
+  'application/zip': 'zip',
+  'video/webm': 'webm',
+  'video/mp4': 'mp4',
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/webp': 'webp',
+  'image/gif': 'gif',
+}
+
+// Playwright attachment names carry no extension ("trace", "video"), and /artifacts/* types its
+// responses from the stored key, so the extension has to come from the content type.
+function withExtension(name: string, contentType: string): string {
+  const dot = name.lastIndexOf('.')
+  const fromName = dot > 0 ? name.slice(dot + 1).replace(/\W/g, '') : ''
+  const ext = MIME_EXTENSIONS[contentType.split(';')[0].trim()] || fromName || 'zip'
+  return name.endsWith(`.${ext}`) ? name : `${name}.${ext}`
+}
+
 // Parse the multipart upload and stream the file part straight to storage so a large trace.zip is
 // never fully buffered. null = no file part; { tooLarge } = file part exceeded the byte cap.
 async function streamArtifact(c: Context, projectId: string, runId: string): Promise<StreamedArtifact | { tooLarge: true } | null> {
@@ -244,7 +263,7 @@ async function streamArtifact(c: Context, projectId: string, runId: string): Pro
       fileContentType = info.mimeType || 'application/zip'
       // The reporter sends the file part before the name field, so derive the key from its filename.
       const safeName = (info.filename || 'trace').replace(/[^\w.-]/g, '_').slice(0, 100) || 'trace'
-      key = `${projectId}/${runId}/${randomUUID()}-${safeName}.zip`
+      key = `${projectId}/${runId}/${randomUUID()}-${withExtension(safeName, fileContentType)}`
       fileStream.on('limit', () => {
         tooLarge = true
       })

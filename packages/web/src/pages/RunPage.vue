@@ -94,6 +94,12 @@ function attachmentBadges(attachments: Attachment[]): Attachment[] {
   return traceViewerHref(attachments) ? attachments.filter(a => !isTraceAttachment(a)) : attachments
 }
 
+// An uploaded attachment links straight to its file; otherwise fall back to the trace viewer,
+// which is where a traced run keeps its screenshots and video.
+function attachmentHref(a: Attachment, attachments: Attachment[]): string | undefined {
+  return a.url ?? traceViewerHref(attachments, 'attachments')
+}
+
 const BADGE_CLASS = 'inline-flex items-center gap-1 rounded border border-border px-2 py-0.5 font-mono text-[10px] text-muted-foreground'
 
 const dateFmt = new Intl.DateTimeFormat(undefined, {
@@ -276,10 +282,10 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
             >
               <Film class="size-3" />View trace
             </a>
-            <template v-for="a in attachmentBadges(t.attachments)" :key="a.name">
+            <template v-for="(a, i) in attachmentBadges(t.attachments)" :key="`${a.name}-${i}`">
               <a
-                v-if="traceViewerHref(t.attachments, 'attachments')"
-                :href="traceViewerHref(t.attachments, 'attachments')"
+                v-if="attachmentHref(a, t.attachments)"
+                :href="attachmentHref(a, t.attachments)"
                 target="_blank"
                 rel="noopener"
                 class="transition-colors hover:border-signal/40 hover:text-signal" :class="BADGE_CLASS"

@@ -1,9 +1,9 @@
-import type { CiMeta, Counts, GitMeta, IngestRun, IngestRunResult, NormTest } from '@kinora/core'
+import type { AttachmentKind, CiMeta, Counts, GitMeta, IngestRun, IngestRunResult, NormTest } from '@kinora/core'
 import type { FullConfig, FullResult, Reporter, Suite, TestCase } from '@playwright/test/reporter'
 import { readFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import process from 'node:process'
-import { createIngestClient, DEFAULT_KINORA_URL, effectiveAttachments, IngestError, isTraceAttachment, makeTestKey, postPrComment, resolvePrContext } from '@kinora/core'
+import { createIngestClient, DEFAULT_KINORA_URL, DEFAULT_UPLOAD_ATTACHMENTS, effectiveAttachments, IngestError, isUploadableAttachment, makeTestKey, postPrComment, resolvePrContext } from '@kinora/core'
 
 export interface KinoraReporterOptions {
   /** kinora server base URL. Defaults to env KINORA_URL, then the hosted cloud. Set for self-host. */
@@ -19,6 +19,12 @@ export interface KinoraReporterOptions {
    * `permissions: pull-requests: write`). `label` distinguishes matrix legs sharing one PR.
    */
   prComment?: boolean | { label?: string, policy?: 'always' | 'on-failure' }
+  /**
+   * Which attachment kinds to upload. Defaults to `['trace']`. Add `'video'` / `'screenshot'`
+   * to host them on their own, which is what you want when `trace` is off (with tracing on,
+   * Playwright already embeds them in the trace.zip).
+   */
+  uploadAttachments?: AttachmentKind[]
 }
 
 // Rebuild the json-report identity (file path + title path + project) from the
@@ -135,22 +141,23 @@ export default class KinoraReporter implements Reporter {
       const client = createIngestClient({ baseUrl: url, token, regression: !!this.options.prComment })
       const res = await client.uploadRun(payload)
 
-      let traces = 0
+      const kinds = this.options.uploadAttachments ?? DEFAULT_UPLOAD_ATTACHMENTS
+      let artifacts = 0
       for (const t of tests) {
         for (const a of t.attachments) {
-          if (!a.path || !isTraceAttachment(a))
+          if (!a.path || !isUploadableAttachment(a, kinds))
             continue
           try {
             await client.uploadArtifact({ runId: res.runId, testKey: t.testKey, name: a.name, contentType: a.contentType, body: await readFile(a.path) })
-            traces++
+            artifacts++
           }
           catch (err) {
-            console.warn(`[kinora] trace upload failed for ${t.testKey}:`, err instanceof Error ? err.message : err)
+            console.warn(`[kinora] ${a.name} upload failed for ${t.testKey}:`, err instanceof Error ? err.message : err)
           }
         }
       }
       // eslint-disable-next-line no-console -- a reporter's job is to report
-      console.log(`[kinora] uploaded ${res.tests} tests + ${traces} traces (run ${res.runId})`)
+      console.log(`[kinora] uploaded ${res.tests} tests + ${artifacts} artifacts (run ${res.runId})`)
 
       await this.maybePostPrComment(payload, res)
     }
