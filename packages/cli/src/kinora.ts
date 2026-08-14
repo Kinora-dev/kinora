@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises'
 import process from 'node:process'
 import { parseArgs } from 'node:util'
 import { DEFAULT_KINORA_URL, IngestError, postPrComment, resolvePrContext } from '@kinora/core'
+import { parseAttachmentKinds } from './args'
 import { importReports } from './import'
 import { uploadReport } from './upload'
 
@@ -40,16 +41,13 @@ Options:
                         (with tracing on they already ride inside the trace.zip).
   -h, --help`
 
-const ATTACHMENT_KINDS: AttachmentKind[] = ['trace', 'video', 'screenshot']
-
-function parseAttachmentKinds(raw: string | undefined): AttachmentKind[] | undefined {
-  if (raw === undefined)
-    return undefined
-  const kinds = raw.split(',').map(k => k.trim()).filter(Boolean)
-  const unknown = kinds.filter(k => !ATTACHMENT_KINDS.includes(k as AttachmentKind))
-  if (unknown.length)
-    fail(`unknown --upload-attachments value: ${unknown.join(', ')} (allowed: ${ATTACHMENT_KINDS.join(', ')})`)
-  return kinds as AttachmentKind[]
+function attachmentKinds(raw: string | undefined): AttachmentKind[] | undefined {
+  try {
+    return parseAttachmentKinds(raw)
+  }
+  catch (err) {
+    fail(err instanceof Error ? err.message : String(err))
+  }
 }
 
 function fail(msg: string): never {
@@ -144,7 +142,7 @@ async function main(): Promise<void> {
     git,
     ci,
     regression: !!values['pr-comment'],
-    uploadAttachments: parseAttachmentKinds(values['upload-attachments']),
+    uploadAttachments: attachmentKinds(values['upload-attachments']),
   })
 
   console.log(`uploaded ${res.tests} tests to ${values.project} (run ${res.runId})`)
