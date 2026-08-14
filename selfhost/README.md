@@ -43,8 +43,41 @@ automatically (the `migrate` service) before the server starts.
 | `SMTP_*`                                              | no       | Enables email verification, password reset, invitations, and email alerts. |
 | `GOOGLE_*` / `GITHUB_*`                               | no       | Social login. Leave empty for email + password only.                       |
 | `S3_*`                                                | no       | Use an S3-compatible store instead of the local volume.                    |
+| `KINORA_ARTIFACT_RETENTION_DAYS`                      | no       | Delete stored trace files older than N days, keep the runs. `0` = never.   |
+| `KINORA_RETENTION_DAYS`                               | no       | Delete runs older than N days. `0` = never.                                |
+| `KINORA_KEEP_LAST_RUNS`                               | no       | Keep only the N newest runs per project. `0` = unlimited.                  |
 
 Self-host runs with `KINORA_CLOUD=false` (no billing; every feature, including alerts, is unlimited).
+
+## Retention
+
+Nothing is deleted by default. Traces are what fills the disk (a `trace.zip` carries the
+screenshots and video of its test), so the first knob to reach for is
+`KINORA_ARTIFACT_RETENTION_DAYS`: it deletes the stored files past N days but keeps the runs, so
+pass rates, trends and flaky history stay intact. Old runs simply lose their "View trace" link.
+
+```bash
+# keep traces for 30 days, history forever
+KINORA_ARTIFACT_RETENTION_DAYS=30
+```
+
+`KINORA_RETENTION_DAYS` and `KINORA_KEEP_LAST_RUNS` delete whole runs, history included.
+`KINORA_KEEP_LAST_RUNS` counts per project, which is the one to use when your suites run on a
+schedule and you only care about recent history. They combine: a run is deleted if either says so.
+
+```bash
+# traces for 14 days, runs for 180 days, at most 500 runs per project
+KINORA_ARTIFACT_RETENTION_DAYS=14
+KINORA_RETENTION_DAYS=180
+KINORA_KEEP_LAST_RUNS=500
+```
+
+The server sweeps at startup and every 24h while at least one of the three is non-zero. To run
+one immediately (also useful for the first sweep after enabling retention on a large instance):
+
+```bash
+docker compose exec server node dist/scripts/purge-expired-runs.mjs
+```
 
 ## Send your tests
 

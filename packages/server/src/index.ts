@@ -3,8 +3,9 @@ import './instrument'
 import { serve } from '@hono/node-server'
 import process from 'node:process'
 import { app } from './app'
+import { purgeExpiredRuns } from './billing/retention'
 import { db } from './db'
-import { demo, env } from './lib/env'
+import { demo, env, retentionPolicy } from './lib/env'
 import { logger } from './lib/logger'
 
 // Log stray rejections instead of letting one crash the whole server; uncaught exceptions leave the
@@ -18,6 +19,17 @@ process.on('uncaughtException', (err) => {
 const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
   logger.info(`${demo ? '[DEMO] ' : ''}kinora server running on port ${info.port}`)
 })
+
+// Self-host ships no scheduler, so sweep in-process. Cloud leaves retentionPolicy null and
+// keeps sweeping from its own cron (safe with several replicas).
+if (retentionPolicy) {
+  const sweep = (): void => void purgeExpiredRuns(new Date())
+    .then(result => logger.info(result, 'retention sweep complete'))
+    .catch(error => logger.error({ error }, 'retention sweep failed'))
+
+  sweep()
+  setInterval(sweep, 24 * 60 * 60 * 1000).unref()
+}
 
 let shuttingDown = false
 async function shutdown(signal: string): Promise<void> {
