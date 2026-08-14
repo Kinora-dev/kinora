@@ -31,6 +31,10 @@ const envSchema = z.object({
   POLAR_PRODUCT_PRO_ID: z.string().optional(),
   // Ingest requests per minute per client IP (DoS backstop; sharded CI spreads across IPs). Raise for pathological suites.
   INGEST_RATE_LIMIT: z.coerce.number().int().positive().default(600),
+  // Self-host retention. 0 = keep forever; ignored in cloud, where the plan tier drives it.
+  KINORA_RETENTION_DAYS: z.coerce.number().int().nonnegative().default(0),
+  KINORA_KEEP_LAST_RUNS: z.coerce.number().int().nonnegative().default(0),
+  KINORA_ARTIFACT_RETENTION_DAYS: z.coerce.number().int().nonnegative().default(0),
   STORAGE_DIR: z.string().default('.data/artifacts'),
   S3_ENDPOINT: z.string().optional(),
   S3_REGION: z.string().optional(),
@@ -89,6 +93,27 @@ function resolveCloud(): CloudConfig | null {
 export const cloud = resolveCloud()
 
 export const demo = env.KINORA_DEMO
+
+export interface RetentionPolicy {
+  runDays: number
+  keepLastRuns: number
+  artifactDays: number
+}
+
+// null = nothing to sweep, which also gates the in-process sweeper (cloud sweeps via its own cron).
+function resolveRetention(): RetentionPolicy | null {
+  if (env.KINORA_CLOUD)
+    return null
+
+  const policy = {
+    runDays: env.KINORA_RETENTION_DAYS,
+    keepLastRuns: env.KINORA_KEEP_LAST_RUNS,
+    artifactDays: env.KINORA_ARTIFACT_RETENTION_DAYS,
+  }
+  return policy.runDays || policy.keepLastRuns || policy.artifactDays ? policy : null
+}
+
+export const retentionPolicy = resolveRetention()
 
 // Social login is enabled per provider only when both its id and secret are set.
 export const googleOauthEnabled = Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET)
