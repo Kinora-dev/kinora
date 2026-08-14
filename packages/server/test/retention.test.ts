@@ -5,6 +5,7 @@ import { resolve } from 'node:path'
 import { eq } from 'drizzle-orm'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { purgeArtifactsBefore, purgeBeyondLastRuns, purgeExpiredRuns, purgeScope } from '../src/billing/retention'
+import { storageBytes } from '../src/billing/usage'
 import { db } from '../src/db'
 import { artifact, project, run } from '../src/db/schemas/index'
 import { env } from '../src/lib/env'
@@ -153,6 +154,19 @@ describe('purgeArtifactsBefore', () => {
     expect(existsSync(recentKey)).toBe(true)
     expect(await db.query.artifact.findMany({ where: eq(artifact.runId, old) })).toHaveLength(0)
     expect(await exists(old)).toBeTruthy() // history survives the blob sweep
+  })
+})
+
+describe('retention and the storage quota', () => {
+  it('frees quota: purged artifacts stop counting against the org', async () => {
+    const u = await createUser()
+    const org = await ownedOrgId(u.id)
+    const runId = await seedRun(u.id, new Date(Date.now() - 100 * DAY))
+    await seedArtifact(runId, 'trace.zip')
+    expect(await storageBytes(org)).toBe(3)
+
+    await purgeScope(new Date(), {})
+    expect(await storageBytes(org)).toBe(0)
   })
 })
 
