@@ -1,14 +1,14 @@
-// Regenerate the landing app screenshots from the deterministic market seed.
+// Regenerate the website app screenshots from the deterministic market seed.
 //
 //   pnpm --filter @kinora/server db:seed:market   # one-time, gives market@kinora.dev
 //   pnpm dev:server & pnpm dev:web & pnpm dev:viewer
-//   node packages/web/scripts/landing-screenshots.mjs
+//   node packages/web/scripts/website-screenshots.mjs
 //
-// Captures each view light + dark at 1440x900 @2x (2880x1800) into the landing assets.
+// Captures each view light + dark at 1440x900 @2x (2880x1800) into the website assets.
 import { chromium } from '@playwright/test'
 
 const WEB = 'http://localhost:5173'
-const OUT = new URL('../../../landing/src/assets/screenshots/', import.meta.url).pathname
+const OUT = new URL('../../../website/src/assets/screenshots/', import.meta.url).pathname
 const VIEWPORT = { width: 1440, height: 900 }
 const EMAIL = 'market@kinora.dev'
 const PASSWORD = 'password123'

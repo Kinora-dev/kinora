@@ -7,7 +7,7 @@
 **/.env.*
 !**/.env.example
 **/.data
-landing
+website
 docs
 *.png
 .playwright-mcp

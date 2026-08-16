@@ -153,7 +153,7 @@ function createHomeWindow(): BrowserWindow {
       nodeIntegration: false,
       preload: path.join(__dirname, 'home-preload.cjs'),
       // Sandboxed preload reads this from process.argv to expose window.kinora.isDev.
-      // Suppressed during screenshot capture so landing shots look like a prod build.
+      // Suppressed during screenshot capture so website shots look like a prod build.
       additionalArguments: [`--kinora-dev=${app.isPackaged || process.env.KINORA_SHOT ? '0' : '1'}`],
     },
   })

@@ -137,7 +137,7 @@ Two per-package Dockerfiles, both built from the **repo root** (workspace contex
 
 ### Marketing site
 
-`landing/` is a standalone **Astro** site (its own pnpm workspace + lockfile + `Dockerfile`, **not** part of the root `packages/*` workspace). Build/dev separately from `landing/` (`pnpm dev` / `pnpm build`).
+`website/` is a standalone **Astro** site (its own pnpm workspace + lockfile + `Dockerfile`, **not** part of the root `packages/*` workspace). Build/dev separately from `website/` (`pnpm dev` / `pnpm build`).
 
 ## Conventions
 

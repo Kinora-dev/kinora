@@ -48,14 +48,14 @@ jobs:
       - name: Test
         run: pnpm test
 
-  # landing is a standalone Astro workspace (own lockfile), so pnpm -r above never touches it.
+  # website is a standalone Astro workspace (own lockfile), so pnpm -r above never touches it.
   # Lint is already covered by the root eslint .; this catches astro type errors + a broken build.
-  landing:
+  website:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
       run:
-        working-directory: landing
+        working-directory: website
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
@@ -65,7 +65,7 @@ jobs:
         with:
           node-version-file: package.json
           cache: pnpm
-          cache-dependency-path: landing/pnpm-lock.yaml
+          cache-dependency-path: website/pnpm-lock.yaml
 
       - run: pnpm install --frozen-lockfile
 

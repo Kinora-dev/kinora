@@ -1,4 +1,4 @@
-# kinora landing
+# kinora website
 
 Marketing site for kinora.
 

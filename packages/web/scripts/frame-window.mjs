@@ -1,6 +1,6 @@
 // Wrap a desktop app screenshot (renderer-only capturePage) in the macOS traffic-light
 // dots, top-anchored cropped to drop empty space below the content. Rounding + shadow are
-// applied in CSS by the landing (DesktopSection), like the other sections, so the shadow
+// applied in CSS by the website (DesktopSection), like the other sections, so the shadow
 // is never clipped and stays coherent.
 //
 //   # capture (dev stack up; from packages/desktop). --force-device-scale-factor=2 is
@@ -11,7 +11,7 @@
 //   pnpm exec electron . --force-device-scale-factor=2
 //
 //   # frame it (3rd arg = visible height crop, in CSS px):
-//   node packages/web/scripts/frame-window.mjs /tmp/shot.png landing/src/assets/screenshots/desktop-dark.png 700
+//   node packages/web/scripts/frame-window.mjs /tmp/shot.png website/src/assets/screenshots/desktop-dark.png 700
 import { readFileSync } from 'node:fs'
 import process from 'node:process'
 import { chromium } from '@playwright/test'
