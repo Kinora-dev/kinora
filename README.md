@@ -171,7 +171,7 @@ Open http://localhost:5173 and sign in with the seeded credentials (`demo@kinora
 
 ## Self-hosting
 
-Run the whole stack with one `docker compose` (Postgres + server + dashboard, single origin, local-FS artifacts, no S3). See [`selfhost/README.md`](selfhost/README.md) for the quickstart, configuration, sending tests, custom domains, upgrades, and backups.
+Run the whole stack with one `docker compose` (Postgres + server + dashboard, single origin, local-FS artifacts, no S3). The images are prebuilt for amd64 and arm64 (`ghcr.io/kinora-dev/kinora-server`, `ghcr.io/kinora-dev/kinora-web`), so there is nothing to clone or compile: two files and `docker compose up -d`. See [`selfhost/README.md`](selfhost/README.md) for the quickstart, configuration, sending tests, custom domains, upgrades, and backups.
 
 ## Licensing
 
